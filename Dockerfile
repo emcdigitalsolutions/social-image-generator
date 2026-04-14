@@ -6,16 +6,16 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     fonts-noto-core \
     fontconfig \
-    curl \
-    unzip \
+    ca-certificates \
+    wget \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Fonts: Inter + Playfair Display via direct GitHub releases
+# Install Google Fonts: Inter + Playfair Display
 RUN mkdir -p /usr/share/fonts/google \
-    && curl -sL "https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf" -o /usr/share/fonts/google/Inter.ttf \
-    && curl -sL "https://github.com/google/fonts/raw/main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf" -o /usr/share/fonts/google/PlayfairDisplay.ttf \
-    && curl -sL "https://github.com/google/fonts/raw/main/ofl/playfairdisplay/PlayfairDisplay-Italic%5Bwght%5D.ttf" -o /usr/share/fonts/google/PlayfairDisplay-Italic.ttf \
+    && wget -q -O /usr/share/fonts/google/Inter.ttf "https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf" \
+    && wget -q -O /usr/share/fonts/google/PlayfairDisplay.ttf "https://github.com/google/fonts/raw/main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf" \
+    && wget -q -O /usr/share/fonts/google/PlayfairDisplay-Italic.ttf "https://github.com/google/fonts/raw/main/ofl/playfairdisplay/PlayfairDisplay-Italic%5Bwght%5D.ttf" \
     && fc-cache -fv
 
 WORKDIR /app
