@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+/* {{BASE_CSS}} */
+
+body {
+    background: linear-gradient(170deg, var(--bg-deep) 0%, var(--bg-primary) 50%, var(--bg-card) 100%);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Large cross watermark — semi-transparent */
+.cross-watermark {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 650px;
+    height: 650px;
+    opacity: 0.035;
+    color: var(--accent-light);
+}
+
+/* Header logo */
+.header {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    z-index: 2;
+}
+
+/* Center content */
+.event-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.event-date {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 64px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+    letter-spacing: -1px;
+}
+
+.event-divider {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-light), transparent);
+}
+
+.event-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--accent-bright);
+    letter-spacing: 1px;
+    line-height: 1.3;
+}
+
+.event-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text-light);
+    max-width: 680px;
+}
+
+/* Bottom bar */
+.bottom-bar {
+    z-index: 2;
+}
+</style>
+</head>
+<body>
+
+<!-- Cross watermark -->
+<div class="cross-watermark">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="88" y="10" width="24" height="180" rx="4" fill="currentColor"/>
+        <rect x="30" y="78" width="140" height="24" rx="4" fill="currentColor"/>
+    </svg>
+</div>
+
+<!-- Header: Logo badge -->
+<div class="header">
+    <div class="logo-badge">
+        {{LOGO_SVG}}
+        <span class="brand-name">Fratelli Di Rosa</span>
+    </div>
+</div>
+
+<!-- Event content -->
+<div class="event-content">
+    <div class="event-date">{{DATE}}</div>
+    <div class="event-divider"></div>
+    <div class="event-name">{{TITLE}}</div>
+    <p class="event-text">{{TEXT}}</p>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <span class="site-url">fratellidirosa.it</span>
+    <span class="separator"></span>
+    <span class="tagline">Agenzia Funebre — Ravanusa</span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+/* {{BASE_CSS}} */
+
+body {
+    background: var(--bg-deep);
+    position: relative;
+}
+
+/* Background image */
+.bg-image {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+}
+
+/* Header logo */
+.header {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    z-index: 3;
+}
+
+/* Content area — bottom portion */
+.content {
+    position: absolute;
+    bottom: 80px;
+    left: 48px;
+    right: 48px;
+    z-index: 3;
+}
+
+.service-card {
+    background: rgba(20, 24, 33, 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-elevated);
+    border-radius: 16px;
+    padding: 40px;
+}
+
+.service-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.25;
+    margin-bottom: 16px;
+}
+
+.service-description {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--text-light);
+    max-width: 700px;
+}
+
+/* Bottom bar */
+.bottom-bar {
+    z-index: 3;
+}
+
+.bottom-bar .h24-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bottom-bar .h24-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--accent-light);
+    letter-spacing: 0;
+}
+
+.bottom-bar .h24-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<!-- Background image -->
+<div class="bg-image" style="background-image: url('{{IMAGE_URL}}');"></div>
+<div class="bg-overlay"></div>
+
+<!-- Header: Logo badge -->
+<div class="header">
+    <div class="logo-badge">
+        {{LOGO_SVG}}
+        <span class="brand-name">Fratelli Di Rosa</span>
+    </div>
+</div>
+
+<!-- Service content -->
+<div class="content">
+    <div class="service-card">
+        <h2 class="service-title">{{TITLE}}</h2>
+        <p class="service-description">{{DESCRIPTION}}</p>
+    </div>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <span class="site-url">fratellidirosa.it</span>
+    <span class="separator"></span>
+    <span class="h24-badge">
+        <span class="h24-icon">24</span>
+        <span class="h24-text">Servizio H24 — 7 giorni su 7</span>
+    </span>
+</div>
+
+</body>
+</html>

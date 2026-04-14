@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+/* {{BASE_CSS}} */
+
+body {
+    background: var(--bg-primary);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Photo area — top 65% */
+.photo-area {
+    position: relative;
+    width: 100%;
+    height: 702px; /* 65% of 1080 */
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.photo-area img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-gradient {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(180deg, transparent, var(--bg-primary));
+}
+
+/* Info area — bottom 35% */
+.info-area {
+    flex: 1;
+    padding: 24px 48px 72px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.floral-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    line-height: 1.25;
+}
+
+.floral-description {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--text-light);
+    max-width: 700px;
+}
+
+/* Side borders */
+.side-border-left,
+.side-border-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent 10%, var(--accent) 50%, transparent 90%);
+    opacity: 0.2;
+}
+
+.side-border-left { left: 0; }
+.side-border-right { right: 0; }
+
+/* Logo in bottom-right of info area */
+.logo-corner {
+    position: absolute;
+    bottom: 72px;
+    right: 48px;
+}
+
+.logo-corner svg {
+    width: 36px;
+    height: 36px;
+    opacity: 0.5;
+}
+</style>
+</head>
+<body>
+
+<div class="side-border-left"></div>
+<div class="side-border-right"></div>
+
+<!-- Photo -->
+<div class="photo-area">
+    <img src="{{IMAGE_URL}}" alt="Composizione floreale">
+    <div class="photo-gradient"></div>
+</div>
+
+<!-- Info -->
+<div class="info-area">
+    <h2 class="floral-name">{{TITLE}}</h2>
+    <p class="floral-description">{{DESCRIPTION}}</p>
+
+    <div class="logo-corner">
+        {{LOGO_SVG}}
+    </div>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <span class="site-url">fratellidirosa.it</span>
+    <span class="separator"></span>
+    <span class="tagline">Composizioni Floreali</span>
+</div>
+
+</body>
+</html>

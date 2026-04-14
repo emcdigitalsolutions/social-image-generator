@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+/* {{BASE_CSS}} */
+
+body {
+    background: var(--bg-deep);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Cross watermark — large, centered */
+.cross-watermark {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    height: 500px;
+}
+
+/* Header logo area */
+.header {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    z-index: 2;
+}
+
+/* Quote area */
+.quote-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 80px 100px;
+    position: relative;
+    z-index: 2;
+}
+
+.quote-inner {
+    display: flex;
+    gap: 24px;
+    max-width: 900px;
+}
+
+.quote-line {
+    width: 3px;
+    min-height: 100%;
+    background: linear-gradient(180deg, var(--accent-bright), var(--accent), transparent);
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.quote-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.quote-text {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.quote-author {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.quote-author::before {
+    content: '— ';
+}
+
+/* Bottom accent band */
+.bottom-bar {
+    background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+    border-top: 1px solid var(--border-cool);
+}
+
+.bottom-bar::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+</style>
+</head>
+<body>
+
+<!-- Cross watermark -->
+<div class="cross-watermark">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="88" y="20" width="24" height="160" rx="4" fill="currentColor" opacity="0.6"/>
+        <rect x="40" y="68" width="120" height="24" rx="4" fill="currentColor" opacity="0.6"/>
+    </svg>
+</div>
+
+<!-- Header: Logo badge -->
+<div class="header">
+    <div class="logo-badge">
+        {{LOGO_SVG}}
+        <span class="brand-name">Fratelli Di Rosa</span>
+    </div>
+</div>
+
+<!-- Quote -->
+<div class="quote-container">
+    <div class="quote-inner">
+        <div class="quote-line"></div>
+        <div class="quote-content">
+            <div class="quote-text">{{TEXT}}</div>
+            <div class="quote-author">{{AUTHOR}}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <span class="site-url">fratellidirosa.it</span>
+    <span class="separator"></span>
+    <span class="tagline">Agenzia Funebre — Ravanusa</span>
+</div>
+
+</body>
+</html>

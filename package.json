@@ -1,0 +1,14 @@
+{
+  "name": "social-image-generator",
+  "version": "1.0.0",
+  "description": "Self-hosted social media image generator with Puppeteer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "puppeteer-core": "^23.5.0",
+    "uuid": "^10.0.0"
+  }
+}
