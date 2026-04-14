@@ -1,21 +1,21 @@
 FROM node:20-slim
 
-# Install Chromium + fonts
+# Install Chromium + fonts + utilities
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-liberation \
     fonts-noto-core \
-    wget \
+    fontconfig \
+    curl \
+    unzip \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Fonts: Inter + Playfair Display
+# Install Google Fonts: Inter + Playfair Display via direct GitHub releases
 RUN mkdir -p /usr/share/fonts/google \
-    && wget -q -O /tmp/inter.zip "https://fonts.google.com/download?family=Inter" \
-    && wget -q -O /tmp/playfair.zip "https://fonts.google.com/download?family=Playfair+Display" \
-    && unzip -o /tmp/inter.zip -d /usr/share/fonts/google/ \
-    && unzip -o /tmp/playfair.zip -d /usr/share/fonts/google/ \
-    && rm /tmp/inter.zip /tmp/playfair.zip \
+    && curl -sL "https://github.com/google/fonts/raw/main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf" -o /usr/share/fonts/google/Inter.ttf \
+    && curl -sL "https://github.com/google/fonts/raw/main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf" -o /usr/share/fonts/google/PlayfairDisplay.ttf \
+    && curl -sL "https://github.com/google/fonts/raw/main/ofl/playfairdisplay/PlayfairDisplay-Italic%5Bwght%5D.ttf" -o /usr/share/fonts/google/PlayfairDisplay-Italic.ttf \
     && fc-cache -fv
 
 WORKDIR /app
