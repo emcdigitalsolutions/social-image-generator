@@ -1,0 +1,103 @@
+<%- include('layout', { title, user }) %>
+
+<div class="page-header">
+  <h1>Clienti</h1>
+  <button class="btn btn-primary" onclick="openModal('new-client-modal')">+ Nuovo Cliente</button>
+</div>
+
+<div class="clients-grid">
+  <% if (clients.length === 0) { %>
+    <div class="empty-state">
+      <h3>Nessun cliente</h3>
+      <p>Crea il tuo primo cliente per iniziare</p>
+    </div>
+  <% } %>
+  <% clients.forEach(c => { %>
+    <a href="/dashboard/clients/<%= c.id %>" class="client-card">
+      <div class="client-logo"><%= (c.display_name || c.id).charAt(0).toUpperCase() %></div>
+      <div class="client-info">
+        <h3><%= c.display_name %></h3>
+        <p><%= c.sector ? c.sector.replace(/_/g, ' ') : 'Settore non definito' %> &middot; <%= c.location || '' %></p>
+        <span class="badge badge-<%= c.status %>"><%= c.status %></span>
+      </div>
+    </a>
+  <% }) %>
+</div>
+
+<div class="modal-overlay" id="new-client-modal">
+  <div class="modal">
+    <h2>Nuovo Cliente</h2>
+    <form id="new-client-form">
+      <div class="form-group">
+        <label>ID (slug)</label>
+        <input type="text" name="id" placeholder="es: fratellidirosa" required pattern="[a-z0-9_-]+">
+        <div class="help">Solo lettere minuscole, numeri, trattini, underscore</div>
+      </div>
+      <div class="form-group">
+        <label>Nome visualizzato</label>
+        <input type="text" name="display_name" placeholder="es: Fratelli Di Rosa" required>
+      </div>
+      <div class="form-group">
+        <label>Settore</label>
+        <select name="sector">
+          <option value="">— Seleziona —</option>
+          <option value="onoranze_funebri">Onoranze Funebri</option>
+          <option value="ristorazione">Ristorazione</option>
+          <option value="abbigliamento">Abbigliamento / Moda</option>
+          <option value="alimentari">Alimentari / Gastronomia</option>
+          <option value="estetica">Estetica / Benessere</option>
+          <option value="studio_professionale">Studio Professionale</option>
+          <option value="erboristeria">Erboristeria</option>
+          <option value="artigianato">Artigianato</option>
+          <option value="turismo">Turismo / B&B</option>
+          <option value="edilizia">Edilizia</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Località</label>
+        <input type="text" name="location" placeholder="es: Ravanusa (AG)">
+      </div>
+      <div class="form-group">
+        <label>Sito web</label>
+        <input type="text" name="website" placeholder="es: fratellidirosa.it">
+      </div>
+      <div id="new-client-error" class="form-error" style="display:none"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('new-client-modal')">Annulla</button>
+        <button type="submit" class="btn btn-primary">Crea Cliente</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.getElementById('new-client-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const errEl = document.getElementById('new-client-error');
+    errEl.style.display = 'none';
+
+    const data = {
+      id: form.querySelector('[name=id]').value,
+      display_name: form.querySelector('[name=display_name]').value,
+      sector: form.querySelector('[name=sector]').value || undefined,
+      location: form.querySelector('[name=location]').value || undefined,
+      website: form.querySelector('[name=website]').value || undefined
+    };
+
+    try {
+      const res = await apiFetch('/dashboard/api/clients', { method: 'POST', body: data });
+      if (res.error) {
+        errEl.textContent = res.error;
+        errEl.style.display = 'block';
+        return;
+      }
+      window.location.href = '/dashboard/clients/' + res.id;
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  });
+</script>
+
+<%- include('layout-end') %>

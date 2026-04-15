@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — SMM Dashboard</title>
+  <link rel="stylesheet" href="/dashboard/css/dashboard.css">
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <h1>SMM Dashboard</h1>
+      <p>Accedi per gestire i tuoi clienti social media</p>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="form-error"><%= error %></div>
+      <% } %>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+        <div id="login-error" class="form-error" style="display:none"></div>
+        <button type="submit" class="btn btn-primary btn-block">Accedi</button>
+      </form>
+    </div>
+  </div>
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('login-error');
+      errEl.style.display = 'none';
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/dashboard/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.textContent = data.error || 'Credenziali non valide';
+          errEl.style.display = 'block';
+          return;
+        }
+        localStorage.setItem('dashboard_token', data.token);
+        document.cookie = 'dashboard_token=' + data.token + '; path=/; max-age=86400; SameSite=Strict';
+        window.location.href = '/dashboard';
+      } catch (err) {
+        errEl.textContent = 'Errore di connessione';
+        errEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

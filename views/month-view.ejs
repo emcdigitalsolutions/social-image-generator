@@ -1,0 +1,109 @@
+<%- include('layout', { title, user }) %>
+
+<div class="breadcrumb">
+  <a href="/dashboard">Clienti</a> /
+  <a href="/dashboard/clients/<%= client.id %>"><%= client.display_name %></a> /
+  <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>">Piano</a> /
+  Mese <%= month %>
+</div>
+
+<div class="page-header">
+  <h1>Mese <%= month %> — <%= client.display_name %></h1>
+  <div style="display:flex;gap:8px;align-items:center">
+    <% if (schedule && schedule.is_active) { %>
+      <span class="badge badge-active">Schedule attivo</span>
+    <% } %>
+  </div>
+</div>
+
+<div class="month-buttons" style="margin-bottom:16px">
+  <% const totalMonths = (plan.plan_data && plan.plan_data.months) ? plan.plan_data.months.length : 5; %>
+  <% for (let m = 1; m <= totalMonths; m++) { %>
+    <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>/month/<%= m %>"
+       class="month-btn <%= m === month ? 'active' : '' %>">Mese <%= m %></a>
+  <% } %>
+</div>
+
+<div class="actions-bar">
+  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('caption')">Genera tutte le caption</button>
+  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('image')">Genera tutte le immagini</button>
+  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('both')">Genera caption + immagini</button>
+  <% if (!schedule || !schedule.is_active) { %>
+    <button class="btn btn-primary btn-sm" onclick="confirmMonth()">Conferma Mese</button>
+  <% } %>
+</div>
+
+<% if (posts.length === 0) { %>
+  <div class="empty-state"><h3>Nessun post per questo mese</h3></div>
+<% } else { %>
+  <%
+    const weeks = {};
+    posts.forEach(p => {
+      const w = p.week_number || 1;
+      if (!weeks[w]) weeks[w] = [];
+      weeks[w].push(p);
+    });
+  %>
+  <% Object.entries(weeks).forEach(([wn, wPosts]) => { %>
+    <div class="week-group">
+      <h3>Settimana <%= wn %></h3>
+      <div class="posts-grid">
+        <% wPosts.forEach(p => { %>
+          <a href="/dashboard/posts/<%= p.id %>" class="post-card" style="text-decoration:none;color:inherit">
+            <div class="post-card-image">
+              <% if (p.image_url) { %><img src="<%= p.image_url %>"><% } else { %>Nessuna immagine<% } %>
+            </div>
+            <div class="post-card-body">
+              <h4><%= p.category || 'Post' %></h4>
+              <p><%= p.sub_topic || (p.caption ? p.caption.substring(0, 80) + '...' : 'Nessun contenuto') %></p>
+              <div class="post-card-footer">
+                <span class="badge badge-<%= p.status %>"><%= p.status %></span>
+                <span style="font-size:12px;color:var(--gray-400)"><%= p.template || '' %></span>
+              </div>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+  <% }) %>
+<% } %>
+
+<script>
+  const PLAN_ID = '<%= plan.id %>';
+  const CLIENT_ID = '<%= client.id %>';
+  const MONTH = <%= month %>;
+  const POST_IDS = <%= JSON.stringify(posts.map(p => p.id)) %>;
+
+  async function bulkGenerate(action) {
+    if (!POST_IDS.length) return;
+    if (!confirm('Generare ' + action + ' per ' + POST_IDS.length + ' post?')) return;
+
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> In corso...';
+
+    try {
+      const res = await apiFetch('/dashboard/api/posts/bulk-generate', {
+        method: 'POST',
+        body: { post_ids: POST_IDS, action }
+      });
+      const successes = res.results.filter(r => r.success).length;
+      const errors = res.results.filter(r => r.error);
+      alert('Completato: ' + successes + '/' + POST_IDS.length + ' successi' +
+        (errors.length ? '\nErrori: ' + errors.map(e => e.error).join(', ') : ''));
+      window.location.reload();
+    } catch (err) {
+      alert('Errore: ' + err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function confirmMonth() {
+    if (!confirm('Confermare il mese ' + MONTH + '? I post pronti verranno pubblicati automaticamente secondo lo schedule.')) return;
+    await apiFetch('/dashboard/api/schedules/' + PLAN_ID + '/month/' + MONTH + '/confirm', { method: 'POST' });
+    window.location.reload();
+  }
+</script>
+
+<%- include('layout-end') %>

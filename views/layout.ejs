@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — SMM Dashboard</title>
+  <link rel="stylesheet" href="/dashboard/css/dashboard.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <h2>SMM Dashboard</h2>
+        <small>EMC Digital Solutions</small>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard">Clienti</a>
+      </nav>
+      <div class="sidebar-user">
+        <span><%= user.display_name || user.username %></span>
+        <a href="#" onclick="logout()">Esci</a>
+      </div>
+    </aside>
+    <main class="main">

@@ -1,21 +1,35 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs/promises');
+const cookieParser = require('cookie-parser');
 const { renderImage, closeBrowser } = require('./lib/renderer');
+const { runMigrations, close: closeDb } = require('./lib/db');
+const { seedUsers } = require('./lib/auth');
+const scheduler = require('./lib/scheduler');
 
 const app = express();
 const PORT = process.env.PORT || 3100;
 const API_KEY = process.env.API_KEY || 'dev-key';
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
+// ── View engine ──
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
 // ── Middleware ──
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Static files — serve generated images
 app.use('/images', express.static(path.join(__dirname, 'public', 'images'), {
   maxAge: '7d',
   immutable: true,
 }));
+
+// Static files — dashboard assets (CSS/JS only)
+app.use('/dashboard/css', express.static(path.join(__dirname, 'public', 'dashboard', 'css'), { maxAge: '1d' }));
+app.use('/dashboard/js', express.static(path.join(__dirname, 'public', 'dashboard', 'js'), { maxAge: '1d' }));
 
 // Rate limiting (simple in-memory)
 const rateMap = new Map();
@@ -40,7 +54,7 @@ function rateLimit(req, res, next) {
   next();
 }
 
-// Auth middleware
+// Auth middleware for API key
 function auth(req, res, next) {
   const key = req.headers['x-api-key'];
   if (key !== API_KEY) {
@@ -49,7 +63,7 @@ function auth(req, res, next) {
   next();
 }
 
-// ── Routes ──
+// ── Original API Routes ──
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -88,6 +102,19 @@ app.post('/generate', auth, rateLimit, async (req, res) => {
   }
 });
 
+// ── Dashboard Routes ──
+
+// API routes
+app.use('/dashboard/api/auth', require('./routes/api/auth'));
+app.use('/dashboard/api/clients', require('./routes/api/clients'));
+app.use('/dashboard/api/questionnaires', require('./routes/api/questionnaires'));
+app.use('/dashboard/api/plans', require('./routes/api/plans'));
+app.use('/dashboard/api/posts', require('./routes/api/posts'));
+app.use('/dashboard/api/schedules', require('./routes/api/schedules'));
+
+// Page routes
+app.use('/dashboard', require('./routes/dashboard'));
+
 // ── Cleanup cron: delete images older than 30 days ──
 async function cleanupOldImages() {
   const imagesDir = path.join(__dirname, 'public', 'images');
@@ -118,21 +145,37 @@ async function cleanupOldImages() {
 // Run cleanup every 24 hours
 setInterval(cleanupOldImages, 24 * 60 * 60 * 1000);
 
-// ── Start ──
+// ── Initialize database and start ──
+try {
+  runMigrations();
+  seedUsers();
+  console.log('[db] Database initialized');
+} catch (err) {
+  console.error('[db] Initialization error:', err.message);
+}
+
+// Start scheduler
+scheduler.start();
+
 app.listen(PORT, () => {
   console.log(`Social Image Generator running on port ${PORT}`);
   console.log(`Base URL: ${BASE_URL}`);
+  console.log(`Dashboard: ${BASE_URL}/dashboard`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('Shutting down...');
+  scheduler.stop();
+  closeDb();
   await closeBrowser();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('Shutting down...');
+  scheduler.stop();
+  closeDb();
   await closeBrowser();
   process.exit(0);
 });

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/dashboard/css/dashboard.css">
+</head>
+<body>
+  <div class="questionnaire-page">
+    <h1>Questionario Social Media</h1>
+    <p class="subtitle">
+      Ciao <%= questionnaire.client_name %>! Compilando questo questionario ci aiuterai a creare
+      un piano editoriale personalizzato per la tua attività.
+      <br>Tempo di compilazione: circa 10 minuti.
+    </p>
+
+    <div class="progress-bar">
+      <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+
+    <form id="questionnaire-form">
+      <% if (config && config.sections) { %>
+        <% config.sections.forEach((section, si) => { %>
+          <div class="q-section <%= si === 0 ? 'active' : '' %>" data-section="<%= si %>">
+            <h2><%= section.title %></h2>
+            <p class="section-help"><%= section.help || '' %></p>
+
+            <% section.domande.forEach((d, di) => { %>
+              <div class="form-group">
+                <label><%= d.titolo %> <% if (d.required) { %><span style="color:var(--red)">*</span><% } %></label>
+
+                <% if (d.tipo === 'text') { %>
+                  <input type="text" name="s<%= si %>_q<%= di %>" data-title="<%= d.titolo %>" <%= d.required ? 'required' : '' %>>
+
+                <% } else if (d.tipo === 'paragraph') { %>
+                  <textarea name="s<%= si %>_q<%= di %>" data-title="<%= d.titolo %>" rows="3" <%= d.required ? 'required' : '' %>></textarea>
+
+                <% } else if (d.tipo === 'choice') { %>
+                  <div class="radio-group">
+                    <% (d.opzioni || []).forEach((opt, oi) => { %>
+                      <label>
+                        <input type="radio" name="s<%= si %>_q<%= di %>" value="<%= opt %>" data-title="<%= d.titolo %>" <%= d.required && oi === 0 ? '' : '' %>>
+                        <%= opt %>
+                      </label>
+                    <% }) %>
+                  </div>
+
+                <% } else if (d.tipo === 'checkbox') { %>
+                  <div class="checkbox-group">
+                    <% (d.opzioni || []).forEach((opt) => { %>
+                      <label>
+                        <input type="checkbox" name="s<%= si %>_q<%= di %>" value="<%= opt %>" data-title="<%= d.titolo %>">
+                        <%= opt %>
+                      </label>
+                    <% }) %>
+                  </div>
+                <% } %>
+
+                <% if (d.help) { %><div class="help"><%= d.help %></div><% } %>
+              </div>
+            <% }) %>
+
+            <div class="q-nav">
+              <% if (si > 0) { %>
+                <button type="button" class="btn btn-secondary" onclick="prevSection()">Indietro</button>
+              <% } else { %>
+                <div></div>
+              <% } %>
+              <% if (si < config.sections.length - 1) { %>
+                <button type="button" class="btn btn-primary" onclick="nextSection()">Avanti</button>
+              <% } else { %>
+                <button type="submit" class="btn btn-primary">Invia Questionario</button>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <div class="empty-state">
+          <h3>Questionario non configurato</h3>
+          <p>Il settore per questo cliente non è stato impostato.</p>
+        </div>
+      <% } %>
+    </form>
+
+    <div id="success-message" style="display:none;text-align:center;padding:40px 0">
+      <h2 style="color:var(--green);margin-bottom:12px">Grazie!</h2>
+      <p>Il questionario è stato inviato con successo.</p>
+      <p style="color:var(--gray-500);font-size:14px;margin-top:8px">
+        Il team EMC Digital Solutions analizzerà le tue risposte e ti contatterà
+        entro 48 ore con una proposta di piano editoriale personalizzato.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    let currentSection = 0;
+    const totalSections = document.querySelectorAll('.q-section').length;
+
+    function updateProgress() {
+      const pct = totalSections > 0 ? ((currentSection + 1) / totalSections * 100) : 0;
+      document.getElementById('progress-fill').style.width = pct + '%';
+    }
+
+    function showSection(idx) {
+      document.querySelectorAll('.q-section').forEach(s => s.classList.remove('active'));
+      const target = document.querySelector('[data-section="' + idx + '"]');
+      if (target) target.classList.add('active');
+      currentSection = idx;
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function nextSection() { if (currentSection < totalSections - 1) showSection(currentSection + 1); }
+    function prevSection() { if (currentSection > 0) showSection(currentSection - 1); }
+
+    updateProgress();
+
+    document.getElementById('questionnaire-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Collect responses
+      const responses = {};
+      const form = e.target;
+
+      // Text and textarea inputs
+      form.querySelectorAll('input[type=text], textarea').forEach(input => {
+        if (input.value) {
+          responses[input.dataset.title || input.name] = input.value;
+        }
+      });
+
+      // Radio buttons
+      form.querySelectorAll('input[type=radio]:checked').forEach(input => {
+        responses[input.dataset.title || input.name] = input.value;
+      });
+
+      // Checkboxes
+      const checkboxGroups = {};
+      form.querySelectorAll('input[type=checkbox]:checked').forEach(input => {
+        const key = input.dataset.title || input.name;
+        if (!checkboxGroups[key]) checkboxGroups[key] = [];
+        checkboxGroups[key].push(input.value);
+      });
+      Object.assign(responses, checkboxGroups);
+
+      try {
+        const res = await fetch('/dashboard/q/<%= questionnaire.token %>/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ responses })
+        });
+
+        if (res.ok) {
+          document.getElementById('questionnaire-form').style.display = 'none';
+          document.querySelector('.progress-bar').style.display = 'none';
+          document.getElementById('success-message').style.display = 'block';
+        } else {
+          alert('Errore durante l\'invio. Riprova.');
+        }
+      } catch (err) {
+        alert('Errore di connessione. Riprova.');
+      }
+    });
+  </script>
+</body>
+</html>

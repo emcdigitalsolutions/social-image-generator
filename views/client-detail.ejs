@@ -1,0 +1,343 @@
+<%- include('layout', { title, user }) %>
+
+<div class="breadcrumb">
+  <a href="/dashboard">Clienti</a> / <%= client.display_name %>
+</div>
+
+<div class="page-header">
+  <h1><%= client.display_name %></h1>
+  <span class="badge badge-<%= client.status %>"><%= client.status %></span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="profilo">Profilo</button>
+  <button class="tab" data-tab="questionario">Questionario</button>
+  <button class="tab" data-tab="piano">Piano Editoriale</button>
+  <button class="tab" data-tab="posts">Post</button>
+  <button class="tab" data-tab="impostazioni">Impostazioni</button>
+</div>
+
+<!-- Tab: Profilo -->
+<div class="tab-content active" id="tab-profilo">
+  <div class="card">
+    <div class="card-header"><h3>Informazioni Brand</h3></div>
+    <form id="profile-form">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="form-group">
+          <label>Nome visualizzato</label>
+          <input type="text" name="display_name" value="<%= client.display_name || '' %>">
+        </div>
+        <div class="form-group">
+          <label>Brand name</label>
+          <input type="text" name="brand_name" value="<%= client.brand_name || '' %>">
+        </div>
+        <div class="form-group">
+          <label>Settore</label>
+          <select name="sector">
+            <option value="">— Seleziona —</option>
+            <% sectors.forEach(s => { %>
+              <option value="<%= s.key %>" <%= client.sector === s.key ? 'selected' : '' %>><%= s.label %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Località</label>
+          <input type="text" name="location" value="<%= client.location || '' %>">
+        </div>
+        <div class="form-group">
+          <label>Sito web</label>
+          <input type="text" name="website" value="<%= client.website || '' %>">
+        </div>
+        <div class="form-group">
+          <label>Tagline</label>
+          <input type="text" name="tagline" value="<%= client.tagline || '' %>">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Stato</label>
+        <select name="status">
+          <option value="active" <%= client.status === 'active' ? 'selected' : '' %>>Attivo</option>
+          <option value="paused" <%= client.status === 'paused' ? 'selected' : '' %>>In pausa</option>
+          <option value="archived" <%= client.status === 'archived' ? 'selected' : '' %>>Archiviato</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Salva Profilo</button>
+    </form>
+  </div>
+</div>
+
+<!-- Tab: Questionario -->
+<div class="tab-content" id="tab-questionario">
+  <div class="card">
+    <div class="card-header">
+      <h3>Questionari</h3>
+      <button class="btn btn-primary btn-sm" onclick="createQuestionnaire()">+ Nuovo Questionario</button>
+    </div>
+    <% if (questionnaires.length === 0) { %>
+      <div class="empty-state"><p>Nessun questionario creato</p></div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>ID</th><th>Settore</th><th>Stato</th><th>Inviato</th><th>Link</th><th>Azioni</th></tr></thead>
+        <tbody>
+          <% questionnaires.forEach(q => { %>
+          <tr>
+            <td><code><%= q.id.substring(0, 8) %></code></td>
+            <td><%= q.sector ? q.sector.replace(/_/g, ' ') : '—' %></td>
+            <td><span class="badge badge-<%= q.status %>"><%= q.status %></span></td>
+            <td><%= q.submitted_at || '—' %></td>
+            <td><a href="/dashboard/q/<%= q.token %>" target="_blank" class="btn btn-sm btn-secondary">Apri</a></td>
+            <td>
+              <% if (q.status === 'submitted') { %>
+                <button class="btn btn-sm btn-secondary" onclick="viewResponses('<%= q.id %>')">Risposte</button>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<!-- Tab: Piano Editoriale -->
+<div class="tab-content" id="tab-piano">
+  <div class="card">
+    <div class="card-header">
+      <h3>Piani Editoriali</h3>
+      <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn">Genera Piano con AI</button>
+    </div>
+    <% if (plans.length === 0) { %>
+      <div class="empty-state"><p>Nessun piano editoriale. Genera il primo dal questionario compilato.</p></div>
+    <% } else { %>
+      <table>
+        <thead><tr><th>Titolo</th><th>Stato</th><th>Creato</th><th>Azioni</th></tr></thead>
+        <tbody>
+          <% plans.forEach(p => { %>
+          <tr>
+            <td><%= p.title || 'Piano senza titolo' %></td>
+            <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
+            <td><%= p.created_at %></td>
+            <td><a href="/dashboard/clients/<%= client.id %>/plan/<%= p.id %>" class="btn btn-sm btn-secondary">Apri</a></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>
+
+<!-- Tab: Posts -->
+<div class="tab-content" id="tab-posts">
+  <div class="card">
+    <div class="card-header"><h3>Tutti i Post</h3></div>
+    <div id="posts-container"><div class="empty-state"><p>I post appariranno qui dopo aver generato un piano editoriale.</p></div></div>
+  </div>
+</div>
+
+<!-- Tab: Impostazioni -->
+<div class="tab-content" id="tab-impostazioni">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header"><h3>Credenziali Social</h3></div>
+    <form id="social-form">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="form-group">
+          <label>Facebook Page ID</label>
+          <input type="text" name="fb_page_id" value="<%= client.fb_page_id || '' %>">
+        </div>
+        <div class="form-group">
+          <label>FB System User Token</label>
+          <input type="password" name="fb_system_user_token" value="<%= client.fb_system_user_token || '' %>">
+        </div>
+        <div class="form-group">
+          <label>Instagram User ID</label>
+          <input type="text" name="ig_user_id" value="<%= client.ig_user_id || '' %>">
+        </div>
+        <div class="form-group">
+          <label>IG Access Token</label>
+          <input type="password" name="ig_access_token" value="<%= client.ig_access_token || '' %>">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Salva Credenziali</button>
+    </form>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header"><h3>Gemini AI</h3></div>
+    <form id="ai-form">
+      <div class="form-group">
+        <label>Gemini API Key</label>
+        <input type="password" name="gemini_api_key" value="<%= client.gemini_api_key || '' %>">
+      </div>
+      <div class="form-group">
+        <label>System Instruction (prompt personalizzato)</label>
+        <textarea name="system_instruction" rows="8"><%= client.system_instruction || '' %></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Salva AI Config</button>
+    </form>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>Logo e Tema</h3></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Logo SVG: <%= client.logo_filename || 'non caricato' %></p>
+        <form id="logo-form" enctype="multipart/form-data">
+          <input type="file" name="logo" accept=".svg">
+          <button type="submit" class="btn btn-sm btn-secondary" style="margin-top:8px">Carica Logo</button>
+        </form>
+      </div>
+      <div>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Tema CSS: <%= client.theme_filename || 'non caricato' %></p>
+        <form id="theme-form" enctype="multipart/form-data">
+          <input type="file" name="theme" accept=".css">
+          <button type="submit" class="btn btn-sm btn-secondary" style="margin-top:8px">Carica Tema</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Responses modal -->
+<div class="modal-overlay" id="responses-modal">
+  <div class="modal" style="max-width:700px">
+    <h2>Risposte Questionario</h2>
+    <pre id="responses-content" style="white-space:pre-wrap;font-size:13px;max-height:60vh;overflow-y:auto;background:var(--gray-50);padding:16px;border-radius:6px"></pre>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('responses-modal')">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CLIENT_ID = '<%= client.id %>';
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Profile form
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const data = {};
+    new FormData(form).forEach((v, k) => { if (v) data[k] = v; });
+    await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
+    window.location.reload();
+  });
+
+  // Social form
+  document.getElementById('social-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {};
+    new FormData(e.target).forEach((v, k) => { data[k] = v; });
+    await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
+    alert('Credenziali salvate');
+  });
+
+  // AI form
+  document.getElementById('ai-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {};
+    new FormData(e.target).forEach((v, k) => { data[k] = v; });
+    await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
+    alert('Configurazione AI salvata');
+  });
+
+  // Logo upload
+  document.getElementById('logo-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const token = localStorage.getItem('dashboard_token');
+    const res = await fetch('/dashboard/api/clients/' + CLIENT_ID + '/logo', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    });
+    if (res.ok) { alert('Logo caricato'); window.location.reload(); }
+  });
+
+  // Theme upload
+  document.getElementById('theme-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const token = localStorage.getItem('dashboard_token');
+    const res = await fetch('/dashboard/api/clients/' + CLIENT_ID + '/theme', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: formData
+    });
+    if (res.ok) { alert('Tema caricato'); window.location.reload(); }
+  });
+
+  // Create questionnaire
+  async function createQuestionnaire() {
+    const res = await apiFetch('/dashboard/api/questionnaires', {
+      method: 'POST',
+      body: { client_id: CLIENT_ID }
+    });
+    if (res.error) { alert(res.error); return; }
+    window.location.reload();
+  }
+
+  // View responses
+  async function viewResponses(id) {
+    const res = await apiFetch('/dashboard/api/questionnaires/' + id);
+    document.getElementById('responses-content').textContent = JSON.stringify(res.responses || {}, null, 2);
+    openModal('responses-modal');
+  }
+
+  // Generate plan
+  async function generatePlan() {
+    const btn = document.getElementById('gen-plan-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Generazione in corso...';
+    try {
+      const res = await apiFetch('/dashboard/api/plans/generate', {
+        method: 'POST',
+        body: { client_id: CLIENT_ID }
+      });
+      if (res.error) { alert(res.error); return; }
+      window.location.href = '/dashboard/clients/' + CLIENT_ID + '/plan/' + res.id;
+    } catch (err) {
+      alert('Errore: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Genera Piano con AI';
+    }
+  }
+
+  // Load posts
+  (async function loadPosts() {
+    const plans = await apiFetch('/dashboard/api/plans/by-client/' + CLIENT_ID);
+    if (!plans.length) return;
+    let allPosts = [];
+    for (const plan of plans) {
+      for (let m = 1; m <= 5; m++) {
+        const posts = await apiFetch('/dashboard/api/posts/by-plan/' + plan.id + '/month/' + m);
+        allPosts = allPosts.concat(posts);
+      }
+    }
+    if (allPosts.length) {
+      const container = document.getElementById('posts-container');
+      container.innerHTML = '<div class="posts-grid">' + allPosts.map(p => `
+        <a href="/dashboard/posts/${p.id}" class="post-card" style="text-decoration:none;color:inherit">
+          <div class="post-card-image">${p.image_url ? '<img src="' + p.image_url + '">' : 'Nessuna immagine'}</div>
+          <div class="post-card-body">
+            <h4>${p.category || 'Post'}</h4>
+            <p>${p.caption ? p.caption.substring(0, 80) + '...' : p.sub_topic || 'Nessuna caption'}</p>
+            <div class="post-card-footer">
+              <span class="badge badge-${p.status}">${p.status}</span>
+              <span style="font-size:12px;color:var(--gray-400)">M${p.month_number} W${p.week_number}</span>
+            </div>
+          </div>
+        </a>
+      `).join('') + '</div>';
+    }
+  })();
+</script>
+
+<%- include('layout-end') %>

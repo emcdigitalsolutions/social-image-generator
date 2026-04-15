@@ -3,3 +3,7 @@ node_modules
 .gitignore
 public/images/*
 !public/images/.gitkeep
+data/*.db
+data/*.db-wal
+data/*.db-shm
+test-*.png

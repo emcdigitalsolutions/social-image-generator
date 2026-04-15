@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-# Install Chromium + fonts + utilities
+# Install Chromium + fonts + utilities + sqlite3
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-liberation \
@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y \
     fontconfig \
     ca-certificates \
     wget \
+    sqlite3 \
+    python3 \
+    make \
+    g++ \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,13 +27,18 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
+# Remove build tools after native modules are compiled
+RUN apt-get purge -y python3 make g++ && apt-get autoremove -y
+
 COPY . .
 
-RUN mkdir -p /app/public/images/fratellidirosa
+RUN mkdir -p /app/public/images/fratellidirosa /app/data
 
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV NODE_ENV=production
 
 EXPOSE 3100
+
+VOLUME /app/data
 
 CMD ["node", "server.js"]

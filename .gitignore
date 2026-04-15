@@ -2,3 +2,6 @@ node_modules/
 public/images/**/*.png
 test-output-*.png
 .env
+data/*.db
+data/*.db-wal
+data/*.db-shm
