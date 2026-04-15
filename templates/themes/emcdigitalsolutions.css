@@ -1,0 +1,32 @@
+/* ==========================================================================
+   EMC Digital Solutions — Theme "Deep Navy"
+   Palette from emcdigitalsolutions.it
+   ========================================================================== */
+
+:root {
+    --bg-deep: #0c1120;
+    --bg-primary: #131b2e;
+    --bg-card: #172035;
+    --bg-elevated: #1c2742;
+
+    --accent: #6b9ef7;
+    --accent-light: #93b8fc;
+    --accent-silver: #a8c4ff;
+    --accent-bright: #f5c542;
+
+    --text-primary: #e8e4dc;
+    --text-light: #c8c4bc;
+    --text-medium: #9ca3b0;
+    --text-muted: #6b7280;
+
+    --border-cool: rgba(107, 158, 247, 0.15);
+    --border-elevated: rgba(107, 158, 247, 0.25);
+
+    --glass-bg: rgba(12, 17, 32, 0.8);
+    --overlay-top: rgba(12, 17, 32, 0.4);
+    --overlay-bottom: rgba(12, 17, 32, 0.95);
+}
+
+/* Hide FDR-specific elements */
+.cross-watermark { display: none !important; }
+.h24-icon { display: none !important; }

@@ -1,0 +1,28 @@
+/* ==========================================================================
+   Fratelli Di Rosa — Theme "Cinematic Dark"
+   Palette from fratellidirosa.it
+   ========================================================================== */
+
+:root {
+    --bg-deep: #0a0e15;
+    --bg-primary: #141821;
+    --bg-card: #1a1f2e;
+    --bg-elevated: #222838;
+
+    --accent: #7b8fa3;
+    --accent-light: #9bb0c4;
+    --accent-silver: #a8bfd1;
+    --accent-bright: #c5d5e4;
+
+    --text-primary: #e8eaed;
+    --text-light: #c0c4cc;
+    --text-medium: #8a919c;
+    --text-muted: #6a7180;
+
+    --border-cool: rgba(123, 143, 163, 0.15);
+    --border-elevated: rgba(123, 143, 163, 0.25);
+
+    --glass-bg: rgba(20, 24, 33, 0.75);
+    --overlay-top: rgba(10, 14, 21, 0.4);
+    --overlay-bottom: rgba(10, 14, 21, 0.95);
+}

@@ -1,12 +1,13 @@
 /* ==========================================================================
-   Fratelli Di Rosa — Social Image Design System
-   Palette "Cinematic Dark" — matching fratellidirosa.it
+   Social Image Generator — Shared Design System
+   Client-specific colors come from themes/{client}.css
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap');
 
+/* Fallback defaults — overridden by client theme */
 :root {
-    --bg-deep: #0a0e15;
+    --bg-deep: #0c1120;
     --bg-primary: #141821;
     --bg-card: #1a1f2e;
     --bg-elevated: #222838;
@@ -23,6 +24,10 @@
 
     --border-cool: rgba(123, 143, 163, 0.15);
     --border-elevated: rgba(123, 143, 163, 0.25);
+
+    --glass-bg: rgba(20, 24, 33, 0.75);
+    --overlay-top: rgba(10, 14, 21, 0.4);
+    --overlay-bottom: rgba(10, 14, 21, 0.95);
 }
 
 *, *::before, *::after {
@@ -131,7 +136,7 @@ html, body {
 /* ── Glassmorphism Box ── */
 
 .glass-box {
-    background: rgba(20, 24, 33, 0.75);
+    background: var(--glass-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border-elevated);
@@ -154,9 +159,9 @@ html, body {
     inset: 0;
     background: linear-gradient(
         180deg,
-        rgba(10, 14, 21, 0.4) 0%,
-        rgba(10, 14, 21, 0.2) 40%,
-        rgba(10, 14, 21, 0.7) 70%,
-        rgba(10, 14, 21, 0.95) 100%
+        var(--overlay-top) 0%,
+        rgba(0, 0, 0, 0.2) 40%,
+        rgba(0, 0, 0, 0.7) 70%,
+        var(--overlay-bottom) 100%
     );
 }
