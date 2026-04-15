@@ -1,3 +1,4 @@
 node_modules/
 public/images/**/*.png
+test-output-*.png
 .env
