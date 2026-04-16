@@ -39,6 +39,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3100
 
-VOLUME /app/data
-
 CMD ["node", "server.js"]
