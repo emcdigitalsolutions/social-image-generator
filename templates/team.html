@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+/* {{BASE_CSS}} */
+
+body {
+    background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-primary) 100%);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header logo */
+.header {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    z-index: 2;
+}
+
+/* Decorative circle pattern */
+.circle-pattern {
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    border: 1px solid var(--border-cool);
+    opacity: 0.4;
+    z-index: 1;
+}
+
+.circle-pattern-inner {
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 380px;
+    height: 380px;
+    border-radius: 50%;
+    border: 1px solid var(--border-cool);
+    opacity: 0.25;
+    z-index: 1;
+}
+
+/* Team icon area */
+.team-icon-area {
+    position: absolute;
+    top: 40px;
+    right: 48px;
+    z-index: 2;
+    display: flex;
+    gap: 8px;
+}
+
+.team-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+    border: 2px solid var(--bg-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.team-avatar svg {
+    width: 24px;
+    height: 24px;
+    color: var(--bg-deep);
+}
+
+.team-avatar:nth-child(2) {
+    margin-left: -16px;
+    background: linear-gradient(135deg, var(--accent-light), var(--accent-silver));
+}
+
+.team-avatar:nth-child(3) {
+    margin-left: -16px;
+    background: linear-gradient(135deg, var(--accent-silver), var(--text-medium));
+}
+
+/* Main content */
+.team-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 64px 100px;
+    position: relative;
+    z-index: 2;
+}
+
+.team-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent-light);
+    margin-bottom: 20px;
+}
+
+.team-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 28px;
+    max-width: 750px;
+}
+
+.team-divider {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent-light), transparent);
+    margin-bottom: 28px;
+}
+
+.team-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text-light);
+    max-width: 700px;
+}
+
+/* Bottom bar */
+.bottom-bar {
+    background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+    border-top: 1px solid var(--border-cool);
+}
+</style>
+</head>
+<body>
+
+<!-- Decorative circles -->
+<div class="circle-pattern"></div>
+<div class="circle-pattern-inner"></div>
+
+<!-- Team icon -->
+<div class="team-icon-area">
+    <div class="team-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>
+    </div>
+    <div class="team-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>
+    </div>
+    <div class="team-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+        </svg>
+    </div>
+</div>
+
+<!-- Header: Logo badge -->
+<div class="header">
+    <div class="logo-badge">
+        {{LOGO_SVG}}
+        <span class="brand-name">{{BRAND_NAME}}</span>
+    </div>
+</div>
+
+<!-- Team content -->
+<div class="team-content">
+    <div class="team-label">Il Nostro Team</div>
+    <h2 class="team-title">{{TITLE}}</h2>
+    <div class="team-divider"></div>
+    <p class="team-text">{{DESCRIPTION}}</p>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <span class="site-url">{{WEBSITE}}</span>
+    <span class="separator"></span>
+    <span class="tagline">{{TAGLINE}}</span>
+</div>
+
+</body>
+</html>

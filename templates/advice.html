@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+/* {{BASE_CSS}} */
+
+body {
+    background: linear-gradient(155deg, var(--bg-deep) 0%, var(--bg-primary) 40%, var(--bg-card) 100%);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Decorative top-right icon */
+.advice-icon {
+    position: absolute;
+    top: 40px;
+    right: 48px;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.advice-icon svg {
+    width: 32px;
+    height: 32px;
+    color: var(--bg-deep);
+}
+
+/* Header logo */
+.header {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    z-index: 2;
+}
+
+/* Watermark pattern — dots grid */
+.dots-watermark {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 400px;
+    height: 400px;
+    opacity: 0.04;
+    pointer-events: none;
+}
+
+/* Main content */
+.advice-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 64px 100px;
+    position: relative;
+    z-index: 2;
+}
+
+.advice-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent-bright);
+    margin-bottom: 24px;
+}
+
+.advice-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 28px;
+    max-width: 800px;
+}
+
+.advice-divider {
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-bright), var(--accent));
+    border-radius: 2px;
+    margin-bottom: 28px;
+}
+
+.advice-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text-light);
+    max-width: 750px;
+}
+
+/* Bottom bar */
+.bottom-bar {
+    background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+    border-top: 1px solid var(--border-cool);
+}
+</style>
+</head>
+<body>
+
+<!-- Dots watermark -->
+<div class="dots-watermark">
+    <svg viewBox="0 0 200 200" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="3"/><circle cx="60" cy="20" r="3"/><circle cx="100" cy="20" r="3"/><circle cx="140" cy="20" r="3"/><circle cx="180" cy="20" r="3"/>
+        <circle cx="20" cy="60" r="3"/><circle cx="60" cy="60" r="3"/><circle cx="100" cy="60" r="3"/><circle cx="140" cy="60" r="3"/><circle cx="180" cy="60" r="3"/>
+        <circle cx="20" cy="100" r="3"/><circle cx="60" cy="100" r="3"/><circle cx="100" cy="100" r="3"/><circle cx="140" cy="100" r="3"/><circle cx="180" cy="100" r="3"/>
+        <circle cx="20" cy="140" r="3"/><circle cx="60" cy="140" r="3"/><circle cx="100" cy="140" r="3"/><circle cx="140" cy="140" r="3"/><circle cx="180" cy="140" r="3"/>
+        <circle cx="20" cy="180" r="3"/><circle cx="60" cy="180" r="3"/><circle cx="100" cy="180" r="3"/><circle cx="140" cy="180" r="3"/><circle cx="180" cy="180" r="3"/>
+    </svg>
+</div>
+
+<!-- Advice icon (lightbulb) -->
+<div class="advice-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18h6"/><path d="M10 22h4"/>
+        <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+    </svg>
+</div>
+
+<!-- Header: Logo badge -->
+<div class="header">
+    <div class="logo-badge">
+        {{LOGO_SVG}}
+        <span class="brand-name">{{BRAND_NAME}}</span>
+    </div>
+</div>
+
+<!-- Advice content -->
+<div class="advice-content">
+    <div class="advice-label">Consiglio</div>
+    <h2 class="advice-title">{{TITLE}}</h2>
+    <div class="advice-divider"></div>
+    <p class="advice-text">{{DESCRIPTION}}</p>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <span class="site-url">{{WEBSITE}}</span>
+    <span class="separator"></span>
+    <span class="tagline">{{TAGLINE}}</span>
+</div>
+
+</body>
+</html>

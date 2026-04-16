@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+/* {{BASE_CSS}} */
+
+body {
+    background: var(--bg-deep);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header logo */
+.header {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    z-index: 2;
+}
+
+/* Accent stripe on left */
+.accent-stripe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--accent-bright) 0%, var(--accent) 50%, transparent 100%);
+    z-index: 2;
+}
+
+/* Cross watermark */
+.cross-watermark {
+    top: 50%;
+    left: 65%;
+    transform: translate(-50%, -50%);
+    width: 550px;
+    height: 550px;
+}
+
+/* Main content */
+.case-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 120px 80px 100px;
+    position: relative;
+    z-index: 2;
+}
+
+.case-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--glass-bg);
+    border: 1px solid var(--border-elevated);
+    border-radius: 8px;
+    padding: 8px 16px;
+    margin-bottom: 32px;
+    width: fit-content;
+}
+
+.case-badge-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--accent-bright);
+}
+
+.case-badge-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent-bright);
+}
+
+.case-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 40px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.25;
+    margin-bottom: 24px;
+    max-width: 800px;
+}
+
+.case-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.case-divider-line {
+    width: 40px;
+    height: 2px;
+    background: var(--accent);
+}
+
+.case-divider-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.case-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text-light);
+    max-width: 700px;
+}
+
+/* Result highlight */
+.case-result {
+    margin-top: 32px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-elevated);
+    border-left: 3px solid var(--accent-bright);
+    border-radius: 0 12px 12px 0;
+    padding: 20px 28px;
+    width: fit-content;
+    max-width: 600px;
+}
+
+.case-result-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--accent-bright);
+    line-height: 1.5;
+}
+
+/* Bottom bar */
+.bottom-bar {
+    background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+    border-top: 1px solid var(--border-cool);
+}
+</style>
+</head>
+<body>
+
+<!-- Accent stripe -->
+<div class="accent-stripe"></div>
+
+<!-- Cross watermark -->
+<div class="cross-watermark">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="88" y="20" width="24" height="160" rx="4" fill="currentColor" opacity="0.6"/>
+        <rect x="40" y="68" width="120" height="24" rx="4" fill="currentColor" opacity="0.6"/>
+    </svg>
+</div>
+
+<!-- Header: Logo badge -->
+<div class="header">
+    <div class="logo-badge">
+        {{LOGO_SVG}}
+        <span class="brand-name">{{BRAND_NAME}}</span>
+    </div>
+</div>
+
+<!-- Case study content -->
+<div class="case-content">
+    <div class="case-badge">
+        <svg class="case-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span class="case-badge-text">Caso di Successo</span>
+    </div>
+    <h2 class="case-title">{{TITLE}}</h2>
+    <div class="case-divider">
+        <div class="case-divider-line"></div>
+        <span class="case-divider-label">La Sfida</span>
+    </div>
+    <p class="case-text">{{DESCRIPTION}}</p>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <span class="site-url">{{WEBSITE}}</span>
+    <span class="separator"></span>
+    <span class="tagline">{{TAGLINE}}</span>
+</div>
+
+</body>
+</html>

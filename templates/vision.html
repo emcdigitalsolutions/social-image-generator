@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<style>
+/* {{BASE_CSS}} */
+
+body {
+    background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-primary) 35%, var(--bg-card) 70%, var(--bg-deep) 100%);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Header logo */
+.header {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    z-index: 2;
+}
+
+/* Radiating lines watermark */
+.rays-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    height: 900px;
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Accent arc */
+.accent-arc {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 300px;
+    border: 1px solid var(--accent);
+    border-radius: 300px 300px 0 0;
+    border-bottom: none;
+    opacity: 0.08;
+    z-index: 1;
+}
+
+.accent-arc-inner {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 440px;
+    height: 220px;
+    border: 1px solid var(--accent);
+    border-radius: 220px 220px 0 0;
+    border-bottom: none;
+    opacity: 0.05;
+    z-index: 1;
+}
+
+/* Main content — centered */
+.vision-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    max-width: 900px;
+}
+
+.vision-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-bright);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.vision-icon svg {
+    width: 28px;
+    height: 28px;
+    color: var(--accent-bright);
+}
+
+.vision-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent-light);
+}
+
+.vision-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 46px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+}
+
+.vision-divider {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-bright), transparent);
+}
+
+.vision-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text-light);
+    max-width: 680px;
+}
+
+/* Bottom bar */
+.bottom-bar {
+    z-index: 2;
+    background: linear-gradient(90deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+    border-top: 1px solid var(--border-cool);
+}
+</style>
+</head>
+<body>
+
+<!-- Rays watermark -->
+<div class="rays-watermark">
+    <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg" stroke-width="0.5">
+        <line x1="100" y1="100" x2="100" y2="0"/>
+        <line x1="100" y1="100" x2="138" y2="8"/>
+        <line x1="100" y1="100" x2="171" y2="29"/>
+        <line x1="100" y1="100" x2="192" y2="62"/>
+        <line x1="100" y1="100" x2="200" y2="100"/>
+        <line x1="100" y1="100" x2="192" y2="138"/>
+        <line x1="100" y1="100" x2="171" y2="171"/>
+        <line x1="100" y1="100" x2="138" y2="192"/>
+        <line x1="100" y1="100" x2="100" y2="200"/>
+        <line x1="100" y1="100" x2="62" y2="192"/>
+        <line x1="100" y1="100" x2="29" y2="171"/>
+        <line x1="100" y1="100" x2="8" y2="138"/>
+        <line x1="100" y1="100" x2="0" y2="100"/>
+        <line x1="100" y1="100" x2="8" y2="62"/>
+        <line x1="100" y1="100" x2="29" y2="29"/>
+        <line x1="100" y1="100" x2="62" y2="8"/>
+    </svg>
+</div>
+
+<!-- Accent arcs -->
+<div class="accent-arc"></div>
+<div class="accent-arc-inner"></div>
+
+<!-- Header: Logo badge -->
+<div class="header">
+    <div class="logo-badge">
+        {{LOGO_SVG}}
+        <span class="brand-name">{{BRAND_NAME}}</span>
+    </div>
+</div>
+
+<!-- Vision content -->
+<div class="vision-content">
+    <div class="vision-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+        </svg>
+    </div>
+    <div class="vision-label">Visione</div>
+    <h2 class="vision-title">{{TITLE}}</h2>
+    <div class="vision-divider"></div>
+    <p class="vision-text">{{DESCRIPTION}}</p>
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+    <span class="site-url">{{WEBSITE}}</span>
+    <span class="separator"></span>
+    <span class="tagline">{{TAGLINE}}</span>
+</div>
+
+</body>
+</html>
