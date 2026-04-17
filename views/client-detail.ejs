@@ -46,7 +46,10 @@
         </div>
         <div class="form-group">
           <label>Sito web</label>
-          <input type="text" name="website" value="<%= client.website || '' %>">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" name="website" value="<%= client.website || '' %>" style="flex:1">
+            <button type="button" class="btn btn-secondary btn-sm" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi">Scansiona Sito</button>
+          </div>
         </div>
         <div class="form-group">
           <label>Tagline</label>
@@ -307,6 +310,63 @@
     } finally {
       btn.disabled = false;
       btn.textContent = 'Genera Piano con AI';
+    }
+  }
+
+  // Scan website
+  async function scanWebsite() {
+    const btn = document.getElementById('scan-website-btn');
+    const url = document.querySelector('input[name="website"]').value.trim();
+    if (!url) { alert('Inserisci un URL nel campo Sito web'); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Scansione...';
+
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/scan-website', {
+        method: 'POST',
+        body: { url }
+      });
+
+      if (res.error) { alert('Errore: ' + res.error); return; }
+      if (!res.data) { alert('Nessun dato estratto'); return; }
+
+      const d = res.data;
+      const form = document.getElementById('profile-form');
+      let filled = 0;
+
+      const fieldMap = {
+        display_name: d.display_name,
+        brand_name: d.brand_name,
+        sector: d.sector,
+        location: d.location,
+        tagline: d.tagline
+      };
+
+      for (const [name, value] of Object.entries(fieldMap)) {
+        if (!value) continue;
+        const input = form.querySelector('[name="' + name + '"]');
+        if (!input) continue;
+        // Only fill if field is empty
+        if (input.value && input.value.trim()) continue;
+        input.value = value;
+        input.style.outline = '2px solid #3b82f6';
+        input.style.outlineOffset = '-1px';
+        filled++;
+      }
+
+      // Show extra info as alert
+      let msg = 'Scansione completata: ' + filled + ' campi compilati.';
+      if (d.description) msg += '\n\nDescrizione: ' + d.description;
+      if (d.services) msg += '\nServizi: ' + d.services;
+      if (d.colors && d.colors.length) msg += '\nColori brand: ' + d.colors.join(', ');
+      msg += '\n\nRivedi i campi evidenziati e clicca "Salva Profilo".';
+      alert(msg);
+    } catch (err) {
+      alert('Errore: ' + (err.message || 'Scansione fallita'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Scansiona Sito';
     }
   }
 
