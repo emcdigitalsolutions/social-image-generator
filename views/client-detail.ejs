@@ -74,7 +74,13 @@
   <div class="card">
     <div class="card-header">
       <h3>Questionari</h3>
-      <button class="btn btn-primary btn-sm" onclick="createQuestionnaire()">+ Nuovo Questionario</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="createQuestionnaire()">+ Nuovo Questionario</button>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0">
+          Importa CSV
+          <input type="file" accept=".csv" style="display:none" onchange="importCsv(this)">
+        </label>
+      </div>
     </div>
     <% if (questionnaires.length === 0) { %>
       <div class="empty-state"><p>Nessun questionario creato</p></div>
@@ -275,6 +281,86 @@
     });
     if (res.ok) { alert('Tema caricato'); window.location.reload(); }
   });
+
+  // Import CSV from Google Forms
+  async function importCsv(input) {
+    const file = input.files[0];
+    if (!file) return;
+    input.value = '';
+
+    const text = await file.text();
+    const lines = [];
+    let current = '';
+    let inQuotes = false;
+
+    // Parse CSV handling quoted fields with commas and newlines
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '"') {
+        if (inQuotes && text[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === ',' && !inQuotes) {
+        if (!lines.length) lines.push([]);
+        lines[lines.length - 1].push(current);
+        current = '';
+      } else if ((ch === '\n' || (ch === '\r' && text[i + 1] === '\n')) && !inQuotes) {
+        if (!lines.length) lines.push([]);
+        lines[lines.length - 1].push(current);
+        current = '';
+        lines.push([]);
+        if (ch === '\r') i++;
+      } else {
+        current += ch;
+      }
+    }
+    if (current || (lines.length && lines[lines.length - 1])) {
+      if (!lines.length) lines.push([]);
+      lines[lines.length - 1].push(current);
+    }
+
+    if (lines.length < 2) {
+      alert('Il CSV deve avere almeno 2 righe (header + risposte)');
+      return;
+    }
+
+    const headers = lines[0];
+    const values = lines[1];
+
+    // Build responses object: { question: answer }
+    const responses = {};
+    headers.forEach((h, i) => {
+      const question = h.trim();
+      const answer = (values[i] || '').trim();
+      if (question && question !== 'Informazioni cronologiche' && answer) {
+        responses[question] = answer;
+      }
+    });
+
+    if (Object.keys(responses).length === 0) {
+      alert('Nessuna risposta trovata nel CSV');
+      return;
+    }
+
+    // Create questionnaire then import responses
+    const q = await apiFetch('/dashboard/api/questionnaires', {
+      method: 'POST',
+      body: { client_id: CLIENT_ID }
+    });
+    if (q.error) { alert(q.error); return; }
+
+    const res = await apiFetch('/dashboard/api/questionnaires/' + q.id + '/import-csv', {
+      method: 'POST',
+      body: { responses }
+    });
+    if (res.error) { alert(res.error); return; }
+
+    alert('CSV importato: ' + Object.keys(responses).length + ' risposte caricate');
+    window.location.reload();
+  }
 
   // Create questionnaire
   async function createQuestionnaire() {
