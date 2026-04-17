@@ -67,6 +67,14 @@ router.post('/:id/import-csv', authMiddleware, (req, res) => {
   res.json({ success: true });
 });
 
+// Delete questionnaire (auth required)
+router.delete('/:id', authMiddleware, (req, res) => {
+  const db = getDb();
+  const result = db.prepare('DELETE FROM questionnaires WHERE id = ?').run(req.params.id);
+  if (!result.changes) return res.status(404).json({ error: 'Questionnaire not found' });
+  res.json({ success: true });
+});
+
 // Get available sectors
 router.get('/config/sectors', authMiddleware, (req, res) => {
   const sectors = Object.entries(SETTORI).map(([key, val]) => ({ key, label: val.label }));

@@ -95,10 +95,11 @@
             <td><span class="badge badge-<%= q.status %>"><%= q.status %></span></td>
             <td><%= q.submitted_at || '—' %></td>
             <td><a href="/dashboard/q/<%= q.token %>" target="_blank" class="btn btn-sm btn-secondary">Apri</a></td>
-            <td>
+            <td style="display:flex;gap:4px">
               <% if (q.status === 'submitted') { %>
                 <button class="btn btn-sm btn-secondary" onclick="viewResponses('<%= q.id %>')">Risposte</button>
               <% } %>
+              <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deleteQuestionnaire('<%= q.id %>')">Elimina</button>
             </td>
           </tr>
           <% }) %>
@@ -363,6 +364,13 @@
   }
 
   // Create questionnaire
+  async function deleteQuestionnaire(id) {
+    if (!confirm('Eliminare questo questionario?')) return;
+    const res = await apiFetch('/dashboard/api/questionnaires/' + id, { method: 'DELETE' });
+    if (res.error) { alert(res.error); return; }
+    window.location.reload();
+  }
+
   async function createQuestionnaire() {
     const res = await apiFetch('/dashboard/api/questionnaires', {
       method: 'POST',
