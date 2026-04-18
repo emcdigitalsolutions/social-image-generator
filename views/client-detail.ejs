@@ -48,7 +48,7 @@
           <label>Sito web</label>
           <div style="display:flex;gap:8px;align-items:center">
             <input type="text" name="website" value="<%= client.website || '' %>" style="flex:1">
-            <button type="button" class="btn btn-secondary btn-sm" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi">Scansiona Sito</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Scansiona Sito</button>
           </div>
         </div>
         <div class="form-group">
@@ -114,7 +114,7 @@
   <div class="card">
     <div class="card-header">
       <h3>Piani Editoriali</h3>
-      <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn">Genera Piano con AI</button>
+      <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Piano con AI</button>
     </div>
     <% if (plans.length === 0) { %>
       <div class="empty-state"><p>Nessun piano editoriale. Genera il primo dal questionario compilato.</p></div>
@@ -191,7 +191,7 @@
       <div class="form-group">
         <label>System Instruction (prompt personalizzato)</label>
         <textarea name="system_instruction" id="system-instruction-textarea" rows="8"><%= client.system_instruction || '' %></textarea>
-        <button type="button" class="btn btn-secondary btn-sm" id="generate-si-btn" onclick="generateSystemInstruction()" style="margin-top:8px">Genera con AI</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="generate-si-btn" onclick="generateSystemInstruction()" style="margin-top:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera con AI</button>
       </div>
       <button type="submit" class="btn btn-primary">Salva AI Config</button>
     </form>
@@ -201,7 +201,7 @@
       <h3>Logo e Tema</h3>
       <div style="display:flex;align-items:center;gap:8px">
         <span id="branding-status" style="font-size:12px;display:none"></span>
-        <button type="button" class="btn btn-sm btn-primary" id="scan-branding-btn" onclick="scanBranding()">Importa da Sito</button>
+        <button type="button" class="btn btn-sm btn-primary" id="scan-branding-btn" onclick="scanBranding()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Importa da Sito</button>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
@@ -237,7 +237,7 @@
               <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore terziario (opzionale)</label><input type="text" id="brand-hex-3" value="#e8eaed" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
             </div>
           </div>
-          <button type="button" class="btn btn-sm btn-primary" id="generate-theme-btn" onclick="generateTheme()" style="margin-top:10px;width:100%">Genera Tema da colori</button>
+          <button type="button" class="btn btn-sm btn-primary" id="generate-theme-btn" onclick="generateTheme()" style="margin-top:10px;width:100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Tema da colori</button>
         </div>
         <!-- Theme CSS variables editor (visible when theme exists) -->
         <div id="theme-colors-container" style="display:none;border-top:1px solid var(--gray-200);padding-top:12px;margin-bottom:12px">

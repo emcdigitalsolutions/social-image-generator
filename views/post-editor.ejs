@@ -17,7 +17,7 @@
     <div class="card" style="margin-bottom:16px">
       <div class="card-header">
         <h3>Caption</h3>
-        <button class="btn btn-sm btn-secondary" onclick="generateCaption()" id="gen-caption-btn">Genera Caption</button>
+        <button class="btn btn-sm btn-secondary" onclick="generateCaption()" id="gen-caption-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Caption</button>
       </div>
       <div class="form-group">
         <textarea id="caption-text" rows="10" style="width:100%"><%= post.caption || '' %></textarea>
@@ -69,7 +69,7 @@
     <div class="card" style="margin-bottom:16px">
       <div class="card-header">
         <h3>Immagine</h3>
-        <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn">Genera Immagine</button>
+        <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Immagine</button>
       </div>
       <div class="post-preview" id="image-preview">
         <% if (post.image_url) { %>
