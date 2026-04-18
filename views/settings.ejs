@@ -4,6 +4,46 @@
   <h1>Impostazioni</h1>
 </div>
 
+<!-- API Keys globali -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3>API Keys globali</h3>
+  </div>
+  <p style="font-size:13px; color:var(--gray-500); margin-bottom:16px;">
+    Chiavi usate come fallback quando un cliente non ha la propria. Lasciare vuoto per usare le variabili d'ambiente.
+  </p>
+  <div id="apiAlert" style="display:none; padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:16px;"></div>
+  <form id="apiForm" onsubmit="saveApi(event)">
+    <div class="form-group">
+      <label>Anthropic API Key</label>
+      <input type="password" id="setAnthropicKey" placeholder="sk-ant-...">
+    </div>
+    <div class="form-group">
+      <label>Gemini API Key</label>
+      <input type="password" id="setGeminiKey" placeholder="AIza...">
+    </div>
+    <button type="submit" class="btn btn-primary">Salva</button>
+  </form>
+</div>
+
+<!-- Generale -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3>Generale</h3>
+  </div>
+  <p style="font-size:13px; color:var(--gray-500); margin-bottom:16px;">
+    Modifiche a Base URL richiedono un restart per essere visibili nei link al di fuori delle email.
+  </p>
+  <div id="genAlert" style="display:none; padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:16px;"></div>
+  <form id="genForm" onsubmit="saveGen(event)">
+    <div class="form-group">
+      <label>Base URL pubblica</label>
+      <input type="url" id="setBaseUrl" placeholder="https://img.emcdigitalsolutions.it">
+    </div>
+    <button type="submit" class="btn btn-primary">Salva</button>
+  </form>
+</div>
+
 <!-- SMTP -->
 <div class="card" style="margin-bottom: 24px;">
   <div class="card-header">
@@ -59,8 +99,48 @@ async function loadSettings() {
     document.getElementById('setSmtpUser').value = s.smtp_user || '';
     document.getElementById('setSmtpPass').value = s.smtp_pass || '';
     document.getElementById('setSmtpNotifyTo').value = s.smtp_notify_to || '';
+    document.getElementById('setAnthropicKey').value = s.anthropic_api_key || '';
+    document.getElementById('setGeminiKey').value = s.gemini_api_key || '';
+    document.getElementById('setBaseUrl').value = s.base_url || '';
   } catch (err) {
-    showSmtpAlert('error', 'Errore nel caricamento: ' + err.message);
+    showAlert('smtpAlert', 'error', 'Errore nel caricamento: ' + err.message);
+  }
+}
+
+async function saveApi(e) {
+  e.preventDefault();
+  try {
+    const res = await fetch('/dashboard/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ settings: {
+        anthropic_api_key: document.getElementById('setAnthropicKey').value,
+        gemini_api_key: document.getElementById('setGeminiKey').value
+      }})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showAlert('apiAlert', 'success', 'API keys salvate.');
+  } catch (err) {
+    showAlert('apiAlert', 'error', 'Errore: ' + err.message);
+  }
+}
+
+async function saveGen(e) {
+  e.preventDefault();
+  try {
+    const res = await fetch('/dashboard/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ settings: {
+        base_url: document.getElementById('setBaseUrl').value
+      }})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showAlert('genAlert', 'success', 'Impostazioni generali salvate.');
+  } catch (err) {
+    showAlert('genAlert', 'error', 'Errore: ' + err.message);
   }
 }
 
@@ -80,29 +160,29 @@ async function saveSmtp(e) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    showSmtpAlert('success', 'Impostazioni salvate con successo.');
+    showAlert('smtpAlert', 'success', 'Impostazioni salvate con successo.');
   } catch (err) {
-    showSmtpAlert('error', 'Errore: ' + err.message);
+    showAlert('smtpAlert', 'error', 'Errore: ' + err.message);
   }
 }
 
 async function testSmtp() {
   try {
-    showSmtpAlert('info', 'Invio email di test in corso...');
+    showAlert('smtpAlert', 'info', 'Invio email di test in corso...');
     const res = await fetch('/dashboard/api/settings/test-smtp', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + getToken() }
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    showSmtpAlert('success', data.message);
+    showAlert('smtpAlert', 'success', data.message);
   } catch (err) {
-    showSmtpAlert('error', 'Errore: ' + err.message);
+    showAlert('smtpAlert', 'error', 'Errore: ' + err.message);
   }
 }
 
-function showSmtpAlert(type, msg) {
-  const el = document.getElementById('smtpAlert');
+function showAlert(elId, type, msg) {
+  const el = document.getElementById(elId);
   const colors = {
     success: { bg: 'var(--green-light)', color: 'var(--green)' },
     error: { bg: 'var(--red-light)', color: 'var(--red)' },

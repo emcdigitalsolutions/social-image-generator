@@ -14,16 +14,19 @@ const settings = require('../../lib/settings');
 router.use(authMiddleware);
 
 const ALLOWED_KEYS = [
-  'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_notify_to'
+  'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_notify_to',
+  'anthropic_api_key', 'gemini_api_key',
+  'base_url'
 ];
+const SECRET_KEYS = new Set(['smtp_pass', 'anthropic_api_key', 'gemini_api_key']);
+const MASK = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
 
-// GET - legge tutte le impostazioni
+// GET - legge tutte le impostazioni (segreti mascherati)
 router.get('/', (req, res) => {
   try {
     const all = settings.getAllSettings();
-    // Non esporre la password SMTP in chiaro
-    if (all.smtp_pass) {
-      all.smtp_pass = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
+    for (const key of SECRET_KEYS) {
+      if (all[key]) all[key] = MASK;
     }
     res.json({ settings: all });
   } catch (err) {
@@ -42,8 +45,8 @@ router.put('/', (req, res) => {
 
     for (const [key, value] of Object.entries(data)) {
       if (!ALLOWED_KEYS.includes(key)) continue;
-      // Se la password e' mascherata, non sovrascriverla
-      if (key === 'smtp_pass' && value === '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022') continue;
+      // Se il segreto e' mascherato, non sovrascriverlo
+      if (SECRET_KEYS.has(key) && value === MASK) continue;
       settings.setSetting(key, value);
     }
 
