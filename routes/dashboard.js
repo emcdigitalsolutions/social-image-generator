@@ -109,4 +109,9 @@ router.get('/posts/:id', (req, res) => {
   res.render('post-editor', { title: 'Editor Post', client, post, user: req.user });
 });
 
+// Logs page
+router.get('/logs', (req, res) => {
+  res.render('logs', { title: 'Log', user: req.user });
+});
+
 module.exports = router;

@@ -1,0 +1,110 @@
+<%- include('layout', { title, user }) %>
+
+<div class="page-header">
+  <h1>Log</h1>
+  <div style="display:flex;gap:8px;align-items:center">
+    <select id="log-level-filter" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px">
+      <option value="">Tutti i livelli</option>
+      <option value="info">Info</option>
+      <option value="warn">Warning</option>
+      <option value="error">Errori</option>
+    </select>
+    <button class="btn btn-secondary btn-sm" onclick="loadLogs()">Aggiorna</button>
+    <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="clearLogs()">Svuota</button>
+    <label style="font-size:12px;color:var(--gray-400);display:flex;align-items:center;gap:4px">
+      <input type="checkbox" id="auto-refresh" checked> Auto-refresh
+    </label>
+  </div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+  <div id="log-container" style="max-height:calc(100vh - 160px);overflow-y:auto;font-family:'SF Mono',Monaco,'Cascadia Code',monospace;font-size:12px;line-height:1.6;padding:12px 16px;background:#0d1117;color:#c9d1d9">
+    <div id="log-entries" style="white-space:pre-wrap;word-break:break-all"></div>
+    <div id="log-empty" style="color:#484f58;text-align:center;padding:40px 0;display:none">Nessun log disponibile</div>
+  </div>
+</div>
+
+<script src="/dashboard/js/dashboard.js"></script>
+<script>
+  let refreshTimer = null;
+
+  const LEVEL_COLORS = {
+    info: '#58a6ff',
+    warn: '#d29922',
+    error: '#f85149'
+  };
+
+  const LEVEL_BADGES = {
+    info: 'INFO ',
+    warn: 'WARN ',
+    error: 'ERROR'
+  };
+
+  async function loadLogs() {
+    const level = document.getElementById('log-level-filter').value;
+    const qs = level ? '?level=' + level : '';
+    try {
+      const res = await apiFetch('/dashboard/api/logs' + qs);
+      renderLogs(res.logs || []);
+    } catch (err) {
+      console.error('Failed to load logs:', err);
+    }
+  }
+
+  function renderLogs(logs) {
+    const container = document.getElementById('log-entries');
+    const empty = document.getElementById('log-empty');
+
+    if (!logs.length) {
+      container.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+
+    empty.style.display = 'none';
+    container.innerHTML = logs.map(entry => {
+      const color = LEVEL_COLORS[entry.level] || '#c9d1d9';
+      const badge = LEVEL_BADGES[entry.level] || entry.level.toUpperCase().padEnd(5);
+      const ts = entry.timestamp.replace('T', ' ').substring(0, 19);
+      const msg = escapeHtml(entry.message);
+      return '<div style="padding:1px 0"><span style="color:#484f58">' + ts + '</span> <span style="color:' + color + ';font-weight:600">[' + badge + ']</span> ' + msg + '</div>';
+    }).join('');
+
+    // Auto-scroll to bottom
+    const wrapper = document.getElementById('log-container');
+    wrapper.scrollTop = wrapper.scrollHeight;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  async function clearLogs() {
+    if (!confirm('Svuotare tutti i log?')) return;
+    try {
+      await apiFetch('/dashboard/api/logs', { method: 'DELETE' });
+      loadLogs();
+    } catch (err) {
+      alert('Errore: ' + err.message);
+    }
+  }
+
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    if (document.getElementById('auto-refresh').checked) {
+      refreshTimer = setInterval(loadLogs, 5000);
+    }
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+  }
+
+  document.getElementById('auto-refresh').addEventListener('change', startAutoRefresh);
+  document.getElementById('log-level-filter').addEventListener('change', loadLogs);
+
+  loadLogs();
+  startAutoRefresh();
+</script>

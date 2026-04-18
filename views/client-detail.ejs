@@ -827,7 +827,7 @@
               body: { url: d.logo_urls[0] }
             });
             if (logoRes.imported) {
-              document.getElementById('logo-status-text').textContent = 'Logo: logo-' + CLIENT_ID + '.svg';
+              document.getElementById('logo-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> logo-' + CLIENT_ID + '.svg';
               loadLogoPreview();
               alert('Logo importato dal sito');
             } else if (logoRes.error) {

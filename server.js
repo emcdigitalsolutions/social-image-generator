@@ -1,3 +1,4 @@
+require('./lib/logger'); // Must be first — intercepts console.log/error/warn
 const express = require('express');
 const path = require('path');
 const fs = require('fs/promises');
@@ -111,6 +112,7 @@ app.use('/dashboard/api/questionnaires', require('./routes/api/questionnaires'))
 app.use('/dashboard/api/plans', require('./routes/api/plans'));
 app.use('/dashboard/api/posts', require('./routes/api/posts'));
 app.use('/dashboard/api/schedules', require('./routes/api/schedules'));
+app.use('/dashboard/api/logs', require('./routes/api/logs'));
 
 // Page routes
 app.use('/dashboard', require('./routes/dashboard'));
