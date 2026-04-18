@@ -198,20 +198,41 @@
   </div>
   <div class="card">
     <div class="card-header"><h3>Logo e Tema</h3></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <!-- Logo Section -->
       <div>
-        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Logo SVG: <%= client.logo_filename || 'non caricato' %></p>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Logo: <%= client.logo_filename || 'non caricato' %></p>
+        <% if (client.logo_filename) { %>
+          <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);display:inline-block">
+            <img id="logo-preview-img" src="/dashboard/api/clients/<%= client.id %>/logo-preview" alt="Logo preview" style="max-width:80px;max-height:80px;display:block">
+          </div>
+        <% } else { %>
+          <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);display:none">
+            <img id="logo-preview-img" alt="Logo preview" style="max-width:80px;max-height:80px;display:block">
+          </div>
+        <% } %>
         <form id="logo-form" enctype="multipart/form-data">
-          <input type="file" name="logo" accept=".svg">
+          <input type="file" name="logo" accept=".svg,.jpg,.jpeg,.png">
           <button type="submit" class="btn btn-sm btn-secondary" style="margin-top:8px">Carica Logo</button>
         </form>
+        <p style="font-size:11px;color:var(--gray-400);margin-top:4px">Formati: SVG, JPG, PNG (max 5MB)</p>
       </div>
+      <!-- Theme Section -->
       <div>
         <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Tema CSS: <%= client.theme_filename || 'non caricato' %></p>
-        <form id="theme-form" enctype="multipart/form-data">
+        <div id="theme-colors-container" style="margin-bottom:12px;display:none">
+          <div id="theme-color-swatches" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+          <button type="button" class="btn btn-sm btn-primary" id="save-colors-btn" onclick="saveThemeColors()" style="display:none">Salva colori</button>
+        </div>
+        <form id="theme-form" enctype="multipart/form-data" style="margin-bottom:8px">
           <input type="file" name="theme" accept=".css">
-          <button type="submit" class="btn btn-sm btn-secondary" style="margin-top:8px">Carica Tema</button>
+          <button type="submit" class="btn btn-sm btn-secondary" style="margin-top:8px">Carica Tema CSS</button>
         </form>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="brand-colors-input" placeholder="es. #6b9ef7, #1a1f2e, #e8eaed" style="flex:1;font-size:12px;min-width:180px">
+          <button type="button" class="btn btn-sm btn-primary" id="generate-theme-btn" onclick="generateTheme()">Genera Tema da colori</button>
+        </div>
+        <p style="font-size:11px;color:var(--gray-400);margin-top:4px">Inserisci 2-4 colori HEX del brand oppure usa quelli dalla scansione sito</p>
       </div>
     </div>
   </div>
@@ -288,7 +309,14 @@
       headers: { 'Authorization': 'Bearer ' + token },
       body: formData
     });
-    if (res.ok) { alert('Logo caricato'); window.location.reload(); }
+    if (res.ok) {
+      // Update preview without full reload
+      const container = document.getElementById('logo-preview-container');
+      const img = document.getElementById('logo-preview-img');
+      img.src = '/dashboard/api/clients/' + CLIENT_ID + '/logo-preview?t=' + Date.now();
+      container.style.display = 'inline-block';
+      alert('Logo caricato');
+    }
   });
 
   // Theme upload
@@ -301,8 +329,152 @@
       headers: { 'Authorization': 'Bearer ' + token },
       body: formData
     });
-    if (res.ok) { alert('Tema caricato'); window.location.reload(); }
+    if (res.ok) {
+      alert('Tema caricato');
+      loadThemeColors();
+    }
   });
+
+  // --- Theme color management ---
+
+  const CSS_VAR_GROUPS = {
+    'Backgrounds': ['--bg-deep', '--bg-primary', '--bg-card', '--bg-elevated'],
+    'Accents': ['--accent', '--accent-light', '--accent-silver', '--accent-bright'],
+    'Testi': ['--text-primary', '--text-light', '--text-medium', '--text-muted'],
+    'Bordi': ['--border-cool', '--border-elevated'],
+    'Effetti': ['--glass-bg', '--overlay-top', '--overlay-bottom']
+  };
+
+  let currentThemeColors = {};
+  let colorsModified = false;
+
+  function hexFromValue(val) {
+    val = val.trim();
+    if (val.startsWith('#')) return val.substring(0, 7);
+    // Try to extract from rgba
+    const rgbaMatch = val.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (rgbaMatch) {
+      const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
+      const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
+      const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
+      return '#' + r + g + b;
+    }
+    return '#888888';
+  }
+
+  function renderThemeSwatches(colors) {
+    const container = document.getElementById('theme-color-swatches');
+    const wrapper = document.getElementById('theme-colors-container');
+    container.innerHTML = '';
+
+    if (!Object.keys(colors).length) {
+      wrapper.style.display = 'none';
+      return;
+    }
+
+    wrapper.style.display = 'block';
+
+    for (const [groupName, vars] of Object.entries(CSS_VAR_GROUPS)) {
+      const groupDiv = document.createElement('div');
+      groupDiv.style.cssText = 'margin-bottom:6px;width:100%';
+      groupDiv.innerHTML = '<span style="font-size:10px;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.5px">' + groupName + '</span>';
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:4px;margin-top:2px;flex-wrap:wrap';
+
+      vars.forEach(varName => {
+        if (!colors[varName]) return;
+        const hex = hexFromValue(colors[varName]);
+        const swatch = document.createElement('label');
+        swatch.style.cssText = 'position:relative;cursor:pointer;display:inline-block';
+        swatch.title = varName + ': ' + colors[varName];
+        swatch.innerHTML = '<div style="width:28px;height:28px;border-radius:6px;background:' + colors[varName] + ';border:2px solid rgba(255,255,255,0.15);transition:transform 0.1s" onmouseenter="this.style.transform=\'scale(1.15)\'" onmouseleave="this.style.transform=\'\'"></div>' +
+          '<input type="color" value="' + hex + '" data-var="' + varName + '" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">';
+        swatch.querySelector('input').addEventListener('input', function() {
+          const newColor = this.value;
+          this.previousElementSibling.style.background = newColor;
+          currentThemeColors[varName] = newColor;
+          colorsModified = true;
+          document.getElementById('save-colors-btn').style.display = '';
+          this.parentElement.title = varName + ': ' + newColor;
+        });
+        row.appendChild(swatch);
+      });
+
+      groupDiv.appendChild(row);
+      container.appendChild(groupDiv);
+    }
+  }
+
+  async function loadThemeColors() {
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/theme-colors');
+      if (res.exists && res.colors) {
+        currentThemeColors = res.colors;
+        renderThemeSwatches(res.colors);
+      }
+    } catch (err) {
+      console.error('Error loading theme colors:', err);
+    }
+  }
+
+  async function saveThemeColors() {
+    const btn = document.getElementById('save-colors-btn');
+    btn.disabled = true;
+    btn.textContent = 'Salvataggio...';
+    try {
+      await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/theme-colors', {
+        method: 'PUT',
+        body: { colors: currentThemeColors }
+      });
+      colorsModified = false;
+      btn.style.display = 'none';
+      alert('Colori del tema aggiornati');
+    } catch (err) {
+      alert('Errore: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Salva colori';
+    }
+  }
+
+  async function generateTheme() {
+    const input = document.getElementById('brand-colors-input');
+    const raw = input.value.trim();
+    if (!raw) {
+      alert('Inserisci almeno 2 colori HEX separati da virgola (es. #6b9ef7, #1a1f2e)');
+      return;
+    }
+    const colors = raw.split(',').map(c => c.trim()).filter(c => /^#[0-9a-fA-F]{3,8}$/.test(c));
+    if (colors.length < 2) {
+      alert('Servono almeno 2 colori HEX validi (es. #6b9ef7, #1a1f2e)');
+      return;
+    }
+
+    const btn = document.getElementById('generate-theme-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Generazione...';
+
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/generate-theme', {
+        method: 'POST',
+        body: { colors }
+      });
+      if (res.error) { alert('Errore: ' + res.error); return; }
+      if (res.colors) {
+        currentThemeColors = res.colors;
+        renderThemeSwatches(res.colors);
+      }
+      alert('Tema generato e salvato');
+    } catch (err) {
+      alert('Errore: ' + (err.message || 'Generazione fallita'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Genera Tema da colori';
+    }
+  }
+
+  // Load theme colors on page load
+  loadThemeColors();
 
   // Import CSV from Google Forms
   async function importCsv(input) {
@@ -470,11 +642,17 @@
         filled++;
       }
 
+      // Auto-fill brand colors input
+      if (d.colors && d.colors.length) {
+        const colorsInput = document.getElementById('brand-colors-input');
+        if (colorsInput) colorsInput.value = d.colors.join(', ');
+      }
+
       // Show extra info as alert
       let msg = 'Scansione completata: ' + filled + ' campi compilati.';
       if (d.description) msg += '\n\nDescrizione: ' + d.description;
       if (d.services) msg += '\nServizi: ' + d.services;
-      if (d.colors && d.colors.length) msg += '\nColori brand: ' + d.colors.join(', ');
+      if (d.colors && d.colors.length) msg += '\nColori brand: ' + d.colors.join(', ') + '\n(Compilati nel campo "Genera Tema da colori" nella sezione Impostazioni)';
       msg += '\n\nRivedi i campi evidenziati e clicca "Salva Profilo".';
       alert(msg);
     } catch (err) {

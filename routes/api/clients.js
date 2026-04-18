@@ -6,7 +6,7 @@ const http = require('http');
 const https = require('https');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { callAI, generateSystemInstruction } = require('../../lib/ai-provider');
+const { callAI, generateSystemInstruction, generateThemeCSS } = require('../../lib/ai-provider');
 const { getSectorKeys } = require('../../lib/questionnaire-config');
 
 const router = express.Router();
@@ -14,12 +14,13 @@ router.use(authMiddleware);
 
 const logoUpload = multer({
   dest: path.join(__dirname, '..', '..', 'assets'),
-  limits: { fileSize: 2 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'image/svg+xml' || file.originalname.endsWith('.svg')) {
+    const allowed = ['image/svg+xml', 'image/jpeg', 'image/png'];
+    if (allowed.includes(file.mimetype) || /\.(svg|jpg|jpeg|png)$/i.test(file.originalname)) {
       cb(null, true);
     } else {
-      cb(new Error('Only SVG files allowed'));
+      cb(new Error('Solo file SVG, JPG o PNG'));
     }
   }
 });
@@ -127,18 +128,44 @@ router.delete('/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// Upload logo
+// Upload logo (SVG, JPG, PNG — raster images are wrapped in SVG)
 router.post('/:id/logo', logoUpload.single('logo'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   const db = getDb();
   const filename = `logo-${req.params.id}.svg`;
   const dest = path.join(__dirname, '..', '..', 'assets', filename);
+  const isSvg = req.file.mimetype === 'image/svg+xml' || req.file.originalname.endsWith('.svg');
 
-  fs.renameSync(req.file.path, dest);
+  if (isSvg) {
+    fs.renameSync(req.file.path, dest);
+  } else {
+    // Convert JPG/PNG to SVG wrapper with embedded base64
+    const imageData = fs.readFileSync(req.file.path);
+    const base64 = imageData.toString('base64');
+    const mimeType = req.file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
+    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200" viewBox="0 0 200 200">
+  <image width="200" height="200" href="data:${mimeType};base64,${base64}" />
+</svg>`;
+    fs.writeFileSync(dest, svgContent);
+    // Remove temp file
+    fs.unlinkSync(req.file.path);
+  }
+
   db.prepare("UPDATE clients SET logo_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
-
   res.json({ filename });
+});
+
+// Serve logo preview
+router.get('/:id/logo-preview', (req, res) => {
+  const filename = `logo-${req.params.id}.svg`;
+  const filepath = path.join(__dirname, '..', '..', 'assets', filename);
+  if (!fs.existsSync(filepath)) {
+    return res.status(404).json({ error: 'Logo non trovato' });
+  }
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'no-cache');
+  fs.createReadStream(filepath).pipe(res);
 });
 
 // Upload/generate theme CSS
@@ -163,6 +190,83 @@ router.post('/:id/theme', themeUpload.single('theme'), (req, res) => {
   }
 
   res.status(400).json({ error: 'Upload a CSS file or send css in body' });
+});
+
+// Generate theme CSS from brand colors using AI
+router.post('/:id/generate-theme', async (req, res) => {
+  try {
+    const db = getDb();
+    const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+
+    const { colors } = req.body;
+    if (!colors || !Array.isArray(colors) || colors.length < 2) {
+      return res.status(400).json({ error: 'Fornire almeno 2 colori brand (array di hex)' });
+    }
+
+    const css = await generateThemeCSS(client, colors);
+
+    const filename = `${req.params.id}.css`;
+    const dest = path.join(__dirname, '..', '..', 'templates', 'themes', filename);
+    fs.writeFileSync(dest, css);
+    db.prepare("UPDATE clients SET theme_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
+
+    // Parse generated CSS to extract colors
+    const parsedColors = {};
+    const varRegex = /--([\w-]+)\s*:\s*([^;]+);/g;
+    let match;
+    while ((match = varRegex.exec(css)) !== null) {
+      parsedColors['--' + match[1]] = match[2].trim();
+    }
+
+    res.json({ filename, css, colors: parsedColors });
+  } catch (err) {
+    console.error('Generate theme error:', err);
+    res.status(500).json({ error: err.message || 'Errore durante la generazione del tema' });
+  }
+});
+
+// Get theme colors from current CSS
+router.get('/:id/theme-colors', (req, res) => {
+  const filename = `${req.params.id}.css`;
+  const filepath = path.join(__dirname, '..', '..', 'templates', 'themes', filename);
+
+  if (!fs.existsSync(filepath)) {
+    return res.json({ exists: false, colors: {} });
+  }
+
+  const css = fs.readFileSync(filepath, 'utf-8');
+  const colors = {};
+  const varRegex = /--([\w-]+)\s*:\s*([^;]+);/g;
+  let match;
+  while ((match = varRegex.exec(css)) !== null) {
+    colors['--' + match[1]] = match[2].trim();
+  }
+
+  res.json({ exists: true, colors });
+});
+
+// Update theme colors manually
+router.put('/:id/theme-colors', (req, res) => {
+  const { colors } = req.body;
+  if (!colors || typeof colors !== 'object') {
+    return res.status(400).json({ error: 'Fornire un oggetto colors con le variabili CSS' });
+  }
+
+  const db = getDb();
+  const filename = `${req.params.id}.css`;
+  const dest = path.join(__dirname, '..', '..', 'templates', 'themes', filename);
+
+  // Build CSS content
+  const vars = Object.entries(colors)
+    .map(([key, value]) => `    ${key}: ${value};`)
+    .join('\n');
+  const css = `:root {\n${vars}\n}\n`;
+
+  fs.writeFileSync(dest, css);
+  db.prepare("UPDATE clients SET theme_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
+
+  res.json({ filename, css });
 });
 
 // --- Website scan helpers ---
