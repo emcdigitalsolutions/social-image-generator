@@ -46,6 +46,25 @@ router.use(pageAuthMiddleware);
 router.get('/', (req, res) => {
   const db = getDb();
   const clients = db.prepare("SELECT * FROM clients ORDER BY status = 'active' DESC, updated_at DESC").all();
+
+  // Post stats per client
+  const statsRows = db.prepare(`
+    SELECT client_id,
+      SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft_count,
+      SUM(CASE WHEN status IN ('caption_generated','image_generated') THEN 1 ELSE 0 END) as wip_count,
+      SUM(CASE WHEN status = 'ready' THEN 1 ELSE 0 END) as ready_count,
+      SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as published_count,
+      SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed_count,
+      MIN(CASE WHEN status = 'ready' AND scheduled_date IS NOT NULL
+        THEN scheduled_date || ' ' || COALESCE(scheduled_time, '00:00') END) as next_scheduled
+    FROM posts GROUP BY client_id
+  `).all();
+
+  const statsMap = {};
+  const defaultStats = { draft_count: 0, wip_count: 0, ready_count: 0, published_count: 0, failed_count: 0, next_scheduled: null };
+  for (const row of statsRows) statsMap[row.client_id] = row;
+  clients.forEach(c => { c.stats = statsMap[c.id] || defaultStats; });
+
   res.render('dashboard', { title: 'Dashboard', clients, user: req.user });
 });
 
@@ -59,7 +78,23 @@ router.get('/clients/:id', (req, res) => {
   const plans = db.prepare('SELECT * FROM editorial_plans WHERE client_id = ? ORDER BY created_at DESC').all(req.params.id);
   const sectors = Object.entries(SETTORI).map(([k, v]) => ({ key: k, label: v.label }));
 
-  res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, user: req.user });
+  // Onboarding checklist
+  const onboardingSteps = {
+    profile: !!(client.sector && client.location),
+    social: !!(client.fb_page_id && client.fb_system_user_token),
+    logo: !!client.logo_filename,
+    questionnaire: questionnaires.some(q => q.status === 'submitted'),
+    system_instruction: !!client.system_instruction,
+    plan: plans.some(p => p.status !== 'draft'),
+    theme: !!client.theme_filename
+  };
+  const onboarding = {
+    ...onboardingSteps,
+    completed: Object.values(onboardingSteps).filter(Boolean).length,
+    total: Object.keys(onboardingSteps).length
+  };
+
+  res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, onboarding, user: req.user });
 });
 
 // Plan editor
@@ -112,6 +147,11 @@ router.get('/posts/:id', (req, res) => {
 // Logs page
 router.get('/logs', (req, res) => {
   res.render('logs', { title: 'Log', user: req.user });
+});
+
+// Settings page
+router.get('/settings', (req, res) => {
+  res.render('settings', { title: 'Impostazioni', user: req.user });
 });
 
 module.exports = router;

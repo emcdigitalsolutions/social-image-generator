@@ -1,0 +1,126 @@
+<%- include('layout', { title, user }) %>
+
+<div class="page-header">
+  <h1>Impostazioni</h1>
+</div>
+
+<!-- SMTP -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <h3>Configurazione SMTP</h3>
+  </div>
+  <p style="font-size:13px; color:var(--gray-500); margin-bottom:16px;">
+    Configura il server SMTP per l'invio di notifiche email. Se non configurato, il sistema utilizza le variabili d'ambiente.
+  </p>
+  <div id="smtpAlert" style="display:none; padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:16px;"></div>
+  <form id="smtpForm" onsubmit="saveSmtp(event)">
+    <div style="display:grid; grid-template-columns:1fr 200px; gap:16px;">
+      <div class="form-group">
+        <label>Host SMTP</label>
+        <input type="text" id="setSmtpHost" placeholder="Es. smtp.gmail.com">
+      </div>
+      <div class="form-group">
+        <label>Porta</label>
+        <input type="number" id="setSmtpPort" placeholder="587" value="587">
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="setSmtpUser" placeholder="email@esempio.it">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="setSmtpPass" placeholder="Password o App Password">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Email destinatario notifiche</label>
+      <input type="email" id="setSmtpNotifyTo" placeholder="Es. admin@esempio.it (lasciare vuoto per usare lo username)">
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button type="submit" class="btn btn-primary">Salva</button>
+      <button type="button" class="btn btn-secondary" onclick="testSmtp()">Invia Email di Test</button>
+    </div>
+  </form>
+</div>
+
+<script>
+async function loadSettings() {
+  try {
+    const res = await fetch('/dashboard/api/settings', {
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    const s = data.settings || {};
+    document.getElementById('setSmtpHost').value = s.smtp_host || '';
+    document.getElementById('setSmtpPort').value = s.smtp_port || '587';
+    document.getElementById('setSmtpUser').value = s.smtp_user || '';
+    document.getElementById('setSmtpPass').value = s.smtp_pass || '';
+    document.getElementById('setSmtpNotifyTo').value = s.smtp_notify_to || '';
+  } catch (err) {
+    showSmtpAlert('error', 'Errore nel caricamento: ' + err.message);
+  }
+}
+
+async function saveSmtp(e) {
+  e.preventDefault();
+  try {
+    const res = await fetch('/dashboard/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ settings: {
+        smtp_host: document.getElementById('setSmtpHost').value,
+        smtp_port: document.getElementById('setSmtpPort').value,
+        smtp_user: document.getElementById('setSmtpUser').value,
+        smtp_pass: document.getElementById('setSmtpPass').value,
+        smtp_notify_to: document.getElementById('setSmtpNotifyTo').value
+      }})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showSmtpAlert('success', 'Impostazioni salvate con successo.');
+  } catch (err) {
+    showSmtpAlert('error', 'Errore: ' + err.message);
+  }
+}
+
+async function testSmtp() {
+  try {
+    showSmtpAlert('info', 'Invio email di test in corso...');
+    const res = await fetch('/dashboard/api/settings/test-smtp', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    showSmtpAlert('success', data.message);
+  } catch (err) {
+    showSmtpAlert('error', 'Errore: ' + err.message);
+  }
+}
+
+function showSmtpAlert(type, msg) {
+  const el = document.getElementById('smtpAlert');
+  const colors = {
+    success: { bg: 'var(--green-light)', color: 'var(--green)' },
+    error: { bg: 'var(--red-light)', color: 'var(--red)' },
+    info: { bg: 'var(--blue-50)', color: 'var(--blue)' }
+  };
+  const c = colors[type] || colors.info;
+  el.style.display = 'block';
+  el.style.background = c.bg;
+  el.style.color = c.color;
+  el.textContent = msg;
+}
+
+function getToken() {
+  const c = document.cookie.split(';').find(c => c.trim().startsWith('dashboard_token='));
+  return c ? c.split('=')[1] : '';
+}
+
+loadSettings();
+</script>
+
+<%- include('layout-end') %>

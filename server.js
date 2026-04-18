@@ -7,6 +7,8 @@ const { renderImage, closeBrowser } = require('./lib/renderer');
 const { runMigrations, close: closeDb } = require('./lib/db');
 const { seedUsers } = require('./lib/auth');
 const scheduler = require('./lib/scheduler');
+const cron = require('node-cron');
+const { runBackup } = require('./lib/backup');
 
 const app = express();
 const PORT = process.env.PORT || 3100;
@@ -113,6 +115,7 @@ app.use('/dashboard/api/plans', require('./routes/api/plans'));
 app.use('/dashboard/api/posts', require('./routes/api/posts'));
 app.use('/dashboard/api/schedules', require('./routes/api/schedules'));
 app.use('/dashboard/api/logs', require('./routes/api/logs'));
+app.use('/dashboard/api/settings', require('./routes/api/settings'));
 
 // Page routes
 app.use('/dashboard', require('./routes/dashboard'));
@@ -158,6 +161,10 @@ try {
 
 // Start scheduler
 scheduler.start();
+
+// Backup DB daily at 03:00 + initial backup
+runBackup();
+cron.schedule('0 3 * * *', runBackup);
 
 app.listen(PORT, () => {
   console.log(`Social Image Generator running on port ${PORT}`);
