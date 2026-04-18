@@ -197,11 +197,17 @@
     </form>
   </div>
   <div class="card">
-    <div class="card-header"><h3>Logo e Tema</h3></div>
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+      <h3>Logo e Tema</h3>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="branding-status" style="font-size:12px;display:none"></span>
+        <button type="button" class="btn btn-sm btn-primary" id="scan-branding-btn" onclick="scanBranding()">Importa da Sito</button>
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
       <!-- Logo Section -->
       <div>
-        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px" id="logo-status-text">Logo: <%= client.logo_filename || 'non caricato' %></p>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px" id="logo-status-text">Logo: <span id="logo-status-value"><%= client.logo_filename ? '<span style="color:#16a34a">&#10003;</span> ' + client.logo_filename : 'non caricato' %></span></p>
         <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);display:none">
           <img id="logo-preview-img" style="max-width:80px;max-height:80px;display:block">
         </div>
@@ -213,7 +219,7 @@
       </div>
       <!-- Theme Section -->
       <div>
-        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">Tema CSS: <%= client.theme_filename || 'non caricato' %></p>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px" id="theme-status-text">Tema CSS: <span id="theme-status-value"><%= client.theme_filename ? '<span style="color:#16a34a">&#10003;</span> ' + client.theme_filename : 'non caricato' %></span></p>
         <!-- Brand colors pickers for theme generation -->
         <div style="margin-bottom:12px">
           <p style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px">Colori Brand</p>
@@ -349,7 +355,8 @@
         document.getElementById('logo-preview-container').style.display = 'inline-block';
       };
       reader.readAsDataURL(file);
-      document.getElementById('logo-status-text').textContent = 'Logo: logo-' + CLIENT_ID + '.svg';
+      document.getElementById('logo-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> logo-' + CLIENT_ID + '.svg';
+      updateBrandingStatus();
       alert('Logo caricato');
     }
   });
@@ -365,8 +372,10 @@
       body: formData
     });
     if (res.ok) {
-      alert('Tema caricato');
+      document.getElementById('theme-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> ' + CLIENT_ID + '.css';
       loadThemeColors();
+      updateBrandingStatus();
+      alert('Tema caricato');
     }
   });
 
@@ -527,6 +536,8 @@
       if (res.colors) {
         currentThemeColors = res.colors;
         renderThemeSwatches(res.colors);
+        document.getElementById('theme-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> ' + CLIENT_ID + '.css';
+        updateBrandingStatus();
       }
       alert('Tema generato e salvato');
     } catch (err) {
@@ -539,6 +550,93 @@
 
   // Load theme colors on page load
   loadThemeColors();
+
+  // --- Branding status & scan ---
+  function updateBrandingStatus() {
+    const hasLogo = document.getElementById('logo-status-value').innerHTML.includes('10003') ||
+      document.getElementById('logo-preview-container').style.display !== 'none';
+    const hasTheme = document.getElementById('theme-status-value').innerHTML.includes('10003');
+    const el = document.getElementById('branding-status');
+    if (hasLogo && hasTheme) {
+      el.innerHTML = '<span style="color:#16a34a;font-weight:600">&#10003; Logo e Tema pronti</span>';
+      el.style.display = '';
+    } else if (hasLogo || hasTheme) {
+      const missing = !hasLogo ? 'logo' : 'tema';
+      el.innerHTML = '<span style="color:#d97706">Manca: ' + missing + '</span>';
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  }
+  updateBrandingStatus();
+
+  async function scanBranding() {
+    const websiteInput = document.querySelector('input[name="website"]');
+    const url = websiteInput ? websiteInput.value.trim() : '';
+    if (!url) { alert('Inserisci un URL nel campo Sito web (tab Profilo) prima di scansionare'); return; }
+
+    const btn = document.getElementById('scan-branding-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Scansione...';
+
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/scan-website', {
+        method: 'POST',
+        body: { url }
+      });
+
+      if (res.error) { alert('Errore: ' + res.error); return; }
+      if (!res.data) { alert('Nessun dato estratto'); return; }
+
+      const d = res.data;
+      let imported = [];
+
+      // Import logo
+      if (d.logo_urls && d.logo_urls.length) {
+        try {
+          const logoRes = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/import-logo', {
+            method: 'POST',
+            body: { url: d.logo_urls[0] }
+          });
+          if (logoRes.imported) {
+            document.getElementById('logo-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> logo-' + CLIENT_ID + '.svg';
+            loadLogoPreview();
+            imported.push('Logo');
+          }
+        } catch (err) { console.error('Logo import failed:', err); }
+      }
+
+      // Set brand colors and generate theme
+      if (d.colors && d.colors.length >= 2) {
+        setBrandColors(d.colors);
+        try {
+          const themeRes = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/generate-theme', {
+            method: 'POST',
+            body: { colors: d.colors.filter(c => /^#[0-9a-fA-F]{3,8}$/.test(c)).slice(0, 4) }
+          });
+          if (themeRes.colors) {
+            currentThemeColors = themeRes.colors;
+            renderThemeSwatches(themeRes.colors);
+            document.getElementById('theme-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> ' + CLIENT_ID + '.css';
+            imported.push('Tema CSS');
+          }
+        } catch (err) { console.error('Theme generation failed:', err); }
+      }
+
+      updateBrandingStatus();
+
+      if (imported.length) {
+        alert('Importazione completata: ' + imported.join(' + ') + (imported.length === 2 ? '\n\nLogo e Tema pronti!' : ''));
+      } else {
+        alert('Scansione completata ma non sono stati trovati logo o colori nel sito.');
+      }
+    } catch (err) {
+      alert('Errore: ' + (err.message || 'Scansione fallita'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Importa da Sito';
+    }
+  }
 
   // Import CSV from Google Forms
   async function importCsv(input) {
