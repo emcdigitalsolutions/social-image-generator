@@ -6,7 +6,7 @@ const http = require('http');
 const https = require('https');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { callGemini } = require('../../lib/gemini');
+const { callClaude } = require('../../lib/ai');
 const { getSectorKeys } = require('../../lib/questionnaire-config');
 
 const router = express.Router();
@@ -92,7 +92,7 @@ router.put('/:id', (req, res) => {
   const db = getDb();
   const fields = ['display_name', 'sector', 'location', 'website', 'tagline', 'brand_name',
     'fb_page_id', 'fb_system_user_token', 'ig_user_id', 'ig_access_token',
-    'system_instruction', 'gemini_api_key', 'status', 'logo_filename', 'theme_filename'];
+    'system_instruction', 'anthropic_api_key', 'status', 'logo_filename', 'theme_filename'];
 
   const updates = [];
   const values = [];
@@ -259,7 +259,7 @@ function extractTextFromHtml(html) {
   // Collapse whitespace
   text = text.replace(/\s+/g, ' ').trim();
 
-  // Truncate to 8000 chars for Gemini
+  // Truncate to 8000 chars for AI
   if (text.length > 8000) text = text.substring(0, 8000);
 
   return { text, meta };
@@ -300,8 +300,8 @@ IMPORTANTE:
 - Per "colors" scegli i 2-4 colori principali del brand/sito dai colori CSS trovati
 - Rispondi SOLO con il JSON, nient'altro`;
 
-  const result = await callGemini(
-    client.gemini_api_key,
+  const result = await callClaude(
+    client.anthropic_api_key,
     systemInstruction,
     userPrompt,
     { temperature: 0.3, maxTokens: 1024 }
@@ -316,7 +316,7 @@ IMPORTANTE:
     }
     parsed = JSON.parse(text);
   } catch {
-    throw new Error('Gemini non ha restituito un JSON valido');
+    throw new Error('Claude non ha restituito un JSON valido');
   }
 
   return parsed;
@@ -346,7 +346,7 @@ router.post('/:id/scan-website', async (req, res) => {
       return res.status(400).json({ error: 'Il sito non contiene abbastanza testo da analizzare.' });
     }
 
-    // Analyze with Gemini
+    // Analyze with Claude
     const data = await analyzeWebsite(client, text, meta, url);
 
     res.json({ success: true, data });

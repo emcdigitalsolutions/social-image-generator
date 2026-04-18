@@ -2,7 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { generateEditorialPlan } = require('../../lib/gemini');
+const { generateEditorialPlan } = require('../../lib/ai');
 
 const router = express.Router();
 router.use(authMiddleware);
