@@ -94,7 +94,8 @@ router.put('/:id', (req, res) => {
   const fields = ['display_name', 'sector', 'location', 'website', 'tagline', 'brand_name',
     'fb_page_id', 'fb_system_user_token', 'ig_user_id', 'ig_access_token',
     'system_instruction', 'anthropic_api_key', 'gemini_api_key', 'ai_provider',
-    'status', 'logo_filename', 'theme_filename'];
+    'status', 'logo_filename', 'theme_filename',
+    'subscription_plan', 'subscription_price', 'subscription_notes'];
 
   const updates = [];
   const values = [];
