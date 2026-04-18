@@ -190,7 +190,8 @@
       </div>
       <div class="form-group">
         <label>System Instruction (prompt personalizzato)</label>
-        <textarea name="system_instruction" rows="8"><%= client.system_instruction || '' %></textarea>
+        <textarea name="system_instruction" id="system-instruction-textarea" rows="8"><%= client.system_instruction || '' %></textarea>
+        <button type="button" class="btn btn-secondary btn-sm" id="generate-si-btn" onclick="generateSystemInstruction()" style="margin-top:8px">Genera con AI</button>
       </div>
       <button type="submit" class="btn btn-primary">Salva AI Config</button>
     </form>
@@ -481,6 +482,40 @@
     } finally {
       btn.disabled = false;
       btn.textContent = 'Scansiona Sito';
+    }
+  }
+
+  // Generate system instruction
+  async function generateSystemInstruction() {
+    const btn = document.getElementById('generate-si-btn');
+    const textarea = document.getElementById('system-instruction-textarea');
+
+    // Ask confirmation if textarea already has content
+    if (textarea.value.trim() && !confirm('Il campo System Instruction contiene già del testo. Vuoi sovrascriverlo con una nuova versione generata dall\'AI?')) {
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Generazione in corso...';
+
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/generate-system-instruction', {
+        method: 'POST',
+        body: {}
+      });
+
+      if (res.error) { alert('Errore: ' + res.error); return; }
+      if (!res.system_instruction) { alert('Nessun risultato generato'); return; }
+
+      textarea.value = res.system_instruction;
+      textarea.style.outline = '2px solid #3b82f6';
+      textarea.style.outlineOffset = '-1px';
+      alert('System Instruction generato. Rivedi il testo e clicca "Salva AI Config" per salvare.');
+    } catch (err) {
+      alert('Errore: ' + (err.message || 'Generazione fallita'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Genera con AI';
     }
   }
 

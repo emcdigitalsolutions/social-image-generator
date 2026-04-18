@@ -6,7 +6,7 @@ const http = require('http');
 const https = require('https');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { callAI } = require('../../lib/ai-provider');
+const { callAI, generateSystemInstruction } = require('../../lib/ai-provider');
 const { getSectorKeys } = require('../../lib/questionnaire-config');
 
 const router = express.Router();
@@ -354,6 +354,39 @@ router.post('/:id/scan-website', async (req, res) => {
   } catch (err) {
     console.error('Scan website error:', err);
     res.status(500).json({ error: err.message || 'Errore durante la scansione del sito' });
+  }
+});
+
+// Generate system instruction with AI
+router.post('/:id/generate-system-instruction', async (req, res) => {
+  try {
+    const db = getDb();
+    const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+
+    // Get questionnaire responses
+    let questionnaireResponses = null;
+    const qId = req.body.questionnaire_id;
+
+    if (qId) {
+      const q = db.prepare('SELECT * FROM questionnaires WHERE id = ? AND client_id = ?').get(qId, req.params.id);
+      if (q && q.responses) {
+        questionnaireResponses = JSON.parse(q.responses);
+      }
+    } else {
+      // Get the latest submitted questionnaire
+      const q = db.prepare("SELECT * FROM questionnaires WHERE client_id = ? AND status = 'submitted' ORDER BY submitted_at DESC LIMIT 1").get(req.params.id);
+      if (q && q.responses) {
+        questionnaireResponses = JSON.parse(q.responses);
+      }
+    }
+
+    const systemInstruction = await generateSystemInstruction(client, questionnaireResponses);
+
+    res.json({ system_instruction: systemInstruction });
+  } catch (err) {
+    console.error('Generate system instruction error:', err);
+    res.status(500).json({ error: err.message || 'Errore durante la generazione' });
   }
 });
 
