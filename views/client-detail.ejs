@@ -61,6 +61,20 @@
           <option value="archived" <%= client.status === 'archived' ? 'selected' : '' %>>Archiviato</option>
         </select>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="form-group">
+          <label>Piano commerciale</label>
+          <input type="text" name="subscription_plan" value="<%= client.subscription_plan || '' %>" placeholder="es. Social Basic, Social Pro">
+        </div>
+        <div class="form-group">
+          <label>Prezzo mensile (&euro;)</label>
+          <input type="number" name="subscription_price" value="<%= client.subscription_price || '' %>" step="0.01" min="0" placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Note commerciali</label>
+        <textarea name="subscription_notes" rows="2" placeholder="es. canone 80&euro;/anno, social 150&euro;+IVA"><%= client.subscription_notes || '' %></textarea>
+      </div>
       <div style="display:flex;gap:8px;align-items:center">
         <button type="button" class="btn btn-secondary" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Scansiona Sito</button>
         <button type="submit" class="btn btn-primary">Salva Profilo</button>
@@ -114,20 +128,40 @@
   <div class="card">
     <div class="card-header">
       <h3>Piani Editoriali</h3>
-      <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Piano con AI</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="plan-months-select" style="padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px;font-family:inherit">
+          <option value="3">3 mesi</option>
+          <option value="6" selected>6 mesi</option>
+          <option value="12">12 mesi</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Piano con AI</button>
+      </div>
     </div>
     <% if (plans.length === 0) { %>
       <div class="empty-state"><p>Nessun piano editoriale. Genera il primo dal questionario compilato.</p></div>
     <% } else { %>
       <table>
-        <thead><tr><th>Titolo</th><th>Stato</th><th>Creato</th><th>Azioni</th></tr></thead>
+        <thead><tr><th>Titolo</th><th>Durata</th><th>Stato</th><th>Creato</th><th>Azioni</th></tr></thead>
         <tbody>
-          <% plans.forEach(p => { %>
+          <% plans.forEach(p => {
+            const planData = typeof p.plan_data === 'string' ? JSON.parse(p.plan_data) : p.plan_data;
+            const monthCount = planData && planData.months ? planData.months.length : '—';
+          %>
           <tr>
             <td><%= p.title || 'Piano senza titolo' %></td>
+            <td><%= monthCount %> mesi</td>
             <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
             <td><%= p.created_at %></td>
-            <td><a href="/dashboard/clients/<%= client.id %>/plan/<%= p.id %>" class="btn btn-sm btn-secondary">Apri</a></td>
+            <td style="display:flex;gap:4px">
+              <a href="/dashboard/clients/<%= client.id %>/plan/<%= p.id %>" class="btn btn-sm btn-secondary">Apri</a>
+              <% if (p.status === 'draft') { %>
+                <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deletePlan('<%= p.id %>')">Elimina</button>
+              <% } else if (p.status === 'confirmed') { %>
+                <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="activatePlan('<%= p.id %>')">Attiva</button>
+              <% } else if (p.status === 'active') { %>
+                <button class="btn btn-sm" style="background:var(--gray-400);color:#fff" onclick="deactivatePlan('<%= p.id %>')">Disattiva</button>
+              <% } %>
+            </td>
           </tr>
           <% }) %>
         </tbody>
@@ -757,12 +791,13 @@
   // Generate plan
   async function generatePlan() {
     const btn = document.getElementById('gen-plan-btn');
+    const months = parseInt(document.getElementById('plan-months-select').value) || 6;
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> Generazione in corso...';
     try {
       const res = await apiFetch('/dashboard/api/plans/generate', {
         method: 'POST',
-        body: { client_id: CLIENT_ID }
+        body: { client_id: CLIENT_ID, months }
       });
       if (res.error) { await showAlert(res.error); return; }
       window.location.href = '/dashboard/clients/' + CLIENT_ID + '/plan/' + res.id;
@@ -771,6 +806,43 @@
     } finally {
       btn.disabled = false;
       btn.textContent = 'Genera Piano con AI';
+    }
+  }
+
+  // Delete plan (draft only)
+  async function deletePlan(id) {
+    if (!await showConfirm('Eliminare questo piano e i post collegati in draft?')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + id, { method: 'DELETE' });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Piano eliminato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  // Activate plan
+  async function activatePlan(id) {
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + id + '/activate', { method: 'POST', body: {} });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Piano attivato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  // Deactivate plan
+  async function deactivatePlan(id) {
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + id + '/deactivate', { method: 'POST', body: {} });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Piano disattivato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
     }
   }
 
@@ -905,7 +977,8 @@
     if (!plans.length) return;
     let allPosts = [];
     for (const plan of plans) {
-      for (let m = 1; m <= 5; m++) {
+      const monthCount = plan.plan_data && plan.plan_data.months ? plan.plan_data.months.length : 12;
+      for (let m = 1; m <= monthCount; m++) {
         const posts = await apiFetch('/dashboard/api/posts/by-plan/' + plan.id + '/month/' + m);
         allPosts = allPosts.concat(posts);
       }

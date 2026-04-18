@@ -10,7 +10,7 @@ router.use(authMiddleware);
 // Generate plan from questionnaire
 router.post('/generate', async (req, res) => {
   const db = getDb();
-  const { client_id, questionnaire_id } = req.body;
+  const { client_id, questionnaire_id, months } = req.body;
 
   if (!client_id) return res.status(400).json({ error: 'client_id required' });
 
@@ -33,7 +33,8 @@ router.post('/generate', async (req, res) => {
   }
 
   try {
-    const result = await generateEditorialPlan(client, responses);
+    const planMonths = parseInt(months) || 6;
+    const result = await generateEditorialPlan(client, responses, planMonths);
 
     const id = uuidv4();
     const title = result.planData?.title || `Piano Editoriale - ${client.display_name}`;
@@ -124,6 +125,48 @@ router.post('/:id/confirm', (req, res) => {
   if (!plan) return res.status(404).json({ error: 'Plan not found' });
   if (plan.plan_data) plan.plan_data = JSON.parse(plan.plan_data);
   res.json(plan);
+});
+
+// Delete plan (only draft)
+router.delete('/:id', (req, res) => {
+  const db = getDb();
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+  if (plan.status !== 'draft') return res.status(400).json({ error: 'Solo i piani in draft possono essere eliminati' });
+
+  db.prepare("DELETE FROM posts WHERE editorial_plan_id = ? AND status = 'draft'").run(req.params.id);
+  db.prepare('DELETE FROM schedules WHERE editorial_plan_id = ?').run(req.params.id);
+  db.prepare('DELETE FROM editorial_plans WHERE id = ?').run(req.params.id);
+
+  res.json({ deleted: true });
+});
+
+// Activate plan
+router.post('/:id/activate', (req, res) => {
+  const db = getDb();
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+  if (plan.status !== 'confirmed') return res.status(400).json({ error: 'Solo i piani confirmed possono essere attivati' });
+
+  db.prepare("UPDATE editorial_plans SET status = 'active', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
+
+  const updated = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (updated.plan_data) updated.plan_data = JSON.parse(updated.plan_data);
+  res.json(updated);
+});
+
+// Deactivate plan
+router.post('/:id/deactivate', (req, res) => {
+  const db = getDb();
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+  if (plan.status !== 'active') return res.status(400).json({ error: 'Solo i piani attivi possono essere disattivati' });
+
+  db.prepare("UPDATE editorial_plans SET status = 'confirmed', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
+
+  const updated = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (updated.plan_data) updated.plan_data = JSON.parse(updated.plan_data);
+  res.json(updated);
 });
 
 module.exports = router;
