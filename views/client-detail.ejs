@@ -201,16 +201,10 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
       <!-- Logo Section -->
       <div>
-        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Logo: <%= client.logo_filename || 'non caricato' %></p>
-        <% if (client.logo_filename) { %>
-          <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);display:inline-block">
-            <img id="logo-preview-img" src="/dashboard/api/clients/<%= client.id %>/logo-preview" alt="Logo preview" style="max-width:80px;max-height:80px;display:block">
-          </div>
-        <% } else { %>
-          <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);display:none">
-            <img id="logo-preview-img" alt="Logo preview" style="max-width:80px;max-height:80px;display:block">
-          </div>
-        <% } %>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px" id="logo-status-text">Logo: <%= client.logo_filename || 'non caricato' %></p>
+        <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);display:none">
+          <img id="logo-preview-img" style="max-width:80px;max-height:80px;display:block">
+        </div>
         <form id="logo-form" enctype="multipart/form-data">
           <input type="file" name="logo" accept=".svg,.jpg,.jpeg,.png">
           <button type="submit" class="btn btn-sm btn-secondary" style="margin-top:8px">Carica Logo</button>
@@ -316,9 +310,29 @@
     alert('Configurazione AI salvata');
   });
 
-  // Logo upload
+  // Logo preview loader (uses authenticated fetch → blob URL)
+  async function loadLogoPreview() {
+    const token = localStorage.getItem('dashboard_token');
+    try {
+      const res = await fetch('/dashboard/api/clients/' + CLIENT_ID + '/logo-preview', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const img = document.getElementById('logo-preview-img');
+      img.src = URL.createObjectURL(blob);
+      document.getElementById('logo-preview-container').style.display = 'inline-block';
+    } catch (err) { /* no logo, container stays hidden */ }
+  }
+  <% if (client.logo_filename) { %>loadLogoPreview();<% } %>
+
+  // Logo upload with FileReader preview
   document.getElementById('logo-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const fileInput = e.target.querySelector('input[type="file"]');
+    const file = fileInput.files[0];
+    if (!file) return;
+
     const formData = new FormData(e.target);
     const token = localStorage.getItem('dashboard_token');
     const res = await fetch('/dashboard/api/clients/' + CLIENT_ID + '/logo', {
@@ -327,11 +341,15 @@
       body: formData
     });
     if (res.ok) {
-      // Update preview without full reload
-      const container = document.getElementById('logo-preview-container');
-      const img = document.getElementById('logo-preview-img');
-      img.src = '/dashboard/api/clients/' + CLIENT_ID + '/logo-preview?t=' + Date.now();
-      container.style.display = 'inline-block';
+      // Show preview using FileReader (no endpoint dependency)
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const img = document.getElementById('logo-preview-img');
+        img.src = ev.target.result;
+        document.getElementById('logo-preview-container').style.display = 'inline-block';
+      };
+      reader.readAsDataURL(file);
+      document.getElementById('logo-status-text').textContent = 'Logo: logo-' + CLIENT_ID + '.svg';
       alert('Logo caricato');
     }
   });
