@@ -1,3 +1,5 @@
+process.stdout.write('[STARTUP] Loading modules...\n');
+try {
 require('./lib/logger'); // Must be first — intercepts console.log/error/warn
 const express = require('express');
 const path = require('path');
@@ -188,3 +190,7 @@ process.on('SIGINT', async () => {
   await closeBrowser();
   process.exit(0);
 });
+} catch (startupErr) {
+  process.stdout.write('[STARTUP FATAL] ' + (startupErr.stack || startupErr.message || String(startupErr)) + '\n');
+  process.exit(1);
+}
