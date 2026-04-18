@@ -152,19 +152,19 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
         <div class="form-group">
           <label>Facebook Page ID</label>
-          <input type="text" name="fb_page_id" value="<%= client.fb_page_id || '' %>">
+          <div style="display:flex;gap:4px"><input type="text" name="fb_page_id" value="<%= client.fb_page_id || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
         <div class="form-group">
           <label>FB System User Token</label>
-          <input type="password" name="fb_system_user_token" value="<%= client.fb_system_user_token || '' %>">
+          <div style="display:flex;gap:4px"><input type="password" name="fb_system_user_token" value="<%= client.fb_system_user_token || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
         <div class="form-group">
           <label>Instagram User ID</label>
-          <input type="text" name="ig_user_id" value="<%= client.ig_user_id || '' %>">
+          <div style="display:flex;gap:4px"><input type="text" name="ig_user_id" value="<%= client.ig_user_id || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
         <div class="form-group">
           <label>IG Access Token</label>
-          <input type="password" name="ig_access_token" value="<%= client.ig_access_token || '' %>">
+          <div style="display:flex;gap:4px"><input type="password" name="ig_access_token" value="<%= client.ig_access_token || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Salva Credenziali</button>
@@ -182,7 +182,7 @@
       </div>
       <div class="form-group" id="gemini-key-group">
         <label>Gemini API Key</label>
-        <input type="password" name="gemini_api_key" value="<%= client.gemini_api_key || '' %>">
+        <div style="display:flex;gap:4px"><input type="password" name="gemini_api_key" value="<%= client.gemini_api_key || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
       </div>
       <div class="form-group" id="anthropic-key-group">
         <label>Anthropic API Key</label>
@@ -266,8 +266,20 @@
   </div>
 </div>
 
+<style>.btn-copy{display:flex;align-items:center;justify-content:center;width:34px;min-width:34px;height:34px;border:1px solid var(--gray-200);border-radius:6px;background:var(--gray-50);color:var(--gray-400);cursor:pointer;transition:all .15s}.btn-copy:hover{background:var(--gray-100);color:var(--gray-600)}.btn-copy.copied{background:#dcfce7;border-color:#86efac;color:#16a34a}</style>
 <script>
   const CLIENT_ID = '<%= client.id %>';
+
+  function copyField(btn) {
+    const input = btn.closest('div').querySelector('input');
+    if (!input || !input.value) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+      btn.classList.add('copied');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1500);
+    });
+  }
 
   // Tabs
   document.querySelectorAll('.tab').forEach(tab => {
