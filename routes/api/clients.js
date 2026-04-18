@@ -182,6 +182,75 @@ router.get('/:id/logo-preview', (req, res) => {
   }
 });
 
+// Import logo from external URL
+router.post('/:id/import-logo', async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL immagine richiesto' });
+
+  try {
+    // Download image as binary
+    const imageBuffer = await new Promise((resolve, reject) => {
+      let targetUrl = url;
+      if (!targetUrl.startsWith('http')) targetUrl = 'https://' + targetUrl;
+
+      const doFetch = (fetchUrl, redirectsLeft) => {
+        const mod = fetchUrl.startsWith('https') ? https : http;
+        const req = mod.get(fetchUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          timeout: 10000
+        }, (response) => {
+          if ([301, 302, 303, 307, 308].includes(response.statusCode) && response.headers.location) {
+            if (redirectsLeft <= 0) return reject(new Error('Troppi redirect'));
+            let loc = response.headers.location;
+            if (loc.startsWith('/')) {
+              const u = new URL(fetchUrl);
+              loc = u.protocol + '//' + u.host + loc;
+            } else if (loc.startsWith('//')) {
+              loc = 'https:' + loc;
+            }
+            return doFetch(loc, redirectsLeft - 1);
+          }
+          if (response.statusCode !== 200) return reject(new Error(`HTTP ${response.statusCode}`));
+
+          const chunks = [];
+          response.on('data', chunk => chunks.push(chunk));
+          response.on('end', () => resolve({ buffer: Buffer.concat(chunks), contentType: response.headers['content-type'] || '' }));
+          response.on('error', reject);
+        });
+        req.on('timeout', () => { req.destroy(); reject(new Error('Timeout')); });
+        req.on('error', reject);
+      };
+
+      doFetch(targetUrl, 5);
+    });
+
+    const db = getDb();
+    const filename = `logo-${req.params.id}.svg`;
+    const dest = path.join(__dirname, '..', '..', 'assets', filename);
+    const contentType = imageBuffer.contentType.toLowerCase();
+    const buf = imageBuffer.buffer;
+
+    if (contentType.includes('svg')) {
+      // Native SVG
+      fs.writeFileSync(dest, buf);
+    } else {
+      // Raster image (PNG, JPEG, etc.) — wrap in SVG
+      const mimeType = contentType.includes('png') ? 'image/png' : 'image/jpeg';
+      const base64 = buf.toString('base64');
+      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200" viewBox="0 0 200 200">
+  <image width="200" height="200" href="data:${mimeType};base64,${base64}" />
+</svg>`;
+      fs.writeFileSync(dest, svgContent);
+    }
+
+    db.prepare("UPDATE clients SET logo_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
+    res.json({ filename, imported: true });
+  } catch (err) {
+    console.error('Import logo error:', err);
+    res.status(500).json({ error: 'Impossibile scaricare il logo: ' + err.message });
+  }
+});
+
 // Upload/generate theme CSS
 router.post('/:id/theme', themeUpload.single('theme'), (req, res) => {
   const db = getDb();
@@ -353,6 +422,31 @@ function extractTextFromHtml(html) {
   const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([\s\S]*?)["']/i);
   if (ogDesc) meta.og_description = ogDesc[1].trim();
 
+  // Extract logo candidates
+  const logoUrls = [];
+  // apple-touch-icon (high-res, best candidate)
+  const appleIcon = html.match(/<link[^>]*rel=["']apple-touch-icon["'][^>]*href=["']([^"']+)["']/i)
+    || html.match(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["']apple-touch-icon["']/i);
+  if (appleIcon) logoUrls.push(appleIcon[1]);
+  // og:image
+  const ogImg = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+    || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+  if (ogImg) logoUrls.push(ogImg[1]);
+  // img tags with "logo" in class, id, alt, or src
+  const logoImgPatterns = [
+    /<img[^>]*src=["']([^"']+)["'][^>]*(?:class|id|alt)=["'][^"']*logo[^"']*["']/gi,
+    /<img[^>]*(?:class|id|alt)=["'][^"']*logo[^"']*["'][^>]*src=["']([^"']+)["']/gi
+  ];
+  for (const pattern of logoImgPatterns) {
+    let m;
+    while ((m = pattern.exec(html)) !== null) logoUrls.push(m[1]);
+  }
+  // favicon (last resort, often small)
+  const favicon = html.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i)
+    || html.match(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:shortcut )?icon["']/i);
+  if (favicon) logoUrls.push(favicon[1]);
+  if (logoUrls.length) meta.logo_urls = [...new Set(logoUrls)];
+
   // Extract colors from CSS (inline styles and style tags)
   const colorMatches = html.match(/#[0-9a-fA-F]{3,8}\b/g) || [];
   const uniqueColors = [...new Set(colorMatches.map(c => c.toLowerCase()))].slice(0, 20);
@@ -467,6 +561,21 @@ router.post('/:id/scan-website', async (req, res) => {
 
     // Analyze with Claude
     const data = await analyzeWebsite(client, text, meta, url);
+
+    // Resolve logo URLs to absolute
+    if (meta.logo_urls && meta.logo_urls.length) {
+      let baseUrl = url;
+      if (!baseUrl.startsWith('http')) baseUrl = 'https://' + baseUrl;
+      try {
+        const base = new URL(baseUrl);
+        data.logo_urls = meta.logo_urls.map(u => {
+          if (u.startsWith('http')) return u;
+          if (u.startsWith('//')) return base.protocol + u;
+          if (u.startsWith('/')) return base.origin + u;
+          return base.origin + '/' + u;
+        });
+      } catch { data.logo_urls = meta.logo_urls; }
+    }
 
     res.json({ success: true, data });
   } catch (err) {

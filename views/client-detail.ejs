@@ -706,7 +706,7 @@
         filled++;
       }
 
-      // Auto-fill brand color pickers and generate theme
+      // Auto-fill brand color pickers
       if (d.colors && d.colors.length) {
         setBrandColors(d.colors);
       }
@@ -716,8 +716,30 @@
       if (d.description) msg += '\n\nDescrizione: ' + d.description;
       if (d.services) msg += '\nServizi: ' + d.services;
       if (d.colors && d.colors.length) msg += '\nColori brand: ' + d.colors.join(', ');
+      if (d.logo_urls && d.logo_urls.length) msg += '\nLogo trovato nel sito';
       msg += '\n\nRivedi i campi evidenziati e clicca "Salva Profilo".';
       alert(msg);
+
+      // Import logo from website
+      if (d.logo_urls && d.logo_urls.length) {
+        if (confirm('Logo trovato nel sito. Vuoi importarlo?')) {
+          try {
+            const logoRes = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/import-logo', {
+              method: 'POST',
+              body: { url: d.logo_urls[0] }
+            });
+            if (logoRes.imported) {
+              document.getElementById('logo-status-text').textContent = 'Logo: logo-' + CLIENT_ID + '.svg';
+              loadLogoPreview();
+              alert('Logo importato dal sito');
+            } else if (logoRes.error) {
+              alert('Errore importazione logo: ' + logoRes.error);
+            }
+          } catch (err) {
+            alert('Errore importazione logo: ' + err.message);
+          }
+        }
+      }
 
       // Auto-generate theme from scanned colors
       if (d.colors && d.colors.length >= 2) {
