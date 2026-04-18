@@ -307,7 +307,7 @@
     const data = {};
     new FormData(e.target).forEach((v, k) => { data[k] = v; });
     await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
-    alert('Credenziali salvate');
+    toast('Credenziali salvate');
   });
 
   // AI provider toggle
@@ -325,7 +325,7 @@
     const data = {};
     new FormData(e.target).forEach((v, k) => { data[k] = v; });
     await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
-    alert('Configurazione AI salvata');
+    toast('Configurazione AI salvata');
   });
 
   // Logo preview loader (uses authenticated fetch → blob URL)
@@ -369,7 +369,7 @@
       reader.readAsDataURL(file);
       document.getElementById('logo-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> logo-' + CLIENT_ID + '.svg';
       updateBrandingStatus();
-      alert('Logo caricato');
+      toast('Logo caricato');
     }
   });
 
@@ -387,7 +387,7 @@
       document.getElementById('theme-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> ' + CLIENT_ID + '.css';
       loadThemeColors();
       updateBrandingStatus();
-      alert('Tema caricato');
+      toast('Tema caricato');
     }
   });
 
@@ -519,9 +519,9 @@
         body: { colors: currentThemeColors }
       });
       btn.style.display = 'none';
-      alert('Colori del tema aggiornati');
+      toast('Colori del tema aggiornati');
     } catch (err) {
-      alert('Errore: ' + err.message);
+      await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Salva colori tema';
@@ -531,7 +531,7 @@
   async function generateTheme() {
     const colors = getBrandColors();
     if (colors.length < 2) {
-      alert('Seleziona almeno 2 colori brand con i picker');
+      await showAlert('Seleziona almeno 2 colori brand con i picker');
       return;
     }
 
@@ -544,16 +544,16 @@
         method: 'POST',
         body: { colors }
       });
-      if (res.error) { alert('Errore: ' + res.error); return; }
+      if (res.error) { await showAlert('Errore: ' + res.error); return; }
       if (res.colors) {
         currentThemeColors = res.colors;
         renderThemeSwatches(res.colors);
         document.getElementById('theme-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> ' + CLIENT_ID + '.css';
         updateBrandingStatus();
       }
-      alert('Tema generato e salvato');
+      toast('Tema generato e salvato');
     } catch (err) {
-      alert('Errore: ' + (err.message || 'Generazione fallita'));
+      await showAlert('Errore: ' + (err.message || 'Generazione fallita'));
     } finally {
       btn.disabled = false;
       btn.textContent = 'Genera Tema da colori';
@@ -585,7 +585,7 @@
   async function scanBranding() {
     const websiteInput = document.querySelector('input[name="website"]');
     const url = websiteInput ? websiteInput.value.trim() : '';
-    if (!url) { alert('Inserisci un URL nel campo Sito web (tab Profilo) prima di scansionare'); return; }
+    if (!url) { await showAlert('Inserisci un URL nel campo Sito web (tab Profilo) prima di scansionare'); return; }
 
     const btn = document.getElementById('scan-branding-btn');
     btn.disabled = true;
@@ -597,8 +597,8 @@
         body: { url }
       });
 
-      if (res.error) { alert('Errore: ' + res.error); return; }
-      if (!res.data) { alert('Nessun dato estratto'); return; }
+      if (res.error) { await showAlert('Errore: ' + res.error); return; }
+      if (!res.data) { await showAlert('Nessun dato estratto'); return; }
 
       const d = res.data;
       let imported = [];
@@ -638,12 +638,12 @@
       updateBrandingStatus();
 
       if (imported.length) {
-        alert('Importazione completata: ' + imported.join(' + ') + (imported.length === 2 ? '\n\nLogo e Tema pronti!' : ''));
+        toast('Importazione completata: ' + imported.join(' + ') + (imported.length === 2 ? ' — Logo e Tema pronti!' : ''));
       } else {
-        alert('Scansione completata ma non sono stati trovati logo o colori nel sito.');
+        await showAlert('Scansione completata ma non sono stati trovati logo o colori nel sito.');
       }
     } catch (err) {
-      alert('Errore: ' + (err.message || 'Scansione fallita'));
+      await showAlert('Errore: ' + (err.message || 'Scansione fallita'));
     } finally {
       btn.disabled = false;
       btn.textContent = 'Importa da Sito';
@@ -691,7 +691,7 @@
     }
 
     if (lines.length < 2) {
-      alert('Il CSV deve avere almeno 2 righe (header + risposte)');
+      await showAlert('Il CSV deve avere almeno 2 righe (header + risposte)');
       return;
     }
 
@@ -709,7 +709,7 @@
     });
 
     if (Object.keys(responses).length === 0) {
-      alert('Nessuna risposta trovata nel CSV');
+      await showAlert('Nessuna risposta trovata nel CSV');
       return;
     }
 
@@ -718,23 +718,23 @@
       method: 'POST',
       body: { client_id: CLIENT_ID }
     });
-    if (q.error) { alert(q.error); return; }
+    if (q.error) { await showAlert(q.error); return; }
 
     const res = await apiFetch('/dashboard/api/questionnaires/' + q.id + '/import-csv', {
       method: 'POST',
       body: { responses }
     });
-    if (res.error) { alert(res.error); return; }
+    if (res.error) { await showAlert(res.error); return; }
 
-    alert('CSV importato: ' + Object.keys(responses).length + ' risposte caricate');
+    toast('CSV importato: ' + Object.keys(responses).length + ' risposte caricate');
     window.location.reload();
   }
 
   // Create questionnaire
   async function deleteQuestionnaire(id) {
-    if (!confirm('Eliminare questo questionario?')) return;
+    if (!await showConfirm('Eliminare questo questionario?')) return;
     const res = await apiFetch('/dashboard/api/questionnaires/' + id, { method: 'DELETE' });
-    if (res.error) { alert(res.error); return; }
+    if (res.error) { await showAlert(res.error); return; }
     window.location.reload();
   }
 
@@ -743,7 +743,7 @@
       method: 'POST',
       body: { client_id: CLIENT_ID }
     });
-    if (res.error) { alert(res.error); return; }
+    if (res.error) { await showAlert(res.error); return; }
     window.location.reload();
   }
 
@@ -764,10 +764,10 @@
         method: 'POST',
         body: { client_id: CLIENT_ID }
       });
-      if (res.error) { alert(res.error); return; }
+      if (res.error) { await showAlert(res.error); return; }
       window.location.href = '/dashboard/clients/' + CLIENT_ID + '/plan/' + res.id;
     } catch (err) {
-      alert('Errore: ' + err.message);
+      await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Genera Piano con AI';
@@ -778,7 +778,7 @@
   async function scanWebsite() {
     const btn = document.getElementById('scan-website-btn');
     const url = document.querySelector('input[name="website"]').value.trim();
-    if (!url) { alert('Inserisci un URL nel campo Sito web'); return; }
+    if (!url) { await showAlert('Inserisci un URL nel campo Sito web'); return; }
 
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> Scansione...';
@@ -789,8 +789,8 @@
         body: { url }
       });
 
-      if (res.error) { alert('Errore: ' + res.error); return; }
-      if (!res.data) { alert('Nessun dato estratto'); return; }
+      if (res.error) { await showAlert('Errore: ' + res.error); return; }
+      if (!res.data) { await showAlert('Nessun dato estratto'); return; }
 
       const d = res.data;
       const form = document.getElementById('profile-form');
@@ -828,11 +828,11 @@
       if (d.colors && d.colors.length) msg += '\nColori brand: ' + d.colors.join(', ');
       if (d.logo_urls && d.logo_urls.length) msg += '\nLogo trovato nel sito';
       msg += '\n\nRivedi i campi evidenziati e clicca "Salva Profilo".';
-      alert(msg);
+      await showAlert(msg);
 
       // Import logo from website
       if (d.logo_urls && d.logo_urls.length) {
-        if (confirm('Logo trovato nel sito. Vuoi importarlo?')) {
+        if (await showConfirm('Logo trovato nel sito. Vuoi importarlo?')) {
           try {
             const logoRes = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/import-logo', {
               method: 'POST',
@@ -841,24 +841,24 @@
             if (logoRes.imported) {
               document.getElementById('logo-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> logo-' + CLIENT_ID + '.svg';
               loadLogoPreview();
-              alert('Logo importato dal sito');
+              toast('Logo importato dal sito');
             } else if (logoRes.error) {
-              alert('Errore importazione logo: ' + logoRes.error);
+              await showAlert('Errore importazione logo: ' + logoRes.error);
             }
           } catch (err) {
-            alert('Errore importazione logo: ' + err.message);
+            await showAlert('Errore importazione logo: ' + err.message);
           }
         }
       }
 
       // Auto-generate theme from scanned colors
       if (d.colors && d.colors.length >= 2) {
-        if (confirm('Vuoi generare automaticamente il tema CSS dai colori del sito?')) {
-          generateTheme();
+        if (await showConfirm('Vuoi generare automaticamente il tema CSS dai colori del sito?')) {
+          await generateTheme();
         }
       }
     } catch (err) {
-      alert('Errore: ' + (err.message || 'Scansione fallita'));
+      await showAlert('Errore: ' + (err.message || 'Scansione fallita'));
     } finally {
       btn.disabled = false;
       btn.textContent = 'Scansiona Sito';
@@ -871,7 +871,7 @@
     const textarea = document.getElementById('system-instruction-textarea');
 
     // Ask confirmation if textarea already has content
-    if (textarea.value.trim() && !confirm('Il campo System Instruction contiene già del testo. Vuoi sovrascriverlo con una nuova versione generata dall\'AI?')) {
+    if (textarea.value.trim() && !await showConfirm('Il campo System Instruction contiene già del testo. Vuoi sovrascriverlo con una nuova versione generata dall\'AI?')) {
       return;
     }
 
@@ -884,15 +884,15 @@
         body: {}
       });
 
-      if (res.error) { alert('Errore: ' + res.error); return; }
-      if (!res.system_instruction) { alert('Nessun risultato generato'); return; }
+      if (res.error) { await showAlert('Errore: ' + res.error); return; }
+      if (!res.system_instruction) { await showAlert('Nessun risultato generato'); return; }
 
       textarea.value = res.system_instruction;
       textarea.style.outline = '2px solid #3b82f6';
       textarea.style.outlineOffset = '-1px';
-      alert('System Instruction generato. Rivedi il testo e clicca "Salva AI Config" per salvare.');
+      toast('System Instruction generato. Rivedi e salva con "Salva AI Config".');
     } catch (err) {
-      alert('Errore: ' + (err.message || 'Generazione fallita'));
+      await showAlert('Errore: ' + (err.message || 'Generazione fallita'));
     } finally {
       btn.disabled = false;
       btn.textContent = 'Genera con AI';

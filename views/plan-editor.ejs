@@ -55,7 +55,7 @@
   const CLIENT_ID = '<%= client.id %>';
 
   async function confirmPlan() {
-    if (!confirm('Confermare questo piano editoriale?')) return;
+    if (!await showConfirm('Confermare questo piano editoriale?')) return;
     await apiFetch('/dashboard/api/plans/' + PLAN_ID + '/confirm', { method: 'POST' });
     window.location.reload();
   }

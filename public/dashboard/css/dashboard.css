@@ -593,6 +593,59 @@ tr:hover td { background: var(--gray-50); }
   margin-top: 20px;
 }
 
+/* ── Alert / Confirm popup ── */
+#alert-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45); display: none; align-items: center;
+  justify-content: center; z-index: 2000;
+}
+#alert-overlay.active { display: flex; }
+#alert-box {
+  background: #fff; border-radius: var(--radius); padding: 24px;
+  width: 100%; max-width: 480px; max-height: 80vh; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  display: flex; flex-direction: column;
+}
+#alert-msg {
+  font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  overflow-y: auto; max-height: 60vh; color: var(--gray-700);
+}
+#alert-actions {
+  display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; flex-shrink: 0;
+}
+#alert-copy-btn {
+  display: flex; align-items: center; gap: 4px; padding: 8px 14px;
+  border: 1px solid var(--gray-200); border-radius: 6px; background: var(--gray-50);
+  color: var(--gray-500); cursor: pointer; font-size: 13px; transition: all .15s;
+}
+#alert-copy-btn:hover { background: var(--gray-100); color: var(--gray-700); }
+#alert-copy-btn.copied { background: #dcfce7; border-color: #86efac; color: #16a34a; }
+#alert-ok-btn {
+  padding: 8px 20px; border: none; border-radius: 6px; background: var(--blue);
+  color: #fff; cursor: pointer; font-size: 13px; font-weight: 600;
+}
+#alert-ok-btn:hover { opacity: 0.9; }
+#alert-cancel-btn {
+  padding: 8px 16px; border: 1px solid var(--gray-200); border-radius: 6px;
+  background: #fff; color: var(--gray-600); cursor: pointer; font-size: 13px;
+}
+#alert-cancel-btn:hover { background: var(--gray-50); }
+
+/* ── Toast notifications ── */
+#toast-container {
+  position: fixed; top: 16px; right: 16px; z-index: 3000;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.toast {
+  padding: 10px 16px; border-radius: 8px; font-size: 13px; color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); pointer-events: auto;
+  animation: toast-in 0.3s ease; max-width: 360px;
+}
+.toast.success { background: #16a34a; }
+.toast.error { background: #dc2626; }
+.toast.info { background: var(--blue); }
+@keyframes toast-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toast-out { from { opacity: 1; } to { opacity: 0; transform: translateX(20px); } }
+
 /* ── Loading ── */
 .loading {
   display: inline-block;

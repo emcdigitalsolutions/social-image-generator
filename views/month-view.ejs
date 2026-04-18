@@ -76,7 +76,7 @@
 
   async function bulkGenerate(action) {
     if (!POST_IDS.length) return;
-    if (!confirm('Generare ' + action + ' per ' + POST_IDS.length + ' post?')) return;
+    if (!await showConfirm('Generare ' + action + ' per ' + POST_IDS.length + ' post?')) return;
 
     const btn = event.target;
     btn.disabled = true;
@@ -89,18 +89,18 @@
       });
       const successes = res.results.filter(r => r.success).length;
       const errors = res.results.filter(r => r.error);
-      alert('Completato: ' + successes + '/' + POST_IDS.length + ' successi' +
+      await showAlert('Completato: ' + successes + '/' + POST_IDS.length + ' successi' +
         (errors.length ? '\nErrori: ' + errors.map(e => e.error).join(', ') : ''));
       window.location.reload();
     } catch (err) {
-      alert('Errore: ' + err.message);
+      await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
     }
   }
 
   async function confirmMonth() {
-    if (!confirm('Confermare il mese ' + MONTH + '? I post pronti verranno pubblicati automaticamente secondo lo schedule.')) return;
+    if (!await showConfirm('Confermare il mese ' + MONTH + '? I post pronti verranno pubblicati automaticamente secondo lo schedule.')) return;
     await apiFetch('/dashboard/api/schedules/' + PLAN_ID + '/month/' + MONTH + '/confirm', { method: 'POST' });
     window.location.reload();
   }

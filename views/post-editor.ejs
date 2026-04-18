@@ -111,10 +111,10 @@
     btn.innerHTML = '<span class="loading"></span> Generazione...';
     try {
       const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-caption', { method: 'POST' });
-      if (res.error) { alert(res.error); return; }
+      if (res.error) { await showAlert(res.error); return; }
       document.getElementById('caption-text').value = res.caption || '';
     } catch (err) {
-      alert('Errore: ' + err.message);
+      await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Genera Caption';
@@ -126,7 +126,7 @@
       method: 'PUT',
       body: { caption: document.getElementById('caption-text').value }
     });
-    alert('Caption salvata');
+    toast('Caption salvata');
   }
 
   async function saveDetails() {
@@ -141,7 +141,7 @@
         scheduled_time: document.getElementById('post-time').value
       }
     });
-    alert('Dettagli salvati');
+    toast('Dettagli salvati');
   }
 
   async function generateImage() {
@@ -152,12 +152,12 @@
       // Save details first
       await saveDetails();
       const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-image', { method: 'POST' });
-      if (res.error) { alert(res.error); return; }
+      if (res.error) { await showAlert(res.error); return; }
       if (res.image_url) {
         document.getElementById('image-preview').innerHTML = '<img src="' + res.image_url + '" alt="Post preview">';
       }
     } catch (err) {
-      alert('Errore: ' + err.message);
+      await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Genera Immagine';
@@ -165,16 +165,16 @@
   }
 
   async function publishPost() {
-    if (!confirm('Pubblicare questo post su Facebook e Instagram?')) return;
+    if (!await showConfirm('Pubblicare questo post su Facebook e Instagram?')) return;
     const btn = document.getElementById('publish-btn');
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> Pubblicazione...';
     try {
       const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/publish', { method: 'POST' });
-      if (res.error) { alert(res.error); return; }
+      if (res.error) { await showAlert(res.error); return; }
       window.location.reload();
     } catch (err) {
-      alert('Errore: ' + err.message);
+      await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
       btn.textContent = 'Pubblica su FB + IG';

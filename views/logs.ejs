@@ -82,12 +82,12 @@
   }
 
   async function clearLogs() {
-    if (!confirm('Svuotare tutti i log?')) return;
+    if (!await showConfirm('Svuotare tutti i log?')) return;
     try {
       await apiFetch('/dashboard/api/logs', { method: 'DELETE' });
       loadLogs();
     } catch (err) {
-      alert('Errore: ' + err.message);
+      await showAlert('Errore: ' + err.message);
     }
   }
 
