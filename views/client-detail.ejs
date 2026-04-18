@@ -207,8 +207,8 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
       <!-- Logo Section -->
       <div>
-        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px" id="logo-status-text">Logo: <span id="logo-status-value"><%= client.logo_filename ? '<span style="color:#16a34a">&#10003;</span> ' + client.logo_filename : 'non caricato' %></span></p>
-        <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-200);display:none">
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px" id="logo-status-text">Logo: <span id="logo-status-value"><%- client.logo_filename ? '<span style="color:#16a34a">&#10003;</span> ' + client.logo_filename : 'non caricato' %></span></p>
+        <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:repeating-conic-gradient(#808080 0% 25%, #a0a0a0 0% 50%) 50% / 16px 16px;border-radius:8px;border:1px solid var(--gray-200);display:none">
           <img id="logo-preview-img" style="max-width:80px;max-height:80px;display:block">
         </div>
         <form id="logo-form" enctype="multipart/form-data">
@@ -219,7 +219,7 @@
       </div>
       <!-- Theme Section -->
       <div>
-        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px" id="theme-status-text">Tema CSS: <span id="theme-status-value"><%= client.theme_filename ? '<span style="color:#16a34a">&#10003;</span> ' + client.theme_filename : 'non caricato' %></span></p>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px" id="theme-status-text">Tema CSS: <span id="theme-status-value"><%- client.theme_filename ? '<span style="color:#16a34a">&#10003;</span> ' + client.theme_filename : 'non caricato' %></span></p>
         <!-- Brand colors pickers for theme generation -->
         <div style="margin-bottom:12px">
           <p style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px">Colori Brand</p>
