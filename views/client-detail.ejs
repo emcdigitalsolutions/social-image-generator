@@ -46,10 +46,7 @@
         </div>
         <div class="form-group">
           <label>Sito web</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input type="text" name="website" value="<%= client.website || '' %>" style="flex:1">
-            <button type="button" class="btn btn-secondary btn-sm" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Scansiona Sito</button>
-          </div>
+          <input type="text" name="website" value="<%= client.website || '' %>">
         </div>
         <div class="form-group">
           <label>Tagline</label>
@@ -64,7 +61,10 @@
           <option value="archived" <%= client.status === 'archived' ? 'selected' : '' %>>Archiviato</option>
         </select>
       </div>
-      <button type="submit" class="btn btn-primary">Salva Profilo</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button type="button" class="btn btn-secondary" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Scansiona Sito</button>
+        <button type="submit" class="btn btn-primary">Salva Profilo</button>
+      </div>
     </form>
   </div>
 </div>
