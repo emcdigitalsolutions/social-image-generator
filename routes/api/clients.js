@@ -6,7 +6,7 @@ const http = require('http');
 const https = require('https');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { callClaude } = require('../../lib/ai');
+const { callAI } = require('../../lib/ai-provider');
 const { getSectorKeys } = require('../../lib/questionnaire-config');
 
 const router = express.Router();
@@ -92,7 +92,8 @@ router.put('/:id', (req, res) => {
   const db = getDb();
   const fields = ['display_name', 'sector', 'location', 'website', 'tagline', 'brand_name',
     'fb_page_id', 'fb_system_user_token', 'ig_user_id', 'ig_access_token',
-    'system_instruction', 'anthropic_api_key', 'status', 'logo_filename', 'theme_filename'];
+    'system_instruction', 'anthropic_api_key', 'gemini_api_key', 'ai_provider',
+    'status', 'logo_filename', 'theme_filename'];
 
   const updates = [];
   const values = [];
@@ -300,8 +301,8 @@ IMPORTANTE:
 - Per "colors" scegli i 2-4 colori principali del brand/sito dai colori CSS trovati
 - Rispondi SOLO con il JSON, nient'altro`;
 
-  const result = await callClaude(
-    client.anthropic_api_key,
+  const result = await callAI(
+    client,
     systemInstruction,
     userPrompt,
     { temperature: 0.3, maxTokens: 1024 }
@@ -316,7 +317,7 @@ IMPORTANTE:
     }
     parsed = JSON.parse(text);
   } catch {
-    throw new Error('Claude non ha restituito un JSON valido');
+    throw new Error('AI non ha restituito un JSON valido');
   }
 
   return parsed;

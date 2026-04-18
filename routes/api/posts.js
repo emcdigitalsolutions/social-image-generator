@@ -1,7 +1,7 @@
 const express = require('express');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { generateCaption } = require('../../lib/ai');
+const { generateCaption } = require('../../lib/ai-provider');
 const { publishPost } = require('../../lib/meta-publish');
 const { renderImage } = require('../../lib/renderer');
 

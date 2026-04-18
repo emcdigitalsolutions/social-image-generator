@@ -171,9 +171,20 @@
     </form>
   </div>
   <div class="card" style="margin-bottom:16px">
-    <div class="card-header"><h3>Claude AI</h3></div>
+    <div class="card-header"><h3>AI Provider</h3></div>
     <form id="ai-form">
       <div class="form-group">
+        <label>Provider AI</label>
+        <select name="ai_provider" id="ai-provider-select">
+          <option value="gemini" <%= client.ai_provider === 'gemini' || !client.ai_provider ? 'selected' : '' %>>Gemini 2.5 Flash (gratuito)</option>
+          <option value="claude" <%= client.ai_provider === 'claude' ? 'selected' : '' %>>Claude Opus (premium)</option>
+        </select>
+      </div>
+      <div class="form-group" id="gemini-key-group">
+        <label>Gemini API Key</label>
+        <input type="password" name="gemini_api_key" value="<%= client.gemini_api_key || '' %>">
+      </div>
+      <div class="form-group" id="anthropic-key-group">
         <label>Anthropic API Key</label>
         <input type="password" name="anthropic_api_key" value="<%= client.anthropic_api_key || '' %>">
       </div>
@@ -247,6 +258,15 @@
     await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
     alert('Credenziali salvate');
   });
+
+  // AI provider toggle
+  function toggleAiKeyFields() {
+    const provider = document.getElementById('ai-provider-select').value;
+    document.getElementById('gemini-key-group').style.display = provider === 'gemini' ? '' : 'none';
+    document.getElementById('anthropic-key-group').style.display = provider === 'claude' ? '' : 'none';
+  }
+  document.getElementById('ai-provider-select').addEventListener('change', toggleAiKeyFields);
+  toggleAiKeyFields();
 
   // AI form
   document.getElementById('ai-form').addEventListener('submit', async (e) => {
