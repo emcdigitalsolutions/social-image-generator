@@ -219,20 +219,37 @@
       </div>
       <!-- Theme Section -->
       <div>
-        <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">Tema CSS: <%= client.theme_filename || 'non caricato' %></p>
-        <div id="theme-colors-container" style="margin-bottom:12px;display:none">
-          <div id="theme-color-swatches" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-          <button type="button" class="btn btn-sm btn-primary" id="save-colors-btn" onclick="saveThemeColors()" style="display:none">Salva colori</button>
+        <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">Tema CSS: <%= client.theme_filename || 'non caricato' %></p>
+        <!-- Brand colors pickers for theme generation -->
+        <div style="margin-bottom:12px">
+          <p style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px">Colori Brand</p>
+          <div id="brand-colors-pickers" style="display:flex;flex-direction:column;gap:8px">
+            <div class="color-picker-row" style="display:flex;align-items:center;gap:10px">
+              <input type="color" id="brand-color-1" value="#6b9ef7" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
+              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore primario</label><input type="text" id="brand-hex-1" value="#6b9ef7" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
+            </div>
+            <div class="color-picker-row" style="display:flex;align-items:center;gap:10px">
+              <input type="color" id="brand-color-2" value="#1a1f2e" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
+              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore secondario</label><input type="text" id="brand-hex-2" value="#1a1f2e" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
+            </div>
+            <div class="color-picker-row" style="display:flex;align-items:center;gap:10px">
+              <input type="color" id="brand-color-3" value="#e8eaed" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
+              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore terziario (opzionale)</label><input type="text" id="brand-hex-3" value="#e8eaed" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" id="generate-theme-btn" onclick="generateTheme()" style="margin-top:10px;width:100%">Genera Tema da colori</button>
         </div>
-        <form id="theme-form" enctype="multipart/form-data" style="margin-bottom:8px">
+        <!-- Theme CSS variables editor (visible when theme exists) -->
+        <div id="theme-colors-container" style="display:none;border-top:1px solid var(--gray-200);padding-top:12px;margin-bottom:12px">
+          <p style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px">Variabili Tema CSS</p>
+          <div id="theme-color-swatches" style="display:flex;flex-direction:column;gap:4px"></div>
+          <button type="button" class="btn btn-sm btn-primary" id="save-colors-btn" onclick="saveThemeColors()" style="display:none;margin-top:10px;width:100%">Salva colori tema</button>
+        </div>
+        <form id="theme-form" enctype="multipart/form-data" style="border-top:1px solid var(--gray-200);padding-top:12px">
+          <p style="font-size:11px;color:var(--gray-400);margin-bottom:6px">Oppure carica un file CSS manualmente</p>
           <input type="file" name="theme" accept=".css">
           <button type="submit" class="btn btn-sm btn-secondary" style="margin-top:8px">Carica Tema CSS</button>
         </form>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="text" id="brand-colors-input" placeholder="es. #6b9ef7, #1a1f2e, #e8eaed" style="flex:1;font-size:12px;min-width:180px">
-          <button type="button" class="btn btn-sm btn-primary" id="generate-theme-btn" onclick="generateTheme()">Genera Tema da colori</button>
-        </div>
-        <p style="font-size:11px;color:var(--gray-400);margin-top:4px">Inserisci 2-4 colori HEX del brand oppure usa quelli dalla scansione sito</p>
       </div>
     </div>
   </div>
@@ -335,7 +352,45 @@
     }
   });
 
-  // --- Theme color management ---
+  // --- Brand color pickers sync ---
+  for (let i = 1; i <= 3; i++) {
+    const picker = document.getElementById('brand-color-' + i);
+    const hex = document.getElementById('brand-hex-' + i);
+    picker.addEventListener('input', () => { hex.value = picker.value; });
+    hex.addEventListener('input', () => {
+      const v = hex.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) picker.value = v;
+    });
+  }
+
+  function setBrandColors(colors) {
+    for (let i = 0; i < 3; i++) {
+      if (colors[i]) {
+        const c = colors[i].length === 4 ? '#' + colors[i][1]+colors[i][1]+colors[i][2]+colors[i][2]+colors[i][3]+colors[i][3] : colors[i];
+        document.getElementById('brand-color-' + (i + 1)).value = c;
+        document.getElementById('brand-hex-' + (i + 1)).value = c;
+      }
+    }
+  }
+
+  function getBrandColors() {
+    const colors = [];
+    for (let i = 1; i <= 3; i++) {
+      const v = document.getElementById('brand-hex-' + i).value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) colors.push(v);
+    }
+    return colors;
+  }
+
+  // --- Theme CSS variables management ---
+
+  const CSS_VAR_LABELS = {
+    '--bg-deep': 'Sfondo profondo', '--bg-primary': 'Sfondo principale', '--bg-card': 'Sfondo card', '--bg-elevated': 'Sfondo elevato',
+    '--accent': 'Accent', '--accent-light': 'Accent chiaro', '--accent-silver': 'Accent argento', '--accent-bright': 'Accent brillante',
+    '--text-primary': 'Testo primario', '--text-light': 'Testo chiaro', '--text-medium': 'Testo medio', '--text-muted': 'Testo muto',
+    '--border-cool': 'Bordo cool', '--border-elevated': 'Bordo elevato',
+    '--glass-bg': 'Glass bg', '--overlay-top': 'Overlay top', '--overlay-bottom': 'Overlay bottom'
+  };
 
   const CSS_VAR_GROUPS = {
     'Backgrounds': ['--bg-deep', '--bg-primary', '--bg-card', '--bg-elevated'],
@@ -346,18 +401,15 @@
   };
 
   let currentThemeColors = {};
-  let colorsModified = false;
 
   function hexFromValue(val) {
     val = val.trim();
     if (val.startsWith('#')) return val.substring(0, 7);
-    // Try to extract from rgba
     const rgbaMatch = val.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
     if (rgbaMatch) {
-      const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
-      const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
-      const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
-      return '#' + r + g + b;
+      return '#' + parseInt(rgbaMatch[1]).toString(16).padStart(2, '0') +
+        parseInt(rgbaMatch[2]).toString(16).padStart(2, '0') +
+        parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
     }
     return '#888888';
   }
@@ -367,41 +419,42 @@
     const wrapper = document.getElementById('theme-colors-container');
     container.innerHTML = '';
 
-    if (!Object.keys(colors).length) {
-      wrapper.style.display = 'none';
-      return;
-    }
-
+    if (!Object.keys(colors).length) { wrapper.style.display = 'none'; return; }
     wrapper.style.display = 'block';
 
     for (const [groupName, vars] of Object.entries(CSS_VAR_GROUPS)) {
-      const groupDiv = document.createElement('div');
-      groupDiv.style.cssText = 'margin-bottom:6px;width:100%';
-      groupDiv.innerHTML = '<span style="font-size:10px;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.5px">' + groupName + '</span>';
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:4px;margin-top:2px;flex-wrap:wrap';
+      const header = document.createElement('div');
+      header.style.cssText = 'font-size:10px;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.5px;margin-top:8px;margin-bottom:2px';
+      header.textContent = groupName;
+      container.appendChild(header);
 
       vars.forEach(varName => {
         if (!colors[varName]) return;
         const hex = hexFromValue(colors[varName]);
-        const swatch = document.createElement('label');
-        swatch.style.cssText = 'position:relative;cursor:pointer;display:inline-block';
-        swatch.title = varName + ': ' + colors[varName];
-        swatch.innerHTML = '<div style="width:28px;height:28px;border-radius:6px;background:' + colors[varName] + ';border:2px solid rgba(255,255,255,0.15);transition:transform 0.1s" onmouseenter="this.style.transform=\'scale(1.15)\'" onmouseleave="this.style.transform=\'\'"></div>' +
-          '<input type="color" value="' + hex + '" data-var="' + varName + '" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">';
-        swatch.querySelector('input').addEventListener('input', function() {
-          const newColor = this.value;
-          this.previousElementSibling.style.background = newColor;
-          currentThemeColors[varName] = newColor;
-          colorsModified = true;
-          document.getElementById('save-colors-btn').style.display = '';
-          this.parentElement.title = varName + ': ' + newColor;
-        });
-        row.appendChild(swatch);
-      });
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:3px 0';
+        row.innerHTML =
+          '<input type="color" value="' + hex + '" data-var="' + varName + '" style="width:30px;height:30px;border:2px solid var(--gray-200);border-radius:6px;cursor:pointer;padding:1px">' +
+          '<div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">' + (CSS_VAR_LABELS[varName] || varName) + '</label>' +
+          '<input type="text" value="' + colors[varName] + '" data-var="' + varName + '" style="font-size:12px;font-family:monospace;width:100%;padding:2px 6px;border:1px solid var(--gray-200);border-radius:4px" maxlength="30"></div>';
 
-      groupDiv.appendChild(row);
-      container.appendChild(groupDiv);
+        const colorInput = row.querySelector('input[type="color"]');
+        const textInput = row.querySelector('input[type="text"]');
+
+        colorInput.addEventListener('input', function() {
+          textInput.value = this.value;
+          currentThemeColors[varName] = this.value;
+          document.getElementById('save-colors-btn').style.display = '';
+        });
+        textInput.addEventListener('input', function() {
+          const v = this.value.trim();
+          const h = hexFromValue(v);
+          colorInput.value = h;
+          currentThemeColors[varName] = v;
+          document.getElementById('save-colors-btn').style.display = '';
+        });
+        container.appendChild(row);
+      });
     }
   }
 
@@ -426,33 +479,26 @@
         method: 'PUT',
         body: { colors: currentThemeColors }
       });
-      colorsModified = false;
       btn.style.display = 'none';
       alert('Colori del tema aggiornati');
     } catch (err) {
       alert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Salva colori';
+      btn.textContent = 'Salva colori tema';
     }
   }
 
   async function generateTheme() {
-    const input = document.getElementById('brand-colors-input');
-    const raw = input.value.trim();
-    if (!raw) {
-      alert('Inserisci almeno 2 colori HEX separati da virgola (es. #6b9ef7, #1a1f2e)');
-      return;
-    }
-    const colors = raw.split(',').map(c => c.trim()).filter(c => /^#[0-9a-fA-F]{3,8}$/.test(c));
+    const colors = getBrandColors();
     if (colors.length < 2) {
-      alert('Servono almeno 2 colori HEX validi (es. #6b9ef7, #1a1f2e)');
+      alert('Seleziona almeno 2 colori brand con i picker');
       return;
     }
 
     const btn = document.getElementById('generate-theme-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="loading"></span> Generazione...';
+    btn.innerHTML = '<span class="loading"></span> Generazione tema...';
 
     try {
       const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/generate-theme', {
@@ -642,19 +688,25 @@
         filled++;
       }
 
-      // Auto-fill brand colors input
+      // Auto-fill brand color pickers and generate theme
       if (d.colors && d.colors.length) {
-        const colorsInput = document.getElementById('brand-colors-input');
-        if (colorsInput) colorsInput.value = d.colors.join(', ');
+        setBrandColors(d.colors);
       }
 
       // Show extra info as alert
       let msg = 'Scansione completata: ' + filled + ' campi compilati.';
       if (d.description) msg += '\n\nDescrizione: ' + d.description;
       if (d.services) msg += '\nServizi: ' + d.services;
-      if (d.colors && d.colors.length) msg += '\nColori brand: ' + d.colors.join(', ') + '\n(Compilati nel campo "Genera Tema da colori" nella sezione Impostazioni)';
+      if (d.colors && d.colors.length) msg += '\nColori brand: ' + d.colors.join(', ');
       msg += '\n\nRivedi i campi evidenziati e clicca "Salva Profilo".';
       alert(msg);
+
+      // Auto-generate theme from scanned colors
+      if (d.colors && d.colors.length >= 2) {
+        if (confirm('Vuoi generare automaticamente il tema CSS dai colori del sito?')) {
+          generateTheme();
+        }
+      }
     } catch (err) {
       alert('Errore: ' + (err.message || 'Scansione fallita'));
     } finally {

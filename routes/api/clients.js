@@ -156,16 +156,30 @@ router.post('/:id/logo', logoUpload.single('logo'), (req, res) => {
   res.json({ filename });
 });
 
-// Serve logo preview
+// Serve logo preview (extracts raw image from SVG wrapper for raster logos)
 router.get('/:id/logo-preview', (req, res) => {
   const filename = `logo-${req.params.id}.svg`;
   const filepath = path.join(__dirname, '..', '..', 'assets', filename);
   if (!fs.existsSync(filepath)) {
     return res.status(404).json({ error: 'Logo non trovato' });
   }
-  res.setHeader('Content-Type', 'image/svg+xml');
-  res.setHeader('Cache-Control', 'no-cache');
-  fs.createReadStream(filepath).pipe(res);
+
+  const svg = fs.readFileSync(filepath, 'utf-8');
+  // Check if it's a raster-wrapped SVG (contains embedded base64 image)
+  const dataUriMatch = svg.match(/href="data:(image\/(?:png|jpeg));base64,([^"]+)"/);
+  if (dataUriMatch) {
+    // Serve the raw image directly (browsers block data: URIs inside SVG loaded via <img>)
+    const mimeType = dataUriMatch[1];
+    const base64Data = dataUriMatch[2];
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(Buffer.from(base64Data, 'base64'));
+  } else {
+    // Native SVG — serve as-is
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(svg);
+  }
 });
 
 // Upload/generate theme CSS
