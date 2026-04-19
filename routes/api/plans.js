@@ -2,7 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { generateEditorialPlan } = require('../../lib/ai-provider');
+const { generateEditorialPlan, generateCategoryPosts } = require('../../lib/ai-provider');
 const postMedia = require('../../lib/post-media');
 const { renderPlanPdf } = require('../../lib/pdf');
 
@@ -218,6 +218,97 @@ router.post('/:id/save-data', (req, res) => {
   const updated = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
   if (updated.plan_data) updated.plan_data = JSON.parse(updated.plan_data);
   res.json({ plan: updated, posts_created: postsCreated });
+});
+
+// Sostituisce SOLO le categorie del piano (senza toccare i mesi/posts).
+// Usato dall'editor categorie inline.
+router.put('/:id/categories', (req, res) => {
+  const db = getDb();
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+
+  const categories = req.body.categories;
+  if (!Array.isArray(categories)) return res.status(400).json({ error: 'categories deve essere un array' });
+  // Valida shape minimale
+  for (const c of categories) {
+    if (!c.code || !c.name) return res.status(400).json({ error: 'Ogni categoria deve avere code e name' });
+  }
+
+  const planData = plan.plan_data ? JSON.parse(plan.plan_data) : {};
+  planData.categories = categories;
+  db.prepare("UPDATE editorial_plans SET plan_data = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(JSON.stringify(planData), plan.id);
+
+  res.json({ categories });
+});
+
+// Rigenera SOLO i post di una categoria — tipico flusso quando il cliente
+// dice "togli C3, sostituisci con C7" o "cambia frequenza di C2".
+router.post('/:id/regenerate-category', async (req, res) => {
+  const db = getDb();
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+
+  const { category_code, target_count } = req.body;
+  if (!category_code) return res.status(400).json({ error: 'category_code richiesto' });
+
+  const planData = plan.plan_data ? JSON.parse(plan.plan_data) : {};
+  const category = (planData.categories || []).find(c => c.code === category_code);
+  if (!category) return res.status(400).json({ error: `Categoria ${category_code} non trovata nel piano` });
+
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(plan.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  try {
+    const { posts: newPosts } = await generateCategoryPosts(client, planData, category, { targetCount: target_count });
+
+    // Rimuovi i post esistenti di questa categoria dal plan_data
+    for (const month of planData.months || []) {
+      for (const week of month.weeks || []) {
+        week.posts = (week.posts || []).filter(p => p.category !== category_code);
+      }
+    }
+
+    // Inserisci i nuovi post nella struttura plan_data nella settimana giusta
+    for (const newPost of newPosts) {
+      const month = (planData.months || []).find(m => m.month_number === newPost.month_number);
+      if (!month) continue;
+      let week = (month.weeks || []).find(w => w.week_number === newPost.week_number);
+      if (!week) {
+        week = { week_number: newPost.week_number, posts: [] };
+        month.weeks = (month.weeks || []).concat(week);
+      }
+      week.posts = (week.posts || []).concat(newPost);
+    }
+
+    // Salva plan_data aggiornato
+    db.prepare("UPDATE editorial_plans SET plan_data = ?, updated_at = datetime('now') WHERE id = ?")
+      .run(JSON.stringify(planData), plan.id);
+
+    // Ricostruisci i post draft in DB (sostituisce solo i draft della categoria)
+    db.prepare("DELETE FROM posts WHERE editorial_plan_id = ? AND category = ? AND status = 'draft'")
+      .run(plan.id, category_code);
+
+    const insertPost = db.prepare(`
+      INSERT INTO posts (id, client_id, editorial_plan_id, month_number, week_number, category, sub_topic, template, media_type, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
+    `);
+    for (const p of newPosts) {
+      const mt = VALID_MEDIA_TYPES.has(p.media_type) ? p.media_type : 'single_image';
+      insertPost.run(
+        uuidv4(), client.id, plan.id,
+        p.month_number, p.week_number,
+        p.category, p.sub_topic || null,
+        p.template || 'quote',
+        mt
+      );
+    }
+
+    res.json({ posts_created: newPosts.length, plan_data: planData });
+  } catch (err) {
+    console.error('[regenerate-category]', err.stack || err.message);
+    res.status(500).json({ error: 'Rigenerazione categoria fallita', details: err.message });
+  }
 });
 
 // Export PDF — ritorna binary PDF del piano
