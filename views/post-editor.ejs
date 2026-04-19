@@ -13,6 +13,7 @@
   .type-help { font-size:12px; color:var(--gray-500); margin:8px 0 16px; }
 
   .uploader {
+    position:relative;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:10px; padding:36px 20px; min-height:180px;
     border:2px dashed var(--gray-300); border-radius:10px;
@@ -28,7 +29,31 @@
     border-color:var(--blue); background:#dbeafe;
     transform:scale(1.01); box-shadow:0 4px 16px rgba(59,130,246,.15);
   }
-  .uploader.is-uploading { pointer-events:none; opacity:.7; }
+  .uploader.is-uploading { pointer-events:none; }
+
+  /* Progress overlay durante upload */
+  .upload-progress {
+    position:absolute; inset:0; z-index:5;
+    background:rgba(255,255,255,0.96);
+    border-radius:10px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  }
+  .upload-progress-bar {
+    width:70%; max-width:320px; height:10px;
+    background:var(--gray-200); border-radius:5px; overflow:hidden;
+  }
+  .upload-progress-fill {
+    height:100%; background:var(--blue);
+    transition: width .15s ease-out;
+    border-radius:5px;
+  }
+  .upload-progress-text {
+    font-size:14px; font-weight:600; color:var(--gray-700);
+    font-variant-numeric: tabular-nums;
+  }
+  .upload-progress-sub {
+    font-size:12px; color:var(--gray-500);
+  }
   .uploader input[type=file] { display:none; }
   .uploader-icon {
     width:44px; height:44px; color:var(--gray-400);
@@ -219,6 +244,11 @@
         </svg>
         <div class="uploader-title"><em>Seleziona file</em> o trascinali qui</div>
         <div class="uploader-hint">Immagini: JPG / PNG / WEBP fino a 8MB<br>Video: MP4 / MOV fino a 100MB · massimo 10 file</div>
+        <div class="upload-progress" id="upload-progress" style="display:none">
+          <div class="upload-progress-text" id="upload-progress-text">Caricamento... 0%</div>
+          <div class="upload-progress-bar"><div class="upload-progress-fill" id="upload-progress-fill"></div></div>
+          <div class="upload-progress-sub" id="upload-progress-sub"></div>
+        </div>
       </label>
 
       <div id="media-grid" class="media-grid"></div>
@@ -513,30 +543,78 @@
 
   // ── API actions ──
 
-  async function uploadFiles(files) {
-    if (!files.length) return;
-    const dzEl = document.getElementById('uploader');
-    dzEl.classList.add('is-uploading');
-    const fd = new FormData();
-    Array.from(files).forEach(f => fd.append('media', f));
-    try {
-      const res = await fetch('/dashboard/api/posts/' + POST_ID + '/media', {
-        method: 'POST', body: fd,
-        headers: { 'Authorization': 'Bearer ' + getToken() }
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(0) + ' KB';
+    return (n / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  function showUploadProgress(loaded, total, fileCount) {
+    const pct = total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+    document.getElementById('upload-progress-fill').style.width = pct + '%';
+    document.getElementById('upload-progress-text').textContent = 'Caricamento... ' + pct + '%';
+    document.getElementById('upload-progress-sub').textContent =
+      fmtBytes(loaded) + ' / ' + fmtBytes(total) + ' (' + fileCount + ' file)';
+  }
+
+  function uploadFiles(files) {
+    return new Promise((resolve) => {
+      if (!files.length) return resolve();
+      const dzEl = document.getElementById('uploader');
+      const progressEl = document.getElementById('upload-progress');
+      dzEl.classList.add('is-uploading');
+      progressEl.style.display = 'flex';
+      showUploadProgress(0, 1, files.length);
+
+      const fd = new FormData();
+      Array.from(files).forEach(f => fd.append('media', f));
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/dashboard/api/posts/' + POST_ID + '/media', true);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + getToken());
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          showUploadProgress(e.loaded, e.total, files.length);
+        }
       });
-      const data = await res.json();
-      if (!res.ok && (!data.media || !data.media.length)) {
-        await showAlert('Upload fallito: ' + (data.error || JSON.stringify(data.errors || {})));
-        return;
-      }
-      if (data.errors && data.errors.length) {
-        toast('Alcuni file scartati: ' + data.errors.map(e => e.file + ' (' + e.error + ')').join(', '));
-      }
-      MEDIA = MEDIA.concat(data.media || []);
-      renderMedia();
-    } finally {
-      dzEl.classList.remove('is-uploading');
-    }
+
+      xhr.upload.addEventListener('load', () => {
+        // Upload completato lato client, server sta processando
+        document.getElementById('upload-progress-fill').style.width = '100%';
+        document.getElementById('upload-progress-text').textContent = 'Elaborazione...';
+        document.getElementById('upload-progress-sub').textContent = 'Il server sta salvando i file';
+      });
+
+      xhr.onload = async () => {
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch (_) {}
+        const ok = xhr.status >= 200 && xhr.status < 300;
+        if (!ok && (!data.media || !data.media.length)) {
+          dzEl.classList.remove('is-uploading');
+          progressEl.style.display = 'none';
+          await showAlert('Upload fallito: ' + (data.error || ('HTTP ' + xhr.status)));
+          return resolve();
+        }
+        if (data.errors && data.errors.length) {
+          toast('Alcuni file scartati: ' + data.errors.map(e => e.file + ' (' + e.error + ')').join(', '));
+        }
+        MEDIA = MEDIA.concat(data.media || []);
+        renderMedia();
+        dzEl.classList.remove('is-uploading');
+        progressEl.style.display = 'none';
+        resolve();
+      };
+
+      xhr.onerror = async () => {
+        dzEl.classList.remove('is-uploading');
+        progressEl.style.display = 'none';
+        await showAlert('Errore di rete durante l\u2019upload');
+        resolve();
+      };
+
+      xhr.send(fd);
+    });
   }
 
   document.getElementById('media-input').addEventListener('change', e => uploadFiles(e.target.files));
