@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %></title>
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #fff; --border: #e5e7eb; --border-soft: #f1f3f5;
+    --text: #111827; --text-soft: #6b7280; --text-muted: #9ca3af;
+    --blue: #2563eb; --blue-soft: #eff6ff;
+    --green: #10b981; --green-soft: #ecfdf5;
+    --red: #dc2626; --red-soft: #fef2f2;
+    --amber: #d97706; --amber-soft: #fef3c7;
+    --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+    line-height: 1.5; font-size: 15px;
+  }
+  .topbar {
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; }
+  .topbar .meta { font-size: 13px; color: var(--text-soft); }
+  .topbar .progress {
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+  }
+  .progress-bar {
+    width: 120px; height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden;
+  }
+  .progress-bar > span { display: block; height: 100%; background: var(--green); transition: width .25s; }
+
+  .container {
+    max-width: 920px; margin: 0 auto; padding: 24px 16px 80px;
+  }
+  .intro {
+    background: var(--blue-soft); border-left: 4px solid var(--blue); border-radius: 6px;
+    padding: 14px 18px; margin-bottom: 24px; font-size: 14px; color: #1e3a8a;
+  }
+  .intro strong { display: block; margin-bottom: 4px; font-size: 15px; }
+
+  .post-list { display: flex; flex-direction: column; gap: 16px; }
+  .post-card {
+    background: white; border: 1px solid var(--border); border-radius: 10px;
+    overflow: hidden; transition: border-color .15s, box-shadow .15s;
+  }
+  .post-card.s-approved         { border-color: var(--green); }
+  .post-card.s-change_requested { border-color: var(--amber); }
+  .post-card.s-rejected         { border-color: var(--red); }
+
+  .post-head {
+    padding: 12px 16px; border-bottom: 1px solid var(--border-soft);
+    display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 13px;
+  }
+  .post-head .pill {
+    padding: 2px 8px; border-radius: 12px; background: var(--gray-100); font-size: 12px; font-weight: 600;
+  }
+  .post-head .pill.cat   { background: #1e3a8a; color: white; }
+  .post-head .pill.type  { background: #ede9fe; color: #5b21b6; }
+  .post-head .pill.story { background: #fce7f3; color: #9d174d; }
+  .post-head .when { color: var(--text-soft); }
+  .post-head .status-badge {
+    margin-left: auto; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
+  }
+  .post-head .status-badge.pending          { background: var(--gray-100); color: var(--text-soft); }
+  .post-head .status-badge.approved         { background: var(--green-soft); color: var(--green); }
+  .post-head .status-badge.change_requested { background: var(--amber-soft); color: var(--amber); }
+  .post-head .status-badge.rejected         { background: var(--red-soft); color: var(--red); }
+
+  .post-body { display: grid; grid-template-columns: 220px 1fr; gap: 0; }
+  @media (max-width: 640px) { .post-body { grid-template-columns: 1fr; } }
+  .post-media {
+    background: #fafafa; padding: 12px;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 200px;
+  }
+  .post-media .ph {
+    color: var(--text-muted); font-size: 12px; text-align: center;
+  }
+  .post-media img, .post-media video {
+    max-width: 100%; max-height: 220px; border-radius: 6px; object-fit: contain;
+  }
+  .post-media .multi {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; width: 100%;
+  }
+  .post-media .multi img, .post-media .multi video { max-height: 95px; aspect-ratio: 1/1; object-fit: cover; }
+  .post-content { padding: 14px 18px; }
+  .post-content .sub-topic { font-weight: 600; margin-bottom: 8px; }
+  .post-content .caption {
+    white-space: pre-wrap; font-size: 14px; color: var(--text);
+    background: var(--gray-100); padding: 10px 12px; border-radius: 6px;
+    max-height: 220px; overflow-y: auto;
+  }
+  .post-content .empty { color: var(--text-muted); font-style: italic; font-size: 13px; padding: 8px; }
+
+  .comments-block {
+    border-top: 1px solid var(--border-soft); padding: 10px 18px; background: #fafbfc;
+  }
+  .comments-block h4 { margin: 0 0 6px; font-size: 12px; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px; }
+  .comment {
+    font-size: 13px; padding: 6px 0; border-bottom: 1px dashed var(--gray-200);
+  }
+  .comment:last-child { border-bottom: 0; }
+  .comment .who { font-weight: 600; color: var(--text-soft); margin-right: 6px; }
+
+  .post-actions {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px;
+    border-top: 1px solid var(--border-soft); background: #fafbfc;
+  }
+  .post-actions button {
+    flex: 1 1 120px; padding: 10px 14px; font-size: 14px; font-weight: 600;
+    border-radius: 6px; cursor: pointer; transition: background .12s, transform .05s;
+    border: 1px solid;
+  }
+  .post-actions button:active { transform: scale(0.98); }
+  .post-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-approve { background: var(--green); color: white; border-color: var(--green); }
+  .btn-approve:hover:not(:disabled) { background: #059669; }
+  .btn-request { background: white; color: var(--amber); border-color: var(--amber); }
+  .btn-request:hover:not(:disabled) { background: var(--amber-soft); }
+  .btn-reject  { background: white; color: var(--red); border-color: var(--red); }
+  .btn-reject:hover:not(:disabled)  { background: var(--red-soft); }
+
+  .footer-cta {
+    position: sticky; bottom: 0; background: white; border-top: 2px solid var(--border);
+    padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,.06);
+    flex-wrap: wrap;
+  }
+  .footer-cta .label { font-size: 14px; }
+  .btn-approve-all {
+    background: var(--green); color: white; border: 0; padding: 12px 20px; font-size: 15px; font-weight: 700;
+    border-radius: 8px; cursor: pointer;
+  }
+  .btn-approve-all:hover:not(:disabled) { background: #059669; }
+  .btn-approve-all:disabled { background: var(--gray-200); color: var(--text-muted); cursor: not-allowed; }
+
+  .toast {
+    position: fixed; top: 20px; right: 20px; background: #111; color: white;
+    padding: 10px 16px; border-radius: 6px; z-index: 200; font-size: 14px;
+    opacity: 0; transition: opacity .2s; pointer-events: none;
+  }
+  .toast.show { opacity: 0.95; }
+
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 300;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-card {
+    background: white; border-radius: 10px; padding: 22px; width: 92vw; max-width: 460px;
+  }
+  .modal-card h3 { margin: 0 0 6px; font-size: 16px; }
+  .modal-card .sub { font-size: 13px; color: var(--text-soft); margin-bottom: 12px; }
+  .modal-card textarea {
+    width: 100%; min-height: 100px; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
+    font-family: inherit; font-size: 14px; resize: vertical;
+  }
+  .modal-card .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .modal-card .actions button { padding: 8px 14px; font-size: 14px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: white; }
+  .modal-card .actions .primary { background: var(--blue); color: white; border-color: var(--blue); }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: var(--text-soft);
+  }
+  .empty-state h2 { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1><%= client.display_name %></h1>
+    <div class="meta">Piano editoriale &middot; Mese <%= approval.month_number %></div>
+  </div>
+  <div class="progress">
+    <span id="prog-label">Caricamento...</span>
+    <div class="progress-bar"><span id="prog-bar" style="width:0%"></span></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="intro">
+    <strong>Approva i contenuti del mese</strong>
+    Per ogni post puoi <em>Approvare</em>, <em>Chiedere modifica</em> (con un commento) o <em>Rifiutare</em>.
+    Solo i post che hai <strong>approvato</strong> verranno pubblicati. Quando hai finito puoi anche cliccare in basso <strong>"Approva tutto"</strong> per OK rapido a quello che resta.
+  </div>
+
+  <div id="post-list" class="post-list">
+    <div class="empty-state"><h2>Caricamento...</h2></div>
+  </div>
+</div>
+
+<div class="footer-cta">
+  <div class="label" id="footer-label">Caricamento...</div>
+  <button class="btn-approve-all" id="approve-all-btn" onclick="approveAll()" disabled>&#10003; Approva tutti i restanti</button>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  const TOKEN = '<%= token %>';
+  let DATA = null;
+
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function statusLabel(s) {
+    return s === 'approved' ? 'Approvato'
+      : s === 'change_requested' ? 'Modifica richiesta'
+      : s === 'rejected' ? 'Rifiutato'
+      : 'In attesa';
+  }
+  function typeLabel(t) {
+    return t === 'carousel' ? 'Carousel'
+      : t === 'reel' ? 'Reel'
+      : t === 'story' ? 'Storia (la pubblichi tu)'
+      : 'Singola';
+  }
+
+  function renderMedia(p) {
+    if (!p.media || !p.media.length) {
+      // fallback all'image_url legacy
+      if (p.image_url) return '<img src="' + escapeHtml(p.image_url) + '" alt="">';
+      return '<div class="ph">Nessuna immagine ancora</div>';
+    }
+    if (p.media.length === 1) {
+      const m = p.media[0];
+      return m.kind === 'video'
+        ? '<video src="' + escapeHtml(m.url) + '" controls preload="metadata"></video>'
+        : '<img src="' + escapeHtml(m.url) + '" alt="">';
+    }
+    return '<div class="multi">' + p.media.slice(0, 4).map(m =>
+      m.kind === 'video'
+        ? '<video src="' + escapeHtml(m.url) + '" muted preload="metadata"></video>'
+        : '<img src="' + escapeHtml(m.url) + '" alt="">'
+    ).join('') + '</div>';
+  }
+
+  function renderComments(p) {
+    if (!p.comments || !p.comments.length) return '';
+    return '<div class="comments-block"><h4>Commenti</h4>' +
+      p.comments.map(c =>
+        '<div class="comment"><span class="who">' + (c.author === 'client' ? 'Tu' : 'Agenzia') + ':</span>' +
+        escapeHtml(c.text) + '</div>'
+      ).join('') + '</div>';
+  }
+
+  function renderPost(p) {
+    const typeClass = p.media_type === 'story' ? 'pill story' : 'pill type';
+    return ''
+      + '<article class="post-card s-' + p.approval_status + '" data-id="' + p.id + '">'
+      + '  <div class="post-head">'
+      + '    <span class="pill cat">' + escapeHtml(p.category || '?') + '</span>'
+      + '    <span class="' + typeClass + '">' + typeLabel(p.media_type) + '</span>'
+      + (p.scheduled_date
+          ? '    <span class="when">&#128197; ' + escapeHtml(p.scheduled_date + (p.scheduled_time ? ' &middot; ' + p.scheduled_time.slice(0,5) : '')) + '</span>'
+          : '    <span class="when">Data da definire</span>')
+      + '    <span class="status-badge ' + p.approval_status + '">' + statusLabel(p.approval_status) + '</span>'
+      + '  </div>'
+      + '  <div class="post-body">'
+      + '    <div class="post-media">' + renderMedia(p) + '</div>'
+      + '    <div class="post-content">'
+      + (p.sub_topic ? '<div class="sub-topic">' + escapeHtml(p.sub_topic) + '</div>' : '')
+      + (p.caption ? '<div class="caption">' + escapeHtml(p.caption) + '</div>' : '<div class="empty">Caption non ancora pronta</div>')
+      + '    </div>'
+      + '  </div>'
+      + renderComments(p)
+      + '  <div class="post-actions">'
+      + '    <button class="btn-approve" onclick="approvePost(\'' + p.id + '\')" ' + (p.approval_status === 'approved' ? 'disabled' : '') + '>&#10003; Approva</button>'
+      + '    <button class="btn-request" onclick="requestChange(\'' + p.id + '\')">&#9998; Chiedi modifica</button>'
+      + '    <button class="btn-reject"  onclick="rejectPost(\'' + p.id + '\')">&#10005; Rifiuta</button>'
+      + '  </div>'
+      + '</article>';
+  }
+
+  function refreshProgress() {
+    const counts = { total: DATA.posts.length, approved: 0, pending: 0, change_requested: 0, rejected: 0 };
+    DATA.posts.forEach(p => { counts[p.approval_status] = (counts[p.approval_status] || 0) + 1; });
+    const labelEl = document.getElementById('prog-label');
+    const barEl = document.getElementById('prog-bar');
+    const footerLabel = document.getElementById('footer-label');
+    const btn = document.getElementById('approve-all-btn');
+    const decided = counts.approved + counts.change_requested + counts.rejected;
+    const pct = counts.total > 0 ? Math.round(decided / counts.total * 100) : 0;
+    labelEl.textContent = decided + ' / ' + counts.total + ' decisi';
+    barEl.style.width = pct + '%';
+    if (counts.pending === 0) {
+      footerLabel.textContent = 'Tutti i ' + counts.total + ' post sono stati valutati. Grazie!';
+      btn.disabled = true;
+      btn.textContent = '\u2713 Tutto valutato';
+    } else {
+      footerLabel.textContent = counts.pending + ' post ancora da valutare';
+      btn.disabled = false;
+      btn.textContent = '\u2713 Approva i ' + counts.pending + ' restanti';
+    }
+  }
+
+  function renderAll() {
+    const root = document.getElementById('post-list');
+    if (!DATA.posts.length) {
+      root.innerHTML = '<div class="empty-state"><h2>Nessun post in questo mese</h2><p>Il mese non contiene contenuti da approvare.</p></div>';
+      return;
+    }
+    root.innerHTML = DATA.posts.map(renderPost).join('');
+    refreshProgress();
+  }
+
+  async function load() {
+    const res = await fetch('/dashboard/api/approvals/public/' + TOKEN);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      document.getElementById('post-list').innerHTML = '<div class="empty-state"><h2>Errore</h2><p>' + escapeHtml(err.error || 'Impossibile caricare') + '</p></div>';
+      return;
+    }
+    DATA = await res.json();
+    renderAll();
+  }
+
+  async function postAction(path, body) {
+    const res = await fetch('/dashboard/api/approvals/public/' + TOKEN + path, {
+      method: 'POST',
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast('Errore: ' + (err.error || res.status));
+      return false;
+    }
+    return true;
+  }
+
+  async function approvePost(id) {
+    if (!await postAction('/posts/' + id + '/approve')) return;
+    const p = DATA.posts.find(x => x.id === id);
+    p.approval_status = 'approved';
+    renderAll();
+    toast('Post approvato');
+  }
+
+  function openCommentModal(title, sub, onSubmit) {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-bg';
+    wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
+    wrap.innerHTML =
+      '<div class="modal-card" onclick="event.stopPropagation()">' +
+      '  <h3>' + escapeHtml(title) + '</h3>' +
+      '  <div class="sub">' + escapeHtml(sub) + '</div>' +
+      '  <textarea id="cmt-input" placeholder="Scrivi qui il tuo commento o le modifiche che vorresti..."></textarea>' +
+      '  <div class="actions">' +
+      '    <button onclick="this.closest(\'.modal-bg\').remove()">Annulla</button>' +
+      '    <button class="primary" id="cmt-submit">Invia</button>' +
+      '  </div>' +
+      '</div>';
+    document.body.appendChild(wrap);
+    setTimeout(() => document.getElementById('cmt-input').focus(), 50);
+    document.getElementById('cmt-submit').onclick = async () => {
+      const text = document.getElementById('cmt-input').value.trim();
+      const ok = await onSubmit(text);
+      if (ok) wrap.remove();
+    };
+  }
+
+  function requestChange(id) {
+    openCommentModal(
+      'Chiedi una modifica',
+      'Spiega cosa vorresti cambiare. La tua agenzia social riceverà subito il commento.',
+      async (text) => {
+        if (!text) { toast('Scrivi un commento per chiedere la modifica'); return false; }
+        if (!await postAction('/posts/' + id + '/request', { comment: text })) return false;
+        const p = DATA.posts.find(x => x.id === id);
+        p.approval_status = 'change_requested';
+        if (!p.comments) p.comments = [];
+        p.comments.push({ author: 'client', text, created_at: new Date().toISOString() });
+        renderAll();
+        toast('Modifica richiesta');
+        return true;
+      }
+    );
+  }
+
+  function rejectPost(id) {
+    openCommentModal(
+      'Rifiuta questo post',
+      'Vuoi aggiungere il motivo del rifiuto? (opzionale)',
+      async (text) => {
+        if (!await postAction('/posts/' + id + '/reject', { comment: text })) return false;
+        const p = DATA.posts.find(x => x.id === id);
+        p.approval_status = 'rejected';
+        if (text) {
+          if (!p.comments) p.comments = [];
+          p.comments.push({ author: 'client', text, created_at: new Date().toISOString() });
+        }
+        renderAll();
+        toast('Post rifiutato');
+        return true;
+      }
+    );
+  }
+
+  async function approveAll() {
+    const pending = DATA.posts.filter(p => p.approval_status === 'pending').length;
+    if (!pending) return;
+    if (!confirm('Approvare i ' + pending + ' post in attesa? L\u2019operazione non si pu\u00f2 annullare.')) return;
+    if (!await postAction('/approve-all')) return;
+    DATA.posts.forEach(p => { if (p.approval_status === 'pending') p.approval_status = 'approved'; });
+    renderAll();
+    toast('Tutti i post pendenti sono stati approvati');
+  }
+
+  load();
+</script>
+</body>
+</html>

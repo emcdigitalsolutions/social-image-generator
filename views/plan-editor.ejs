@@ -37,6 +37,32 @@
   .month-card .mc-stats span { display:inline-flex; align-items:center; gap:3px; }
   .month-card .mc-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
   .month-card.empty { background:var(--gray-50); border-style:dashed; color:var(--gray-400); }
+
+  /* Approval section */
+  .approvals-card { margin-top:24px; }
+  .approvals-card .card-header { display:flex; align-items:center; justify-content:space-between; }
+  .approval-row {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:10px 12px; border:1px solid var(--gray-200); border-radius:6px; margin-bottom:6px;
+    background:white; flex-wrap:wrap;
+  }
+  .approval-row .ap-meta { font-size:13px; }
+  .approval-row .ap-status {
+    padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; text-transform:uppercase;
+  }
+  .ap-status.pending           { background:var(--gray-100); color:var(--gray-600); }
+  .ap-status.in_review         { background:#dbeafe; color:#1e3a8a; }
+  .ap-status.approved          { background:#dcfce7; color:#15803d; }
+  .ap-status.changes_requested { background:#fef3c7; color:#b45309; }
+  .ap-status.expired           { background:#fee2e2; color:#991b1b; }
+  .approval-row .ap-actions { display:flex; gap:6px; }
+  .approval-row .ap-link {
+    flex:1; padding:6px 10px; background:var(--gray-50); border:1px solid var(--gray-200);
+    border-radius:4px; font-family:monospace; font-size:11px; user-select:all; min-width:200px;
+    color:var(--gray-700);
+  }
+  .approval-row .ap-counts { font-size:11px; color:var(--gray-500); display:flex; gap:8px; flex-wrap:wrap; }
+  .approval-row .ap-counts strong { color:var(--gray-700); }
   .cat-table input,
   .cat-table textarea {
     width:100%; border:1px solid transparent; padding:4px 6px;
@@ -140,6 +166,18 @@
       <% } %>
     </a>
   <% } %>
+</div>
+<% } %>
+
+<% if (plan.plan_data && plan.plan_data.months) { %>
+<div class="card approvals-card">
+  <div class="card-header">
+    <h3>Approvazioni cliente</h3>
+    <span style="font-size:12px;color:var(--gray-500)">Genera un link per ogni mese e mandalo al cliente per farglielo approvare</span>
+  </div>
+  <div id="approvals-list">
+    <p style="font-size:12px;color:var(--gray-500)">Caricamento...</p>
+  </div>
 </div>
 <% } %>
 
@@ -362,6 +400,113 @@
   }
 
   renderCategories();
+
+  // ─────────────────────────── Approvazioni cliente ───────────────────────────
+
+  const APPROVAL_BASE = window.location.origin + '/dashboard/approve/';
+  let APPROVALS = [];
+  let APPROVAL_SUMMARY = {};
+
+  function statusLabelAp(s) {
+    return s === 'approved' ? 'Approvato'
+      : s === 'changes_requested' ? 'Modifiche richieste'
+      : s === 'in_review' ? 'In revisione'
+      : s === 'expired' ? 'Scaduto'
+      : 'In attesa';
+  }
+
+  function renderApprovals() {
+    const root = document.getElementById('approvals-list');
+    if (!root) return;
+    const totalMonths = (PLAN_DATA && PLAN_DATA.months) ? PLAN_DATA.months.length : 0;
+    if (!totalMonths) { root.innerHTML = '<p style="color:var(--gray-500)">Genera prima un piano editoriale.</p>'; return; }
+
+    const byMonth = {};
+    APPROVALS.forEach(a => { byMonth[a.month_number] = a; });
+
+    let html = '';
+    for (let m = 1; m <= totalMonths; m++) {
+      const a = byMonth[m];
+      if (!a) {
+        html += '<div class="approval-row">'
+          + '<div class="ap-meta"><strong>Mese ' + m + '</strong> &middot; <span style="color:var(--gray-500)">nessun link generato</span></div>'
+          + '<div class="ap-actions"><button class="btn btn-sm btn-primary" onclick="createApproval(' + m + ')">Genera link</button></div>'
+          + '</div>';
+      } else {
+        const link = APPROVAL_BASE + a.token;
+        const s = APPROVAL_SUMMARY[a.id] || { approved:0, change_requested:0, rejected:0, pending:0, total:0 };
+        const counts = ''
+          + (s.approved ? '<span><strong>' + s.approved + '</strong> approvati</span>' : '')
+          + (s.change_requested ? '<span><strong>' + s.change_requested + '</strong> modifiche</span>' : '')
+          + (s.rejected ? '<span><strong>' + s.rejected + '</strong> rifiutati</span>' : '')
+          + (s.pending ? '<span><strong>' + s.pending + '</strong> in attesa</span>' : '');
+        html += '<div class="approval-row">'
+          + '<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:280px">'
+          +   '<div class="ap-meta"><strong>Mese ' + m + '</strong> '
+          +     '<span class="ap-status ' + a.status + '">' + statusLabelAp(a.status) + '</span>'
+          +     (a.expires_at ? ' <span style="color:var(--gray-500);font-size:11px">scade ' + a.expires_at.slice(0,10) + '</span>' : '')
+          +   '</div>'
+          +   '<div class="ap-counts">' + (counts || '<span>' + s.total + ' post totali</span>') + '</div>'
+          +   '<input class="ap-link" readonly value="' + link.replace(/"/g, '&quot;') + '" onclick="this.select()">'
+          + '</div>'
+          + '<div class="ap-actions">'
+          +   '<button class="btn btn-sm btn-secondary" onclick="copyApprovalLink(\'' + link.replace(/'/g, "\\'") + '\')">Copia</button>'
+          +   '<button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deleteApproval(\'' + a.id + '\')" title="Elimina questo link (revoca l\u2019accesso)">\u00d7</button>'
+          + '</div>'
+          + '</div>';
+      }
+    }
+    root.innerHTML = html;
+  }
+
+  async function loadApprovals() {
+    try {
+      const res = await apiFetch('/dashboard/api/approvals/admin/plans/' + PLAN_ID);
+      APPROVALS = res.approvals || [];
+      APPROVAL_SUMMARY = res.summaries || {};
+      renderApprovals();
+    } catch (err) {
+      const root = document.getElementById('approvals-list');
+      if (root) root.innerHTML = '<p style="color:var(--red)">Errore: ' + escapeHtml(err.message) + '</p>';
+    }
+  }
+
+  async function createApproval(month) {
+    try {
+      const res = await apiFetch('/dashboard/api/approvals/admin/plans/' + PLAN_ID + '/months/' + month, {
+        method: 'POST', body: { expires_days: 30 }
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Link creato per Mese ' + month);
+      await loadApprovals();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  async function copyApprovalLink(link) {
+    try {
+      await navigator.clipboard.writeText(link);
+      toast('Link copiato negli appunti');
+    } catch (_) {
+      toast('Copia manuale: il link \u00e8 selezionato');
+    }
+  }
+
+  async function deleteApproval(id) {
+    if (!await showConfirm('Eliminare questo link di approvazione? Il cliente non potr\u00e0 pi\u00f9 accedere alla pagina.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/approvals/admin/' + id, { method: 'DELETE' });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Link revocato');
+      await loadApprovals();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  // Carica le approvazioni alla pagina
+  if (PLAN_DATA && PLAN_DATA.months) loadApprovals();
 
   // ─────────────────────────── PDF Export ───────────────────────────
 

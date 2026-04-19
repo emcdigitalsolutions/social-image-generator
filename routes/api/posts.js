@@ -161,6 +161,20 @@ router.post('/:id/publish', async (req, res) => {
     return res.status(400).json({ error: 'Le storie non si pubblicano dalla dashboard — sono task per il cliente (durano 24h)' });
   }
 
+  // Approval guard: se esiste un'approvazione attiva per questo mese, il post
+  // deve essere stato approvato dal cliente. Se non c'è approvazione (workflow
+  // non usato), si procede senza vincoli per backward-compat.
+  if (post.editorial_plan_id) {
+    const ap = db.prepare('SELECT id FROM monthly_approvals WHERE editorial_plan_id = ? AND month_number = ?')
+      .get(post.editorial_plan_id, post.month_number);
+    if (ap && post.approval_status !== 'approved') {
+      const stateLabel = post.approval_status === 'pending' ? 'in attesa di approvazione cliente'
+        : post.approval_status === 'change_requested' ? 'cliente ha chiesto modifiche'
+        : post.approval_status === 'rejected' ? 'rifiutato dal cliente' : post.approval_status;
+      return res.status(400).json({ error: `Pubblicazione bloccata: il post è ${stateLabel}. Aspetta che il cliente lo approvi.` });
+    }
+  }
+
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
   if (!client) return res.status(404).json({ error: 'Client not found' });
 

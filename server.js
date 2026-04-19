@@ -130,6 +130,7 @@ app.use('/dashboard/api/posts', require('./routes/api/posts'));
 app.use('/dashboard/api/schedules', require('./routes/api/schedules'));
 app.use('/dashboard/api/logs', require('./routes/api/logs'));
 app.use('/dashboard/api/settings', require('./routes/api/settings'));
+app.use('/dashboard/api/approvals', require('./routes/api/approvals'));
 
 // Page routes
 app.use('/dashboard', require('./routes/dashboard'));

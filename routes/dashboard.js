@@ -10,6 +10,29 @@ router.get('/login', (req, res) => {
   res.render('login', { title: 'Login' });
 });
 
+// Public approval page (no auth, token-based)
+// Il cliente apre il link che gli arriva tipo /dashboard/approve/<token>
+// e vede la pagina di approvazione mensile.
+router.get('/approve/:token', (req, res) => {
+  const db = getDb();
+  const approval = db.prepare('SELECT * FROM monthly_approvals WHERE token = ?').get(req.params.token);
+  if (!approval) {
+    return res.status(404).render('approval-error', { title: 'Link non valido', message: 'Il link di approvazione non &egrave; valido o &egrave; stato revocato. Contatta il tuo gestore social per riceverne uno nuovo.' });
+  }
+  if (approval.expires_at && new Date(approval.expires_at) < new Date()) {
+    return res.status(410).render('approval-error', { title: 'Link scaduto', message: 'Questo link di approvazione &egrave; scaduto. Contatta il tuo gestore social per riceverne uno nuovo.' });
+  }
+  const plan = db.prepare('SELECT id, title, client_id FROM editorial_plans WHERE id = ?').get(approval.editorial_plan_id);
+  const client = db.prepare('SELECT id, display_name, brand_name FROM clients WHERE id = ?').get(plan.client_id);
+  res.render('approval-public', {
+    title: `Approvazione mese ${approval.month_number} — ${client.display_name}`,
+    token: req.params.token,
+    approval,
+    plan,
+    client
+  });
+});
+
 // Public questionnaire (no auth)
 router.get('/q/:token', (req, res) => {
   const db = getDb();
