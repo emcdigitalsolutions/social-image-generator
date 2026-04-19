@@ -200,13 +200,22 @@
     let html = '';
     Object.keys(weeks).sort((a,b) => +a - +b).forEach(wn => {
       html += '<div class="week-group"><h3>Settimana ' + wn + '</h3><div class="posts-grid">';
+      const TYPE_LABEL = {
+        single_image: '\ud83d\uddbc Singola',
+        carousel:     '\ud83c\udfa0 Carousel',
+        reel:         '\ud83c\udfac Reel',
+        video:        '\ud83c\udfac Video',
+        story:        '\u2728 Storia (cliente)'
+      };
       weeks[wn].forEach(p => {
+        const mt = p.media_type || 'single_image';
+        const typeBadge = TYPE_LABEL[mt] || mt;
         html += '<a href="/dashboard/posts/' + p.id + '" class="post-card" style="text-decoration:none;color:inherit">';
         html += '<div class="post-card-image">' + (p.image_url ? '<img src="' + p.image_url + '">' : 'Nessuna immagine') + '</div>';
         html += '<div class="post-card-body"><h4>' + escapeHtml(p.category || 'Post') + '</h4>';
         html += '<p>' + escapeHtml(p.sub_topic || (p.caption ? p.caption.substring(0,80) + '...' : 'Nessun contenuto')) + '</p>';
         html += '<div class="post-card-footer"><span class="badge badge-' + p.status + '">' + p.status + '</span>';
-        html += '<span style="font-size:12px;color:var(--gray-400)">' + (p.template || '') + '</span></div></div></a>';
+        html += '<span style="font-size:11px;color:var(--gray-500)">' + typeBadge + '</span></div></div></a>';
       });
       html += '</div></div>';
     });

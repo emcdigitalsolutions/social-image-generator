@@ -235,6 +235,7 @@
         <span class="type-chip" data-type="single_image">Singola</span>
         <span class="type-chip" data-type="carousel">Carousel</span>
         <span class="type-chip" data-type="reel">Reel</span>
+        <span class="type-chip" data-type="story">Storia</span>
       </div>
       <p class="type-help" id="type-help"></p>
       <div id="reel-options" style="display:none;font-size:13px;border-top:1px solid var(--gray-200);padding-top:10px;margin-top:6px">
@@ -325,7 +326,8 @@
     single_image: 'Una sola immagine. Caricala oppure generala da template.',
     carousel:     'Da 2 a 10 media dello stesso tipo (tutte immagini o tutti video). L\u2019ordine \u00e8 quello in cui appariranno nel carousel.',
     video:        'Tipo legacy. Su IG Meta lo tratta come Reel — usa direttamente Reel.',
-    reel:         'Un video MP4/MOV verticale 9:16 (3-90s). Su Facebook va come video normale, su Instagram come Reel.'
+    reel:         'Un video MP4/MOV verticale 9:16 (3-90s). Su Facebook va come video normale, su Instagram come Reel.',
+    story:        '\u26a0\ufe0f Le storie devono essere pubblicate MANUALMENTE dal cliente dalla sua app (durano 24h). Qui le suggeriamo nel piano editoriale con caption + media di riferimento, ma non le pubblichiamo automaticamente.'
   };
 
   // Auth helper per fetch nativo (FormData usa boundary, non passabile via apiFetch)
@@ -454,6 +456,12 @@
 
   // Valida media correnti vs media_type. Ritorna stringa errore o null.
   function validateMediaCoherence() {
+    if (MEDIA_TYPE === 'story') {
+      // Le storie non passano per il nostro publish backend. La validazione
+      // serve solo per coerenza UI: ok averne 0 o 1, sono materiale di riferimento.
+      if (MEDIA.length > 1) return 'Storia: massimo 1 media di riferimento';
+      return null;
+    }
     if (MEDIA_TYPE === 'single_image') {
       if (MEDIA.length === 0) return 'Carica una immagine';
       if (MEDIA.length > 1)   return 'Singola immagine: rimuovi i media in eccesso';
@@ -490,6 +498,16 @@
     const btn  = document.getElementById('publish-btn');
     const help = document.getElementById('publish-help');
     if (!btn) return;
+
+    // Le storie non si pubblicano dalla dashboard — task per il cliente
+    if (MEDIA_TYPE === 'story') {
+      btn.disabled = true;
+      btn.textContent = 'Da pubblicare manualmente dal cliente';
+      btn.style.opacity = '0.6';
+      help.innerHTML = '\u2139\ufe0f Le storie sono suggerimenti per il cliente. Salva caption e media di riferimento, il cliente le pubblicher\u00e0 dalla sua app entro 24h.';
+      return;
+    }
+    btn.style.opacity = '';
 
     const captionOk = !!document.getElementById('caption-text').value.trim();
     const err = validateMediaCoherence();

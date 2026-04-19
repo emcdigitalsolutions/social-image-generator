@@ -14,7 +14,9 @@ router.use(authMiddleware);
 
 // 'video' rimosso dall'UI (Meta ha deprecato media_type=VIDEO, tutto va come REELS).
 // Tenuto qui per backward-compat dei post legacy migrati a 'reel' dalla migration 008.
-const MEDIA_TYPES = new Set(['single_image', 'carousel', 'video', 'reel']);
+// 'story' = task per il cliente (non publish da noi), accettato in DB ma il publish
+// endpoint lo rifiuta esplicitamente.
+const MEDIA_TYPES = new Set(['single_image', 'carousel', 'video', 'reel', 'story']);
 
 // Multer per upload media (tmp dir, sposteremo dopo)
 const mediaUpload = multer({
@@ -154,6 +156,9 @@ router.post('/:id/publish', async (req, res) => {
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Post not found' });
   if (!post.caption) return res.status(400).json({ error: 'Caption required' });
+  if (post.media_type === 'story') {
+    return res.status(400).json({ error: 'Le storie non si pubblicano dalla dashboard — sono task per il cliente (durano 24h)' });
+  }
 
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
   if (!client) return res.status(404).json({ error: 'Client not found' });

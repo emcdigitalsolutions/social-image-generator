@@ -47,19 +47,22 @@ router.post('/generate', async (req, res) => {
 
     // Create posts from plan data if available
     if (result.planData && result.planData.months) {
+      const VALID_MEDIA_TYPES = new Set(['single_image', 'carousel', 'reel', 'story']);
       const insertPost = db.prepare(`
-        INSERT INTO posts (id, client_id, editorial_plan_id, month_number, week_number, category, sub_topic, template, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'draft')
+        INSERT INTO posts (id, client_id, editorial_plan_id, month_number, week_number, category, sub_topic, template, media_type, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
       `);
 
       for (const month of result.planData.months) {
         for (const week of month.weeks || []) {
           for (const post of week.posts || []) {
+            const mediaType = VALID_MEDIA_TYPES.has(post.media_type) ? post.media_type : 'single_image';
             insertPost.run(
               uuidv4(), client_id, id,
               month.month_number, week.week_number,
               post.category || null, post.sub_topic || null,
-              post.template || 'quote'
+              post.template || 'quote',
+              mediaType
             );
           }
         }
