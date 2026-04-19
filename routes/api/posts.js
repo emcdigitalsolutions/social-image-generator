@@ -131,21 +131,35 @@ router.post('/:id/generate-image', async (req, res) => {
   }
 });
 
-// Publish post to FB+IG
+// Publish post to FB+IG (single_image / carousel / video / reel)
 router.post('/:id/publish', async (req, res) => {
   const db = getDb();
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Post not found' });
-
-  if (!post.image_url || !post.caption) {
-    return res.status(400).json({ error: 'Post must have both caption and image before publishing' });
-  }
+  if (!post.caption) return res.status(400).json({ error: 'Caption required' });
 
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
   if (!client) return res.status(404).json({ error: 'Client not found' });
 
+  // Costruisci la lista media: prima da post_media, fallback all'image_url legacy.
+  let media = postMedia.listMedia(post.id);
+  if (!media.length && post.image_url) {
+    media = [{ kind: 'image', url: post.image_url, position: 0 }];
+  }
+  if (!media.length) return res.status(400).json({ error: 'Nessun media disponibile per la pubblicazione' });
+
+  // Valida coerenza media_type ↔ media (skip se siamo in modalità legacy single_image)
+  const mediaType = post.media_type || 'single_image';
+  if (postMedia.listMedia(post.id).length > 0) {
+    try {
+      postMedia.validateForMediaType(post.id, mediaType);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   try {
-    const result = await publishPost(client, post.image_url, post.caption);
+    const result = await publishPost(client, { ...post, media_type: mediaType }, media);
 
     const status = (result.fb_post_id || result.ig_media_id) ? 'published' : 'failed';
     db.prepare(`
