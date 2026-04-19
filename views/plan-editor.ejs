@@ -1,5 +1,24 @@
 <%- include('layout', { title, user }) %>
 
+<style>
+  .plan-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .json-editor-card { margin-top:24px; }
+  .json-editor-card .card-header { display:flex; align-items:center; justify-content:space-between; }
+  .json-toolbar { display:flex; gap:6px; align-items:center; }
+  #json-editor {
+    width:100%; min-height:400px; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    font-size:12px; line-height:1.45; padding:12px;
+    border:1px solid var(--gray-200); border-radius:6px; background:#fafafa;
+    resize:vertical; tab-size:2;
+  }
+  #json-editor.has-error { border-color:var(--red); background:#fef2f2; }
+  #json-error { color:var(--red); font-size:12px; margin-top:6px; display:none; }
+  .raw-warning {
+    background:#fef3c7; border:1px solid #fde047; border-radius:6px;
+    padding:12px; margin-bottom:16px; font-size:13px; color:#854d0e;
+  }
+</style>
+
 <div class="breadcrumb">
   <a href="/dashboard">Clienti</a> / <a href="/dashboard/clients/<%= client.id %>"><%= client.display_name %></a> / Piano Editoriale
 </div>
@@ -9,12 +28,20 @@
     <h1><%= plan.title || 'Piano Editoriale' %></h1>
     <span class="badge badge-<%= plan.status %>"><%= plan.status %></span>
   </div>
-  <div style="display:flex;gap:8px">
+  <div class="plan-actions">
+    <button class="btn btn-secondary" onclick="exportPdf()" title="Scarica un PDF stampabile del piano">&#8595; Esporta PDF</button>
     <% if (plan.status === 'draft') { %>
-      <button class="btn btn-primary" onclick="confirmPlan()" title="Cambia lo stato del piano da 'draft' a 'confirmed'. È un'approvazione del piano: i post saranno editabili ma non vengono ancora pubblicati. Per attivare l'auto-publish serve confermare anche il singolo mese.">Conferma Piano</button>
+      <button class="btn btn-primary" onclick="confirmPlan()" title="Approva il piano: i post resteranno editabili ma il piano passa a 'confirmed'.">Conferma Piano</button>
     <% } %>
   </div>
 </div>
+
+<% if (plan.ai_raw && !plan.plan_data) { %>
+  <div class="raw-warning">
+    <strong>&#9888; L'output AI non &egrave; un JSON valido</strong> (probabilmente troncato o malformato).
+    L'editor sotto ti permette di modificarlo manualmente. Quando l'hai sistemato, click <em>Salva e ricostruisci post</em> per applicarlo.
+  </div>
+<% } %>
 
 <% if (plan.plan_data && plan.plan_data.categories) { %>
 <div class="card" style="margin-bottom:24px">
@@ -35,29 +62,162 @@
 </div>
 <% } %>
 
+<% if (plan.plan_data && plan.plan_data.months) { %>
 <h3 style="margin-bottom:16px">Mesi</h3>
 <div class="month-buttons">
-  <% const totalMonths = (plan.plan_data && plan.plan_data.months) ? plan.plan_data.months.length : (client.editorial_months || 6); %>
+  <% const totalMonths = plan.plan_data.months.length; %>
   <% for (let m = 1; m <= totalMonths; m++) { %>
     <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>/month/<%= m %>" class="month-btn">Mese <%= m %></a>
   <% } %>
 </div>
+<% } %>
+
+<!-- Editor JSON sempre disponibile (collassato per default se plan_data è valido) -->
+<div class="card json-editor-card">
+  <div class="card-header">
+    <h3>Editor JSON del piano</h3>
+    <div class="json-toolbar">
+      <button class="btn btn-sm btn-secondary" onclick="toggleEditor()" id="toggle-editor-btn"><%= !plan.plan_data ? 'Nascondi editor' : 'Mostra editor' %></button>
+    </div>
+  </div>
+  <div id="json-editor-wrap" style="display:<%= !plan.plan_data ? 'block' : 'none' %>">
+    <p style="font-size:12px;color:var(--gray-500);margin:0 0 8px">
+      Modifica il JSON per correggere errori dell'AI o personalizzare il piano. Validazione automatica al salvataggio.
+    </p>
+    <textarea id="json-editor" spellcheck="false"></textarea>
+    <div id="json-error"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn btn-sm btn-secondary" onclick="formatJson()">Riformatta</button>
+      <button class="btn btn-sm btn-secondary" onclick="loadFromRaw()" <%= !plan.ai_raw ? 'disabled' : '' %>>Ricarica dall'output AI grezzo</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-sm btn-primary" onclick="saveJson(true)" title="Aggiorna plan_data E ricrea i post draft del piano (i post non-draft non vengono toccati)">Salva e ricostruisci post</button>
+    </div>
+  </div>
+</div>
 
 <% if (plan.ai_raw && !plan.plan_data) { %>
-<div class="card">
+<div class="card" style="margin-top:16px">
   <div class="card-header"><h3>Output AI (raw)</h3></div>
-  <pre style="white-space:pre-wrap;font-size:13px;max-height:500px;overflow-y:auto;background:var(--gray-50);padding:16px;border-radius:6px"><%= plan.ai_raw %></pre>
+  <pre style="white-space:pre-wrap;font-size:12px;max-height:400px;overflow-y:auto;background:var(--gray-50);padding:16px;border-radius:6px;font-family:monospace"><%= plan.ai_raw %></pre>
 </div>
 <% } %>
 
 <script>
   const PLAN_ID = '<%= plan.id %>';
   const CLIENT_ID = '<%= client.id %>';
+  const PLAN_DATA = <%- plan.plan_data ? JSON.stringify(plan.plan_data) : 'null' %>;
+  const PLAN_RAW  = <%- JSON.stringify(plan.ai_raw || '') %>;
+
+  function getToken() {
+    return localStorage.getItem('dashboard_token') || (document.cookie.split(';').find(c => c.trim().startsWith('dashboard_token=')) || '').split('=')[1] || '';
+  }
+
+  function toggleEditor() {
+    const wrap = document.getElementById('json-editor-wrap');
+    const btn = document.getElementById('toggle-editor-btn');
+    if (wrap.style.display === 'none') {
+      wrap.style.display = 'block';
+      btn.textContent = 'Nascondi editor';
+      // Inizializza textarea se vuota
+      const ta = document.getElementById('json-editor');
+      if (!ta.value) {
+        ta.value = PLAN_DATA ? JSON.stringify(PLAN_DATA, null, 2) : (PLAN_RAW || '');
+      }
+    } else {
+      wrap.style.display = 'none';
+      btn.textContent = 'Mostra editor';
+    }
+  }
+
+  function formatJson() {
+    const ta = document.getElementById('json-editor');
+    try {
+      const obj = JSON.parse(ta.value);
+      ta.value = JSON.stringify(obj, null, 2);
+      clearJsonError();
+    } catch (e) {
+      showJsonError('JSON non valido: ' + e.message);
+    }
+  }
+
+  function loadFromRaw() {
+    if (!PLAN_RAW) return;
+    document.getElementById('json-editor').value = PLAN_RAW;
+    clearJsonError();
+  }
+
+  function showJsonError(msg) {
+    const err = document.getElementById('json-error');
+    err.textContent = msg; err.style.display = 'block';
+    document.getElementById('json-editor').classList.add('has-error');
+  }
+  function clearJsonError() {
+    document.getElementById('json-error').style.display = 'none';
+    document.getElementById('json-editor').classList.remove('has-error');
+  }
+
+  async function saveJson(rebuild) {
+    const ta = document.getElementById('json-editor');
+    let obj;
+    try {
+      obj = JSON.parse(ta.value);
+      clearJsonError();
+    } catch (e) {
+      showJsonError('JSON non valido: ' + e.message);
+      return;
+    }
+    if (rebuild && !await showConfirm('Salvare il JSON e ricostruire i post draft? I post non-draft (ready/published) NON verranno toccati.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + PLAN_ID + '/save-data', {
+        method: 'POST',
+        body: { plan_data: obj, rebuild_posts: !!rebuild }
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Salvato' + (res.posts_created ? ' (' + res.posts_created + ' post draft creati)' : ''));
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore salvataggio: ' + err.message);
+    }
+  }
+
+  // Inizializza textarea se editor è già visibile (caso plan_data null)
+  (function init() {
+    const wrap = document.getElementById('json-editor-wrap');
+    if (wrap.style.display !== 'none') {
+      const ta = document.getElementById('json-editor');
+      ta.value = PLAN_DATA ? JSON.stringify(PLAN_DATA, null, 2) : (PLAN_RAW || '');
+    }
+  })();
 
   async function confirmPlan() {
     if (!await showConfirm('Confermare questo piano editoriale?')) return;
     await apiFetch('/dashboard/api/plans/' + PLAN_ID + '/confirm', { method: 'POST' });
     window.location.reload();
+  }
+
+  async function exportPdf() {
+    try {
+      toast('Generazione PDF in corso...');
+      const res = await fetch('/dashboard/api/plans/' + PLAN_ID + '/pdf', {
+        headers: { 'Authorization': 'Bearer ' + getToken() }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        await showAlert('PDF fallito: ' + (err.error || ('HTTP ' + res.status)));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '<%= (plan.title || "piano").replace(/[^a-z0-9_-]/gi, "_").slice(0,60) %>.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
   }
 </script>
 
