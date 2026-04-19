@@ -12,6 +12,8 @@ const postMedia = require('../../lib/post-media');
 const router = express.Router();
 router.use(authMiddleware);
 
+// 'video' rimosso dall'UI (Meta ha deprecato media_type=VIDEO, tutto va come REELS).
+// Tenuto qui per backward-compat dei post legacy migrati a 'reel' dalla migration 008.
 const MEDIA_TYPES = new Set(['single_image', 'carousel', 'video', 'reel']);
 
 // Multer per upload media (tmp dir, sposteremo dopo)
@@ -52,7 +54,8 @@ router.get('/:id', (req, res) => {
 router.put('/:id', (req, res) => {
   const db = getDb();
   const fields = ['category', 'sub_topic', 'template', 'caption', 'image_data',
-    'source_image_url', 'scheduled_date', 'scheduled_time', 'status', 'media_type'];
+    'source_image_url', 'scheduled_date', 'scheduled_time', 'status', 'media_type',
+    'ig_share_to_feed'];
 
   const updates = [];
   const values = [];

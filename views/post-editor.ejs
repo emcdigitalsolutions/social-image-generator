@@ -192,10 +192,16 @@
       <div class="type-chips" id="type-chips">
         <span class="type-chip" data-type="single_image">Singola</span>
         <span class="type-chip" data-type="carousel">Carousel</span>
-        <span class="type-chip" data-type="video">Video</span>
         <span class="type-chip" data-type="reel">Reel</span>
       </div>
       <p class="type-help" id="type-help"></p>
+      <div id="reel-options" style="display:none;font-size:13px;border-top:1px solid var(--gray-200);padding-top:10px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="ig-share-to-feed" onchange="onShareToFeedChange()">
+          Mostra anche nel feed Instagram (oltre alla tab Reels)
+        </label>
+        <p style="font-size:11px;color:var(--gray-500);margin:6px 0 0 22px">Se spuntato, il Reel appare nel feed normale + tab Reels (più visibilit&agrave;). Se non spuntato, &egrave; un "Reel puro" visibile solo nella tab Reels.</p>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom:16px">
@@ -263,8 +269,8 @@
   const TYPE_HELP = {
     single_image: 'Una sola immagine. Caricala oppure generala da template.',
     carousel:     'Da 2 a 10 media dello stesso tipo (tutte immagini o tutti video). L\u2019ordine \u00e8 quello in cui appariranno nel carousel.',
-    video:        'Un solo video MP4/MOV per il feed normale. Ratio consigliato 1:1 o 4:5.',
-    reel:         'Un solo video verticale 9:16 per i Reel (3-90s). Verr\u00e0 condiviso anche al feed.'
+    video:        'Tipo legacy. Su IG Meta lo tratta come Reel — usa direttamente Reel.',
+    reel:         'Un video MP4/MOV verticale 9:16 (3-90s). Su Facebook va come video normale, su Instagram come Reel.'
   };
 
   // Auth helper per fetch nativo (FormData usa boundary, non passabile via apiFetch)
@@ -276,7 +282,27 @@
     MEDIA_TYPE = t;
     document.querySelectorAll('.type-chip').forEach(c => c.classList.toggle('active', c.dataset.type === t));
     document.getElementById('type-help').textContent = TYPE_HELP[t] || '';
+    // Mostra opzioni Reel solo per tipo reel/video (legacy)
+    const reelOpts = document.getElementById('reel-options');
+    if (reelOpts) {
+      const isReelLike = (t === 'reel' || t === 'video');
+      reelOpts.style.display = isReelLike ? 'block' : 'none';
+      if (isReelLike) {
+        // Inizializza la checkbox dal valore corrente del post (default 1)
+        document.getElementById('ig-share-to-feed').checked = (POST.ig_share_to_feed === 0 || POST.ig_share_to_feed === false) ? false : true;
+      }
+    }
     refreshPublishState();
+  }
+
+  async function onShareToFeedChange() {
+    const checked = document.getElementById('ig-share-to-feed').checked;
+    POST.ig_share_to_feed = checked ? 1 : 0;
+    await apiFetch('/dashboard/api/posts/' + POST_ID, {
+      method: 'PUT',
+      body: { ig_share_to_feed: checked ? 1 : 0 }
+    });
+    toast(checked ? 'Reel visibile anche nel feed' : 'Reel puro (solo tab Reels)');
   }
 
   function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
