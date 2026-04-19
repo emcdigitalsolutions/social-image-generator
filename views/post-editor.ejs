@@ -187,10 +187,9 @@
         <p style="color:var(--green);font-size:14px;margin-bottom:8px">Pubblicato il <%= post.published_at %></p>
         <% if (post.fb_post_id) { %><p style="font-size:12px;color:var(--gray-500)">FB: <%= post.fb_post_id %></p><% } %>
         <% if (post.ig_media_id) { %><p style="font-size:12px;color:var(--gray-500)">IG: <%= post.ig_media_id %></p><% } %>
-      <% } else { %>
-        <button class="btn btn-primary" onclick="publishPost()" id="publish-btn">Pubblica su FB + IG</button>
-        <p class="help" id="publish-help" style="margin-top:8px;color:var(--gray-500)"></p>
       <% } %>
+      <button class="btn btn-primary" onclick="publishPost()" id="publish-btn" style="<%= post.status === 'published' ? 'margin-top:12px' : '' %>"><%= post.status === 'published' ? 'Pubblica di nuovo' : 'Pubblica su FB + IG' %></button>
+      <p class="help" id="publish-help" style="margin-top:8px;color:var(--gray-500)"></p>
       <% if (post.publish_error) { %>
         <div class="form-error" style="margin-top:8px"><%= post.publish_error %></div>
       <% } %>
@@ -454,7 +453,7 @@
       await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Pubblica su FB + IG';
+      btn.textContent = POST.status === 'published' ? 'Pubblica di nuovo' : 'Pubblica su FB + IG';
     }
   }
 
