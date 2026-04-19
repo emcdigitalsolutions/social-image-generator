@@ -8,6 +8,7 @@ const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { callAI, generateSystemInstruction, generateThemeCSS } = require('../../lib/ai-provider');
 const { getSectorKeys } = require('../../lib/questionnaire-config');
+const postMedia = require('../../lib/post-media');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -127,6 +128,11 @@ router.delete('/:id', (req, res) => {
   const db = getDb();
   const result = db.prepare('DELETE FROM clients WHERE id = ?').run(req.params.id);
   if (!result.changes) return res.status(404).json({ error: 'Client not found' });
+
+  // Pulizia file orfani: rimuovi tutta la cartella media del cliente
+  try { postMedia.removeClientDir(req.params.id); }
+  catch (err) { console.warn('[clients] cleanup failed for', req.params.id, err.message); }
+
   res.json({ success: true });
 });
 

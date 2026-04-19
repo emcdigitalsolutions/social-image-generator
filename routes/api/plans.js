@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { generateEditorialPlan } = require('../../lib/ai-provider');
+const postMedia = require('../../lib/post-media');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -134,9 +135,18 @@ router.delete('/:id', (req, res) => {
   if (!plan) return res.status(404).json({ error: 'Plan not found' });
   if (plan.status !== 'draft') return res.status(400).json({ error: 'Solo i piani in draft possono essere eliminati' });
 
+  // Raccogli i post draft prima di cancellarli per pulire i file su disco
+  const draftPosts = db.prepare("SELECT id, client_id FROM posts WHERE editorial_plan_id = ? AND status = 'draft'").all(req.params.id);
+
   db.prepare("DELETE FROM posts WHERE editorial_plan_id = ? AND status = 'draft'").run(req.params.id);
   db.prepare('DELETE FROM schedules WHERE editorial_plan_id = ?').run(req.params.id);
   db.prepare('DELETE FROM editorial_plans WHERE id = ?').run(req.params.id);
+
+  // Pulizia file orfani: rimuovi le cartelle dei post draft cancellati
+  for (const p of draftPosts) {
+    try { postMedia.removePostDir(p.client_id, p.id); }
+    catch (err) { console.warn('[plans] cleanup failed for post', p.id, err.message); }
+  }
 
   res.json({ deleted: true });
 });
