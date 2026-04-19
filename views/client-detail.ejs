@@ -106,13 +106,15 @@
       <table>
         <thead><tr><th>ID</th><th>Settore</th><th>Stato</th><th>Inviato</th><th>Link</th><th>Azioni</th></tr></thead>
         <tbody>
-          <% questionnaires.forEach(q => { %>
-          <tr>
+          <% questionnaires.forEach(q => {
+            const qUrl = `/dashboard/q/${q.token}`;
+          %>
+          <tr style="cursor:pointer" onclick="if(!event.target.closest('button,a')) window.open('<%= qUrl %>', '_blank')" title="Apri questo questionario in una nuova scheda">
             <td><code><%= q.id.substring(0, 8) %></code></td>
             <td><%= q.sector ? q.sector.replace(/_/g, ' ') : '—' %></td>
             <td><span class="badge badge-<%= q.status %>"><%= q.status %></span></td>
             <td><%= q.submitted_at || '—' %></td>
-            <td><a href="/dashboard/q/<%= q.token %>" target="_blank" class="btn btn-sm btn-secondary">Apri</a></td>
+            <td><a href="<%= qUrl %>" target="_blank" class="btn btn-sm btn-secondary">Apri</a></td>
             <td style="display:flex;gap:4px">
               <% if (q.status === 'submitted') { %>
                 <button class="btn btn-sm btn-secondary" onclick="viewResponses('<%= q.id %>')">Risposte</button>
