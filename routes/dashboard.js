@@ -107,7 +107,22 @@ router.get('/clients/:id/plan/:planId', (req, res) => {
   if (!plan) return res.redirect(`/dashboard/clients/${req.params.id}`);
   if (plan.plan_data) plan.plan_data = JSON.parse(plan.plan_data);
 
-  res.render('plan-editor', { title: `Piano - ${client.display_name}`, client, plan, user: req.user });
+  // KPI per mese: contatori per status per ogni mese del piano
+  const statsRows = db.prepare(`
+    SELECT month_number,
+      COUNT(*) AS total,
+      SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) AS draft_count,
+      SUM(CASE WHEN status IN ('caption_generated','image_generated') THEN 1 ELSE 0 END) AS wip_count,
+      SUM(CASE WHEN status = 'ready' THEN 1 ELSE 0 END) AS ready_count,
+      SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) AS published_count,
+      SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_count
+    FROM posts WHERE editorial_plan_id = ?
+    GROUP BY month_number
+  `).all(req.params.planId);
+  const monthStats = {};
+  statsRows.forEach(r => { monthStats[r.month_number] = r; });
+
+  res.render('plan-editor', { title: `Piano - ${client.display_name}`, client, plan, monthStats, user: req.user });
 });
 
 // Month view

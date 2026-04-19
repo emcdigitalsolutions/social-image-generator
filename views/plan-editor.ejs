@@ -17,6 +17,26 @@
     background:#fef3c7; border:1px solid #fde047; border-radius:6px;
     padding:12px; margin-bottom:16px; font-size:13px; color:#854d0e;
   }
+  .month-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:10px; }
+  .month-card {
+    display:block; padding:12px 14px;
+    background:white; border:1px solid var(--gray-200); border-radius:8px;
+    text-decoration:none; color:inherit; transition: border-color .1s, box-shadow .15s, transform .1s;
+  }
+  .month-card:hover { border-color:var(--blue); box-shadow:0 4px 12px rgba(59,130,246,.12); transform:translateY(-1px); }
+  .month-card .mc-title { font-weight:700; font-size:14px; color:var(--gray-800); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+  .month-card .mc-total { font-size:11px; color:var(--gray-400); font-weight:500; }
+  .month-card .mc-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; background:var(--gray-100); margin-bottom:8px; }
+  .month-card .mc-bar > span { display:block; height:100%; }
+  .month-card .mc-bar .seg-published { background:#059669; }
+  .month-card .mc-bar .seg-ready     { background:#10b981; }
+  .month-card .mc-bar .seg-wip       { background:#3b82f6; }
+  .month-card .mc-bar .seg-draft     { background:#9ca3af; }
+  .month-card .mc-bar .seg-failed    { background:#dc2626; }
+  .month-card .mc-stats { display:flex; flex-wrap:wrap; gap:6px 10px; font-size:11px; color:var(--gray-600); }
+  .month-card .mc-stats span { display:inline-flex; align-items:center; gap:3px; }
+  .month-card .mc-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .month-card.empty { background:var(--gray-50); border-style:dashed; color:var(--gray-400); }
   .cat-table input,
   .cat-table textarea {
     width:100%; border:1px solid transparent; padding:4px 6px;
@@ -86,11 +106,39 @@
 <% } %>
 
 <% if (plan.plan_data && plan.plan_data.months) { %>
-<h3 style="margin-bottom:16px">Mesi</h3>
-<div class="month-buttons">
+<h3 style="margin-bottom:6px">Mesi</h3>
+<p style="font-size:12px;color:var(--gray-500);margin:0 0 12px">Click su un mese per aprire la vista calendario/lista. La barra colorata mostra a colpo d'occhio lo stato dei post.</p>
+<div class="month-grid">
   <% const totalMonths = plan.plan_data.months.length; %>
-  <% for (let m = 1; m <= totalMonths; m++) { %>
-    <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>/month/<%= m %>" class="month-btn">Mese <%= m %></a>
+  <% for (let m = 1; m <= totalMonths; m++) {
+    const s = (typeof monthStats !== 'undefined' && monthStats[m]) || { total: 0, draft_count: 0, wip_count: 0, ready_count: 0, published_count: 0, failed_count: 0 };
+    const t = s.total || 0;
+    const pct = (n) => t > 0 ? (n / t * 100).toFixed(0) + '%' : '0%';
+  %>
+    <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>/month/<%= m %>" class="month-card <%= t === 0 ? 'empty' : '' %>">
+      <div class="mc-title">
+        <span>Mese <%= m %></span>
+        <span class="mc-total"><%= t %> post</span>
+      </div>
+      <% if (t > 0) { %>
+        <div class="mc-bar">
+          <% if (s.published_count) { %><span class="seg-published" style="width:<%= pct(s.published_count) %>"></span><% } %>
+          <% if (s.ready_count)     { %><span class="seg-ready"     style="width:<%= pct(s.ready_count)     %>"></span><% } %>
+          <% if (s.wip_count)       { %><span class="seg-wip"       style="width:<%= pct(s.wip_count)       %>"></span><% } %>
+          <% if (s.draft_count)     { %><span class="seg-draft"     style="width:<%= pct(s.draft_count)     %>"></span><% } %>
+          <% if (s.failed_count)    { %><span class="seg-failed"    style="width:<%= pct(s.failed_count)    %>"></span><% } %>
+        </div>
+        <div class="mc-stats">
+          <% if (s.published_count) { %><span><i class="mc-dot" style="background:#059669"></i><%= s.published_count %> pubbl.</span><% } %>
+          <% if (s.ready_count)     { %><span><i class="mc-dot" style="background:#10b981"></i><%= s.ready_count %> pronti</span><% } %>
+          <% if (s.wip_count)       { %><span><i class="mc-dot" style="background:#3b82f6"></i><%= s.wip_count %> wip</span><% } %>
+          <% if (s.draft_count)     { %><span><i class="mc-dot" style="background:#9ca3af"></i><%= s.draft_count %> draft</span><% } %>
+          <% if (s.failed_count)    { %><span><i class="mc-dot" style="background:#dc2626"></i><%= s.failed_count %> falliti</span><% } %>
+        </div>
+      <% } else { %>
+        <div style="font-size:11px">Nessun post in questo mese</div>
+      <% } %>
+    </a>
   <% } %>
 </div>
 <% } %>
