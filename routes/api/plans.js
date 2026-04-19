@@ -231,13 +231,16 @@ router.get('/:id/pdf', async (req, res) => {
   if (!client) return res.status(404).json({ error: 'Client not found' });
 
   try {
-    const buffer = await renderPlanPdf(client, plan);
+    const out = await renderPlanPdf(client, plan);
+    // Puppeteer 23+ ritorna Uint8Array, Express vuole Buffer
+    const buffer = Buffer.isBuffer(out) ? out : Buffer.from(out);
     const safeTitle = (plan.title || 'piano').replace(/[^a-z0-9_-]/gi, '_').slice(0, 60);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.pdf"`);
-    res.send(buffer);
+    res.setHeader('Content-Length', buffer.length);
+    res.end(buffer);
   } catch (err) {
-    console.error('[plan pdf]', err.message);
+    console.error('[plan pdf]', err.stack || err.message);
     res.status(500).json({ error: 'Generazione PDF fallita', details: err.message });
   }
 });
