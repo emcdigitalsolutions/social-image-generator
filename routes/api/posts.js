@@ -1,12 +1,29 @@
 const express = require('express');
+const path = require('path');
+const os = require('os');
+const multer = require('multer');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { generateCaption } = require('../../lib/ai-provider');
 const { publishPost } = require('../../lib/meta-publish');
 const { renderImage } = require('../../lib/renderer');
+const postMedia = require('../../lib/post-media');
 
 const router = express.Router();
 router.use(authMiddleware);
+
+const MEDIA_TYPES = new Set(['single_image', 'carousel', 'video', 'reel']);
+
+// Multer per upload media (tmp dir, sposteremo dopo)
+const mediaUpload = multer({
+  dest: path.join(os.tmpdir(), 'sig-upload'),
+  limits: { fileSize: postMedia.MAX_VIDEO_BYTES }, // limite hard al video
+  fileFilter: (req, file, cb) => {
+    const cls = postMedia.classifyExt(file.originalname, file.mimetype);
+    if (cls) cb(null, true);
+    else cb(new Error('Formato non supportato. Accetto JPG/PNG/WEBP/MP4/MOV.'));
+  }
+});
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3100';
 
@@ -35,7 +52,7 @@ router.get('/:id', (req, res) => {
 router.put('/:id', (req, res) => {
   const db = getDb();
   const fields = ['category', 'sub_topic', 'template', 'caption', 'image_data',
-    'source_image_url', 'scheduled_date', 'scheduled_time', 'status'];
+    'source_image_url', 'scheduled_date', 'scheduled_time', 'status', 'media_type'];
 
   const updates = [];
   const values = [];
@@ -213,6 +230,101 @@ router.post('/bulk-generate', async (req, res) => {
   }
 
   res.json({ results });
+});
+
+// ─────────────── Multi-media (carousel + video) ───────────────
+
+// List media for a post
+router.get('/:id/media', (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  res.json({ media: postMedia.listMedia(req.params.id) });
+});
+
+// Upload one or more media files
+router.post('/:id/media', mediaUpload.array('media', postMedia.MAX_CAROUSEL_ITEMS), (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  if (!req.files || !req.files.length) return res.status(400).json({ error: 'Nessun file caricato' });
+
+  const created = [];
+  const errors = [];
+  for (const f of req.files) {
+    try {
+      const m = postMedia.attachUploadedFile({
+        clientId: post.client_id,
+        postId: post.id,
+        tmpPath: f.path,
+        originalName: f.originalname,
+        mimetype: f.mimetype
+      });
+      created.push(m);
+    } catch (err) {
+      errors.push({ file: f.originalname, error: err.message });
+    }
+  }
+
+  res.status(created.length ? 201 : 400).json({ media: created, errors });
+});
+
+// Delete a single media item
+router.delete('/:id/media/:mediaId', (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const m = postMedia.getMedia(req.params.mediaId);
+  if (!m || m.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+
+  postMedia.deleteMedia(req.params.mediaId);
+  res.json({ success: true });
+});
+
+// Reorder media items
+router.put('/:id/media/reorder', (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const order = Array.isArray(req.body.order) ? req.body.order : null;
+  if (!order || !order.length) return res.status(400).json({ error: 'order array required' });
+
+  const items = postMedia.listMedia(post.id);
+  const knownIds = new Set(items.map(i => i.id));
+  if (order.some(id => !knownIds.has(id)) || order.length !== items.length) {
+    return res.status(400).json({ error: 'order deve contenere ESATTAMENTE gli id dei media del post' });
+  }
+
+  const updated = postMedia.reorder(post.id, order);
+  res.json({ media: updated });
+});
+
+// Change post media_type with coherence validation
+router.put('/:id/media-type', (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const { media_type } = req.body;
+  if (!MEDIA_TYPES.has(media_type)) return res.status(400).json({ error: 'media_type non valido' });
+
+  // Permettiamo il cambio anche se i media esistenti non sono ancora coerenti:
+  // sarà la pubblicazione a richiedere coerenza. Qui validiamo solo se ci sono media.
+  const items = postMedia.listMedia(post.id);
+  if (items.length > 0) {
+    try {
+      postMedia.validateForMediaType(post.id, media_type);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
+  db.prepare("UPDATE posts SET media_type = ?, updated_at = datetime('now') WHERE id = ?").run(media_type, post.id);
+  const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(post.id);
+  res.json(updated);
 });
 
 module.exports = router;
