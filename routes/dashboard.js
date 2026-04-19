@@ -140,8 +140,9 @@ router.get('/posts/:id', (req, res) => {
   if (post.image_data) post.image_data = JSON.parse(post.image_data);
 
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  const media = db.prepare('SELECT * FROM post_media WHERE post_id = ? ORDER BY position ASC').all(post.id);
 
-  res.render('post-editor', { title: 'Editor Post', client, post, user: req.user });
+  res.render('post-editor', { title: 'Editor Post', client, post, media, user: req.user });
 });
 
 // Logs page

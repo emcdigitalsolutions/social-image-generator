@@ -1,5 +1,56 @@
 <%- include('layout', { title, user }) %>
 
+<style>
+  .type-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .type-chip {
+    padding:6px 14px; font-size:13px; border-radius:14px;
+    border:1px solid var(--gray-200); background:white; cursor:pointer; user-select:none;
+  }
+  .type-chip.active { background:var(--blue); color:white; border-color:var(--blue); }
+  .type-help { font-size:12px; color:var(--gray-500); margin:8px 0 16px; }
+
+  .uploader {
+    border:2px dashed var(--gray-200); border-radius:8px; padding:20px;
+    text-align:center; color:var(--gray-500); font-size:13px;
+    cursor:pointer; transition:background .15s;
+  }
+  .uploader:hover, .uploader.dragover { background:var(--gray-50); border-color:var(--blue); }
+  .uploader input[type=file] { display:none; }
+
+  .media-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; margin-top:12px; }
+  .media-item {
+    border:1px solid var(--gray-200); border-radius:6px; overflow:hidden;
+    display:flex; flex-direction:column; background:white;
+  }
+  .media-thumb {
+    aspect-ratio:1/1; background:var(--gray-50);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden; position:relative;
+  }
+  .media-thumb img, .media-thumb video { max-width:100%; max-height:100%; object-fit:cover; }
+  .media-thumb .video-icon { font-size:32px; color:var(--gray-400); }
+  .media-source-badge {
+    position:absolute; top:4px; left:4px;
+    padding:2px 6px; font-size:10px; border-radius:3px;
+    background:rgba(0,0,0,0.6); color:white; text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .media-source-badge.styled    { background:var(--blue); }
+  .media-source-badge.generated { background:#10b981; }
+  .media-actions {
+    display:flex; gap:2px; padding:6px; flex-wrap:wrap;
+    border-top:1px solid var(--gray-200); justify-content:space-between;
+  }
+  .media-actions button {
+    background:transparent; border:0; color:var(--gray-500);
+    font-size:11px; padding:3px 6px; cursor:pointer; border-radius:3px;
+  }
+  .media-actions button:hover { background:var(--gray-100); color:var(--gray-700); }
+  .media-actions button.danger:hover { background:#fef2f2; color:var(--red); }
+  .media-pos { font-size:11px; color:var(--gray-400); padding:0 4px; align-self:center; }
+
+  .media-empty { padding:20px; text-align:center; color:var(--gray-400); font-size:13px; }
+</style>
+
 <div class="breadcrumb">
   <a href="/dashboard">Clienti</a> /
   <a href="/dashboard/clients/<%= client.id %>"><%= client.display_name %></a> /
@@ -12,7 +63,7 @@
 </div>
 
 <div class="post-editor-layout">
-  <!-- Left: Caption -->
+  <!-- Left: Caption + Dettagli -->
   <div>
     <div class="card" style="margin-bottom:16px">
       <div class="card-header">
@@ -37,16 +88,16 @@
           <input type="text" id="post-subtopic" value="<%= post.sub_topic || '' %>">
         </div>
         <div class="form-group">
-          <label>Template</label>
+          <label>Template (per generazione singola immagine)</label>
           <select id="post-template">
-            <option value="quote" <%= post.template === 'quote' ? 'selected' : '' %>>Quote</option>
+            <option value="quote"   <%= post.template === 'quote'   ? 'selected' : '' %>>Quote</option>
             <option value="service" <%= post.template === 'service' ? 'selected' : '' %>>Service</option>
-            <option value="event" <%= post.template === 'event' ? 'selected' : '' %>>Event</option>
-            <option value="floral" <%= post.template === 'floral' ? 'selected' : '' %>>Floral</option>
+            <option value="event"   <%= post.template === 'event'   ? 'selected' : '' %>>Event</option>
+            <option value="floral"  <%= post.template === 'floral'  ? 'selected' : '' %>>Floral</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Immagine sorgente URL</label>
+          <label>Immagine sorgente URL (background per template)</label>
           <input type="text" id="post-source-image" value="<%= post.source_image_url || '' %>" placeholder="URL immagine di sfondo">
         </div>
       </div>
@@ -64,20 +115,33 @@
     </div>
   </div>
 
-  <!-- Right: Image preview + actions -->
+  <!-- Right: Tipo + Media + Pubblicazione -->
   <div>
     <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>Tipo post</h3></div>
+      <div class="type-chips" id="type-chips">
+        <span class="type-chip" data-type="single_image">Singola</span>
+        <span class="type-chip" data-type="carousel">Carousel</span>
+        <span class="type-chip" data-type="video">Video</span>
+        <span class="type-chip" data-type="reel">Reel</span>
+      </div>
+      <p class="type-help" id="type-help"></p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
       <div class="card-header">
-        <h3>Immagine</h3>
-        <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Immagine</button>
+        <h3>Media <span id="media-count" style="font-size:12px;color:var(--gray-400);font-weight:normal"></span></h3>
+        <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn" title="Renderizza un'immagine dal template selezionato e la aggiunge come media generato"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera da template</button>
       </div>
-      <div class="post-preview" id="image-preview">
-        <% if (post.image_url) { %>
-          <img src="<%= post.image_url %>" alt="Post preview">
-        <% } else { %>
-          <span style="color:var(--gray-400)">Nessuna immagine generata</span>
-        <% } %>
-      </div>
+
+      <label class="uploader" id="uploader">
+        <input type="file" id="media-input" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime">
+        <div><strong>Carica file</strong> o trascina qui</div>
+        <div style="font-size:11px;margin-top:4px">JPG / PNG / WEBP fino a 8MB · MP4 / MOV fino a 100MB · max 10 file</div>
+      </label>
+
+      <div id="media-grid" class="media-grid"></div>
+      <div id="media-empty" class="media-empty" style="display:none">Nessun media. Carica file o genera da template.</div>
     </div>
 
     <div class="card">
@@ -87,13 +151,8 @@
         <% if (post.fb_post_id) { %><p style="font-size:12px;color:var(--gray-500)">FB: <%= post.fb_post_id %></p><% } %>
         <% if (post.ig_media_id) { %><p style="font-size:12px;color:var(--gray-500)">IG: <%= post.ig_media_id %></p><% } %>
       <% } else { %>
-        <button class="btn btn-primary" onclick="publishPost()" id="publish-btn"
-                <%= (!post.caption || !post.image_url) ? 'disabled' : '' %>>
-          Pubblica su FB + IG
-        </button>
-        <% if (!post.caption || !post.image_url) { %>
-          <p class="help" style="margin-top:8px">Genera prima caption e immagine</p>
-        <% } %>
+        <button class="btn btn-primary" onclick="publishPost()" id="publish-btn">Pubblica su FB + IG</button>
+        <p class="help" id="publish-help" style="margin-top:8px;color:var(--gray-500)"></p>
       <% } %>
       <% if (post.publish_error) { %>
         <div class="form-error" style="margin-top:8px"><%= post.publish_error %></div>
@@ -103,7 +162,183 @@
 </div>
 
 <script>
-  const POST_ID = '<%= post.id %>';
+  const POST_ID    = '<%= post.id %>';
+  const CLIENT_ID  = '<%= client.id %>';
+  const POST       = <%- JSON.stringify(post) %>;
+  let   MEDIA      = <%- JSON.stringify(media || []) %>;
+  let   MEDIA_TYPE = POST.media_type || 'single_image';
+
+  const TYPE_HELP = {
+    single_image: 'Una sola immagine. Caricala oppure generala da template.',
+    carousel:     'Da 2 a 10 media dello stesso tipo (tutte immagini o tutti video). L\u2019ordine \u00e8 quello in cui appariranno nel carousel.',
+    video:        'Un solo video MP4/MOV per il feed normale. Ratio consigliato 1:1 o 4:5.',
+    reel:         'Un solo video verticale 9:16 per i Reel (3-90s). Verr\u00e0 condiviso anche al feed.'
+  };
+
+  // Auth helper per fetch nativo (FormData usa boundary, non passabile via apiFetch)
+  function getToken() {
+    return localStorage.getItem('dashboard_token') || (document.cookie.split(';').find(c => c.trim().startsWith('dashboard_token=')) || '').split('=')[1] || '';
+  }
+
+  function setType(t) {
+    MEDIA_TYPE = t;
+    document.querySelectorAll('.type-chip').forEach(c => c.classList.toggle('active', c.dataset.type === t));
+    document.getElementById('type-help').textContent = TYPE_HELP[t] || '';
+    refreshPublishState();
+  }
+
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function renderMedia() {
+    const grid  = document.getElementById('media-grid');
+    const empty = document.getElementById('media-empty');
+    document.getElementById('media-count').textContent = MEDIA.length ? '(' + MEDIA.length + ')' : '';
+    if (!MEDIA.length) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+    } else {
+      empty.style.display = 'none';
+      grid.innerHTML = MEDIA.map((m, i) => {
+        const thumb = m.kind === 'video'
+          ? '<video src="' + m.url + '" muted preload="metadata"></video>'
+          : '<img src="' + m.url + '" alt="">';
+        const badge = m.source !== 'upload' ? '<span class="media-source-badge ' + m.source + '">' + m.source + '</span>' : '';
+        const stylizeBtn = m.kind === 'image' && m.source !== 'styled'
+          ? '<button onclick="stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>'
+          : '';
+        return '<div class="media-item">'
+          + '<div class="media-thumb">' + thumb + badge + '</div>'
+          + '<div class="media-actions">'
+          +   '<button onclick="moveMedia(\'' + m.id + '\', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Sposta a sinistra">\u2190</button>'
+          +   '<span class="media-pos">' + (i + 1) + '/' + MEDIA.length + '</span>'
+          +   '<button onclick="moveMedia(\'' + m.id + '\', 1)" '  + (i === MEDIA.length - 1 ? 'disabled' : '') + ' title="Sposta a destra">\u2192</button>'
+          + '</div>'
+          + '<div class="media-actions">'
+          +   stylizeBtn
+          +   '<button class="danger" onclick="deleteMedia(\'' + m.id + '\')" title="Rimuovi">\u00d7 Rimuovi</button>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+    refreshPublishState();
+  }
+
+  // Valida media correnti vs media_type. Ritorna stringa errore o null.
+  function validateMediaCoherence() {
+    if (MEDIA_TYPE === 'single_image') {
+      if (MEDIA.length === 0) return 'Carica una immagine';
+      if (MEDIA.length > 1)   return 'Singola immagine: rimuovi i media in eccesso';
+      if (MEDIA[0].kind !== 'image') return 'Singola immagine: il media deve essere image';
+    } else if (MEDIA_TYPE === 'carousel') {
+      if (MEDIA.length < 2)  return 'Carousel: servono almeno 2 media';
+      if (MEDIA.length > 10) return 'Carousel: massimo 10 media';
+      const kinds = new Set(MEDIA.map(m => m.kind));
+      if (kinds.size > 1)    return 'Carousel: tutti i media devono essere dello stesso tipo';
+    } else if (MEDIA_TYPE === 'video' || MEDIA_TYPE === 'reel') {
+      if (MEDIA.length !== 1)        return MEDIA_TYPE + ': serve esattamente 1 video';
+      if (MEDIA[0].kind !== 'video') return MEDIA_TYPE + ': il media deve essere video';
+    }
+    return null;
+  }
+
+  function refreshPublishState() {
+    const btn  = document.getElementById('publish-btn');
+    const help = document.getElementById('publish-help');
+    if (!btn) return; // post già pubblicato
+
+    const captionOk = !!document.getElementById('caption-text').value.trim();
+    const err = validateMediaCoherence();
+
+    if (!captionOk) {
+      btn.disabled = true;
+      help.textContent = 'Scrivi/genera la caption prima di pubblicare';
+      return;
+    }
+    if (err) {
+      btn.disabled = true;
+      help.textContent = err;
+      return;
+    }
+    btn.disabled = false;
+    help.textContent = '';
+  }
+
+  // ── API actions ──
+
+  async function uploadFiles(files) {
+    if (!files.length) return;
+    const fd = new FormData();
+    Array.from(files).forEach(f => fd.append('media', f));
+    const res = await fetch('/dashboard/api/posts/' + POST_ID + '/media', {
+      method: 'POST', body: fd,
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    const data = await res.json();
+    if (!res.ok && (!data.media || !data.media.length)) {
+      await showAlert('Upload fallito: ' + (data.error || JSON.stringify(data.errors || {})));
+      return;
+    }
+    if (data.errors && data.errors.length) {
+      toast('Alcuni file scartati: ' + data.errors.map(e => e.file + ' (' + e.error + ')').join(', '));
+    }
+    MEDIA = MEDIA.concat(data.media || []);
+    renderMedia();
+  }
+
+  document.getElementById('media-input').addEventListener('change', e => uploadFiles(e.target.files));
+  const dz = document.getElementById('uploader');
+  ['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+  dz.addEventListener('drop', e => uploadFiles(e.dataTransfer.files));
+
+  async function deleteMedia(id) {
+    if (!await showConfirm('Rimuovere questo media?')) return;
+    const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media/' + id, { method: 'DELETE' });
+    if (res.error) { await showAlert(res.error); return; }
+    MEDIA = MEDIA.filter(m => m.id !== id);
+    renderMedia();
+  }
+
+  async function moveMedia(id, delta) {
+    const idx = MEDIA.findIndex(m => m.id === id);
+    if (idx < 0) return;
+    const newIdx = idx + delta;
+    if (newIdx < 0 || newIdx >= MEDIA.length) return;
+    const reordered = MEDIA.slice();
+    [reordered[idx], reordered[newIdx]] = [reordered[newIdx], reordered[idx]];
+    const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media/reorder', {
+      method: 'PUT', body: { order: reordered.map(m => m.id) }
+    });
+    if (res.error) { await showAlert(res.error); return; }
+    MEDIA = res.media;
+    renderMedia();
+  }
+
+  async function stylizeMedia(id) {
+    if (!await showConfirm('Generare versione stilizzata di questo media?')) return;
+    toast('Stilizzazione in corso (10-20s)...');
+    const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media/' + id + '/stylize', {
+      method: 'POST', body: { template: 'image-overlay', include_caption: true }
+    });
+    if (res.error) { await showAlert(res.error); return; }
+    MEDIA.push(res.media);
+    renderMedia();
+  }
+
+  // ── Type chip clicks ──
+
+  document.querySelectorAll('.type-chip').forEach(c => c.addEventListener('click', async () => {
+    const newType = c.dataset.type;
+    if (newType === MEDIA_TYPE) return;
+    const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media-type', {
+      method: 'PUT', body: { media_type: newType }
+    });
+    if (res.error) { await showAlert(res.error); return; }
+    setType(newType);
+    toast('Tipo: ' + newType);
+  }));
+
+  // ── Existing actions ──
 
   async function generateCaption() {
     const btn = document.getElementById('gen-caption-btn');
@@ -113,6 +348,7 @@
       const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-caption', { method: 'POST' });
       if (res.error) { await showAlert(res.error); return; }
       document.getElementById('caption-text').value = res.caption || '';
+      refreshPublishState();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     } finally {
@@ -123,10 +359,10 @@
 
   async function saveCaption() {
     await apiFetch('/dashboard/api/posts/' + POST_ID, {
-      method: 'PUT',
-      body: { caption: document.getElementById('caption-text').value }
+      method: 'PUT', body: { caption: document.getElementById('caption-text').value }
     });
     toast('Caption salvata');
+    refreshPublishState();
   }
 
   async function saveDetails() {
@@ -149,18 +385,22 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> Generazione...';
     try {
-      // Save details first
       await saveDetails();
       const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-image', { method: 'POST' });
       if (res.error) { await showAlert(res.error); return; }
-      if (res.image_url) {
-        document.getElementById('image-preview').innerHTML = '<img src="' + res.image_url + '" alt="Post preview">';
+      // Ricarico la lista media (l'endpoint legacy ha aggiornato post.image_url, non post_media)
+      const mediaRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media');
+      MEDIA = mediaRes.media || MEDIA;
+      // Se non c'è ancora una riga post_media per la generata, aggiungo manualmente come fallback
+      if (res.image_url && !MEDIA.some(m => m.url === res.image_url)) {
+        MEDIA.push({ id: 'legacy-' + Date.now(), kind: 'image', source: 'generated', url: res.image_url, position: MEDIA.length });
       }
+      renderMedia();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Genera Immagine';
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera da template';
     }
   }
 
@@ -180,6 +420,11 @@
       btn.textContent = 'Pubblica su FB + IG';
     }
   }
+
+  // ── Init ──
+  setType(MEDIA_TYPE);
+  renderMedia();
+  document.getElementById('caption-text').addEventListener('input', refreshPublishState);
 </script>
 
 <%- include('layout-end') %>
