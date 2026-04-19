@@ -115,13 +115,27 @@ router.post('/:id/generate-image', async (req, res) => {
   };
 
   try {
-    const { filename } = await renderImage(template, post.client_id, data);
+    const { filename, filePath } = await renderImage(template, post.client_id, data);
     const imageUrl = `${BASE_URL}/images/${post.client_id}/${filename}`;
 
     db.prepare(`
       UPDATE posts SET image_url = ?, image_data = ?, status = 'image_generated', updated_at = datetime('now')
       WHERE id = ?
     `).run(imageUrl, JSON.stringify(data), post.id);
+
+    // Registra anche come post_media per la nuova UI (sposta il file in posts/{id}/)
+    try {
+      postMedia.attachGeneratedFile({
+        clientId: post.client_id,
+        postId: post.id,
+        absolutePath: filePath,
+        source: 'generated',
+        kind: 'image'
+      });
+    } catch (mErr) {
+      // non blocca: il fallback legacy image_url funziona comunque
+      console.warn('[generate-image] post_media attach failed:', mErr.message);
+    }
 
     const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(post.id);
     if (updated.image_data) updated.image_data = JSON.parse(updated.image_data);
