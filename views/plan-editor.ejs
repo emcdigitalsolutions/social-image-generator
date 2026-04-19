@@ -11,7 +11,7 @@
   </div>
   <div style="display:flex;gap:8px">
     <% if (plan.status === 'draft') { %>
-      <button class="btn btn-primary" onclick="confirmPlan()">Conferma Piano</button>
+      <button class="btn btn-primary" onclick="confirmPlan()" title="Cambia lo stato del piano da 'draft' a 'confirmed'. È un'approvazione del piano: i post saranno editabili ma non vengono ancora pubblicati. Per attivare l'auto-publish serve confermare anche il singolo mese.">Conferma Piano</button>
     <% } %>
   </div>
 </div>

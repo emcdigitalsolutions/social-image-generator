@@ -1,5 +1,33 @@
 <%- include('layout', { title, user }) %>
 
+<style>
+  .view-toggle { display:inline-flex; border:1px solid var(--gray-200); border-radius:6px; overflow:hidden; }
+  .view-toggle button { background:white; border:0; padding:6px 14px; font-size:13px; cursor:pointer; color:var(--gray-500); }
+  .view-toggle button.active { background:var(--blue); color:white; }
+  .filter-chips { display:flex; gap:6px; flex-wrap:wrap; margin:16px 0; align-items:center; }
+  .filter-chips .label { font-size:12px; color:var(--gray-500); margin-right:4px; }
+  .chip { padding:4px 10px; font-size:12px; border-radius:12px; border:1px solid var(--gray-200); background:white; cursor:pointer; user-select:none; }
+  .chip.active { background:var(--blue); color:white; border-color:var(--blue); }
+  .chip .count { opacity:0.7; margin-left:4px; }
+
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:8px; }
+  .cal-head { font-size:11px; font-weight:600; color:var(--gray-500); text-transform:uppercase; padding:4px 6px; }
+  .cal-cell { min-height:110px; border:1px solid var(--gray-200); border-radius:6px; padding:6px; background:white; display:flex; flex-direction:column; gap:4px; }
+  .cal-cell.empty { background:var(--gray-50); border-style:dashed; }
+  .cal-cell .day { font-size:11px; color:var(--gray-400); font-weight:600; }
+  .cal-cell.today .day { color:var(--blue); }
+  .cal-post { display:block; padding:4px 6px; border-radius:4px; font-size:11px; line-height:1.3; text-decoration:none; border-left:3px solid; background:var(--gray-50); color:var(--gray-700); }
+  .cal-post:hover { background:var(--gray-100); }
+  .cal-post.s-draft           { border-left-color:#9ca3af; }
+  .cal-post.s-caption_generated,
+  .cal-post.s-image_generated { border-left-color:#3b82f6; }
+  .cal-post.s-ready           { border-left-color:#10b981; }
+  .cal-post.s-published       { border-left-color:#059669; background:#ecfdf5; }
+  .cal-post.s-failed          { border-left-color:#dc2626; background:#fef2f2; }
+
+  .unscheduled-bar { margin-top:24px; padding:12px; background:#fef9c3; border:1px solid #fde047; border-radius:6px; font-size:13px; }
+</style>
+
 <div class="breadcrumb">
   <a href="/dashboard">Clienti</a> /
   <a href="/dashboard/clients/<%= client.id %>"><%= client.display_name %></a> /
@@ -11,7 +39,7 @@
   <h1>Mese <%= month %> — <%= client.display_name %></h1>
   <div style="display:flex;gap:8px;align-items:center">
     <% if (schedule && schedule.is_active) { %>
-      <span class="badge badge-active">Schedule attivo</span>
+      <span class="badge badge-active" title="L'auto-publish è attivo per questo mese: i post con stato 'ready' verranno pubblicati alla loro scheduled_date">Schedule attivo</span>
     <% } %>
   </div>
 </div>
@@ -24,55 +52,189 @@
   <% } %>
 </div>
 
-<div class="actions-bar">
-  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('caption')">Genera tutte le caption</button>
-  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('image')">Genera tutte le immagini</button>
-  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('both')">Genera caption + immagini</button>
+<div class="actions-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('caption')" title="Genera la caption AI per tutti i post draft del mese">Genera tutte le caption</button>
+  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('image')" title="Renderizza l'immagine per tutti i post che hanno una caption">Genera tutte le immagini</button>
+  <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('both')" title="Genera caption + immagine per tutti i post del mese">Genera caption + immagini</button>
   <% if (!schedule || !schedule.is_active) { %>
-    <button class="btn btn-primary btn-sm" onclick="confirmMonth()">Conferma Mese</button>
+    <button class="btn btn-primary btn-sm" onclick="confirmMonth()" title="Attiva l'auto-publish: i post con status 'ready' e una scheduled_date passata verranno pubblicati automaticamente su Facebook + Instagram dal cron ogni 60s">Conferma Mese</button>
   <% } %>
+  <div style="flex:1"></div>
+  <div class="view-toggle" role="tablist">
+    <button id="vt-cal"  class="active" onclick="setView('cal')">Calendario</button>
+    <button id="vt-list"            onclick="setView('list')">Lista</button>
+  </div>
 </div>
 
 <% if (posts.length === 0) { %>
   <div class="empty-state"><h3>Nessun post per questo mese</h3></div>
 <% } else { %>
-  <%
-    const weeks = {};
-    posts.forEach(p => {
-      const w = p.week_number || 1;
-      if (!weeks[w]) weeks[w] = [];
-      weeks[w].push(p);
-    });
-  %>
-  <% Object.entries(weeks).forEach(([wn, wPosts]) => { %>
-    <div class="week-group">
-      <h3>Settimana <%= wn %></h3>
-      <div class="posts-grid">
-        <% wPosts.forEach(p => { %>
-          <a href="/dashboard/posts/<%= p.id %>" class="post-card" style="text-decoration:none;color:inherit">
-            <div class="post-card-image">
-              <% if (p.image_url) { %><img src="<%= p.image_url %>"><% } else { %>Nessuna immagine<% } %>
-            </div>
-            <div class="post-card-body">
-              <h4><%= p.category || 'Post' %></h4>
-              <p><%= p.sub_topic || (p.caption ? p.caption.substring(0, 80) + '...' : 'Nessun contenuto') %></p>
-              <div class="post-card-footer">
-                <span class="badge badge-<%= p.status %>"><%= p.status %></span>
-                <span style="font-size:12px;color:var(--gray-400)"><%= p.template || '' %></span>
-              </div>
-            </div>
-          </a>
-        <% }) %>
-      </div>
-    </div>
-  <% }) %>
+
+  <div class="filter-chips">
+    <span class="label">Filtra:</span>
+    <span class="chip active" data-filter="all">Tutti <span class="count" id="cnt-all"></span></span>
+    <span class="chip" data-filter="todo">Da generare <span class="count" id="cnt-todo"></span></span>
+    <span class="chip" data-filter="ready">Pronti <span class="count" id="cnt-ready"></span></span>
+    <span class="chip" data-filter="published">Pubblicati <span class="count" id="cnt-published"></span></span>
+    <span class="chip" data-filter="failed">Falliti <span class="count" id="cnt-failed"></span></span>
+  </div>
+
+  <div id="view-cal"></div>
+  <div id="view-list" style="display:none"></div>
+
+  <div id="unscheduled" class="unscheduled-bar" style="display:none">
+    <strong id="unscheduled-count">0</strong> post senza data programmata. <a href="#" onclick="setView('list');return false">Vedi nella lista</a> e imposta una <em>scheduled_date</em>.
+  </div>
 <% } %>
 
 <script>
   const PLAN_ID = '<%= plan.id %>';
   const CLIENT_ID = '<%= client.id %>';
   const MONTH = <%= month %>;
-  const POST_IDS = <%= JSON.stringify(posts.map(p => p.id)) %>;
+  const POSTS = <%- JSON.stringify(posts) %>;
+  const POST_IDS = POSTS.map(p => p.id);
+
+  // Filtro stato corrente
+  let activeFilter = 'all';
+
+  // Categoria di stato per filtri
+  function bucket(status) {
+    if (status === 'published') return 'published';
+    if (status === 'failed')    return 'failed';
+    if (status === 'ready')     return 'ready';
+    return 'todo'; // draft, caption_generated, image_generated, ecc.
+  }
+
+  function matchesFilter(post) {
+    return activeFilter === 'all' || bucket(post.status) === activeFilter;
+  }
+
+  // Aggiorna i conteggi sulle chip
+  function updateCounts() {
+    const counts = { all: POSTS.length, todo: 0, ready: 0, published: 0, failed: 0 };
+    POSTS.forEach(p => { counts[bucket(p.status)]++; });
+    Object.entries(counts).forEach(([k, v]) => {
+      const el = document.getElementById('cnt-' + k);
+      if (el) el.textContent = v ? '(' + v + ')' : '';
+    });
+  }
+
+  function setFilter(f) {
+    activeFilter = f;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+    renderViews();
+  }
+
+  // Calcola range di date dei post del mese (basato su scheduled_date)
+  function dateRange() {
+    const dates = POSTS.map(p => p.scheduled_date).filter(Boolean).sort();
+    if (!dates.length) return null;
+    return { min: dates[0], max: dates[dates.length - 1] };
+  }
+
+  function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+  function fmtIso(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+  // Renderizza vista calendario
+  function renderCalendar() {
+    const root = document.getElementById('view-cal');
+    if (!root) return;
+    const range = dateRange();
+    if (!range) {
+      root.innerHTML = '<div class="empty-state"><h3>Nessun post ha una data programmata</h3><p>Imposta una <em>scheduled_date</em> da ciascun post per vederlo nel calendario.</p></div>';
+      return;
+    }
+    // Allarga al lunedì precedente / domenica successiva
+    const start = parseDate(range.min);
+    while (start.getDay() !== 1) start.setDate(start.getDate() - 1); // lunedì = 1
+    const end = parseDate(range.max);
+    while (end.getDay() !== 0) end.setDate(end.getDate() + 1);       // domenica = 0
+
+    const today = fmtIso(new Date());
+    const byDate = {};
+    POSTS.filter(matchesFilter).forEach(p => {
+      if (!p.scheduled_date) return;
+      (byDate[p.scheduled_date] = byDate[p.scheduled_date] || []).push(p);
+    });
+
+    let html = '';
+    const dayNames = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+    dayNames.forEach(n => html += '<div class="cal-head">' + n + '</div>');
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = fmtIso(d);
+      const dayPosts = byDate[iso] || [];
+      const cls = ['cal-cell'];
+      if (!dayPosts.length) cls.push('empty');
+      if (iso === today) cls.push('today');
+      html += '<div class="' + cls.join(' ') + '">';
+      html += '<div class="day">' + d.getDate() + '</div>';
+      dayPosts.forEach(p => {
+        const label = (p.category || 'Post') + (p.scheduled_time ? ' · ' + p.scheduled_time.slice(0,5) : '');
+        const titleAttr = escapeHtml(p.sub_topic || p.status);
+        html += '<a href="/dashboard/posts/' + p.id + '" class="cal-post s-' + p.status + '" title="' + titleAttr + '">' + escapeHtml(label) + '</a>';
+      });
+      html += '</div>';
+    }
+    root.innerHTML = '<div class="cal-grid">' + html + '</div>';
+
+    // Avviso post non schedulati
+    const noDate = POSTS.filter(matchesFilter).filter(p => !p.scheduled_date).length;
+    const bar = document.getElementById('unscheduled');
+    if (noDate > 0) {
+      document.getElementById('unscheduled-count').textContent = noDate;
+      bar.style.display = 'block';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+
+  // Renderizza vista lista per settimana (storica)
+  function renderList() {
+    const root = document.getElementById('view-list');
+    if (!root) return;
+    const visible = POSTS.filter(matchesFilter);
+    if (!visible.length) { root.innerHTML = '<div class="empty-state"><h3>Nessun post per il filtro selezionato</h3></div>'; return; }
+    const weeks = {};
+    visible.forEach(p => { const w = p.week_number || 1; (weeks[w] = weeks[w] || []).push(p); });
+    let html = '';
+    Object.keys(weeks).sort((a,b) => +a - +b).forEach(wn => {
+      html += '<div class="week-group"><h3>Settimana ' + wn + '</h3><div class="posts-grid">';
+      weeks[wn].forEach(p => {
+        html += '<a href="/dashboard/posts/' + p.id + '" class="post-card" style="text-decoration:none;color:inherit">';
+        html += '<div class="post-card-image">' + (p.image_url ? '<img src="' + p.image_url + '">' : 'Nessuna immagine') + '</div>';
+        html += '<div class="post-card-body"><h4>' + escapeHtml(p.category || 'Post') + '</h4>';
+        html += '<p>' + escapeHtml(p.sub_topic || (p.caption ? p.caption.substring(0,80) + '...' : 'Nessun contenuto')) + '</p>';
+        html += '<div class="post-card-footer"><span class="badge badge-' + p.status + '">' + p.status + '</span>';
+        html += '<span style="font-size:12px;color:var(--gray-400)">' + (p.template || '') + '</span></div></div></a>';
+      });
+      html += '</div></div>';
+    });
+    root.innerHTML = html;
+  }
+
+  function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  let currentView = 'cal';
+  function setView(v) {
+    currentView = v;
+    document.getElementById('view-cal').style.display  = v === 'cal'  ? 'block' : 'none';
+    document.getElementById('view-list').style.display = v === 'list' ? 'block' : 'none';
+    document.getElementById('vt-cal').classList.toggle('active', v === 'cal');
+    document.getElementById('vt-list').classList.toggle('active', v === 'list');
+    document.getElementById('unscheduled').style.display = v === 'cal' ? document.getElementById('unscheduled').style.display : 'none';
+    renderViews();
+  }
+  function renderViews() {
+    if (currentView === 'cal') renderCalendar(); else renderList();
+  }
+
+  // Init
+  if (POSTS.length) {
+    document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => setFilter(c.dataset.filter)));
+    updateCounts();
+    renderViews();
+  }
 
   async function bulkGenerate(action) {
     if (!POST_IDS.length) return;
