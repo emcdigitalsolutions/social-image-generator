@@ -150,14 +150,15 @@
           <% plans.forEach(p => {
             const planData = typeof p.plan_data === 'string' ? JSON.parse(p.plan_data) : p.plan_data;
             const monthCount = planData && planData.months ? planData.months.length : '—';
+            const planUrl = `/dashboard/clients/${client.id}/plan/${p.id}`;
           %>
-          <tr>
+          <tr style="cursor:pointer" onclick="if(!event.target.closest('button,a')) window.location.href='<%= planUrl %>'" title="Apri questo piano editoriale">
             <td><%= p.title || 'Piano senza titolo' %></td>
             <td><%= monthCount %> mesi</td>
             <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
             <td><%= p.created_at %></td>
-            <td style="display:flex;gap:4px">
-              <a href="/dashboard/clients/<%= client.id %>/plan/<%= p.id %>" class="btn btn-sm btn-secondary">Apri</a>
+            <td style="display:flex;gap:4px" onclick="event.stopPropagation()">
+              <a href="<%= planUrl %>" class="btn btn-sm btn-secondary">Apri</a>
               <% if (p.status === 'draft') { %>
                 <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deletePlan('<%= p.id %>')">Elimina</button>
               <% } else if (p.status === 'confirmed') { %>
