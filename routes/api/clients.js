@@ -95,7 +95,8 @@ router.put('/:id', (req, res) => {
     'fb_page_id', 'fb_system_user_token', 'ig_user_id', 'ig_access_token',
     'system_instruction', 'anthropic_api_key', 'gemini_api_key', 'ai_provider',
     'status', 'logo_filename', 'theme_filename',
-    'subscription_plan', 'subscription_price', 'subscription_notes'];
+    'subscription_plan', 'subscription_price', 'subscription_notes',
+    'editorial_months'];
 
   const updates = [];
   const values = [];

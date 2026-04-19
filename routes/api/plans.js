@@ -33,7 +33,7 @@ router.post('/generate', async (req, res) => {
   }
 
   try {
-    const planMonths = parseInt(months) || 6;
+    const planMonths = parseInt(months) || client.editorial_months || 6;
     const result = await generateEditorialPlan(client, responses, planMonths);
 
     const id = uuidv4();

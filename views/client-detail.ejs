@@ -61,7 +61,7 @@
           <option value="archived" <%= client.status === 'archived' ? 'selected' : '' %>>Archiviato</option>
         </select>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
         <div class="form-group">
           <label>Piano commerciale</label>
           <input type="text" name="subscription_plan" value="<%= client.subscription_plan || '' %>" placeholder="es. Social Basic, Social Pro">
@@ -69,6 +69,10 @@
         <div class="form-group">
           <label>Prezzo mensile (&euro;)</label>
           <input type="number" name="subscription_price" value="<%= client.subscription_price || '' %>" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label title="Quanti mesi il piano editoriale generato dall'AI deve coprire">Mesi piano editoriale</label>
+          <input type="number" name="editorial_months" value="<%= client.editorial_months || 6 %>" step="1" min="1" max="24" placeholder="6">
         </div>
       </div>
       <div class="form-group">

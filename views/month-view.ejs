@@ -17,7 +17,7 @@
 </div>
 
 <div class="month-buttons" style="margin-bottom:16px">
-  <% const totalMonths = (plan.plan_data && plan.plan_data.months) ? plan.plan_data.months.length : 5; %>
+  <% const totalMonths = (plan.plan_data && plan.plan_data.months) ? plan.plan_data.months.length : (client.editorial_months || 6); %>
   <% for (let m = 1; m <= totalMonths; m++) { %>
     <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>/month/<%= m %>"
        class="month-btn <%= m === month ? 'active' : '' %>">Mese <%= m %></a>
