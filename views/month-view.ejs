@@ -26,6 +26,22 @@
   .cal-post.s-failed          { border-left-color:#dc2626; background:#fef2f2; }
 
   .unscheduled-bar { margin-top:24px; padding:12px; background:#fef9c3; border:1px solid #fde047; border-radius:6px; font-size:13px; }
+
+  /* Time modal */
+  .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; display:flex; align-items:center; justify-content:center; }
+  .modal-card { background:white; border-radius:10px; max-width:500px; width:92vw; max-height:90vh; overflow:auto; padding:22px 24px; }
+  .modal-card h3 { margin:0 0 4px; font-size:17px; }
+  .modal-card .modal-sub { font-size:12px; color:var(--gray-500); margin-bottom:18px; }
+  .preset-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px; }
+  .preset-btn { display:flex; flex-direction:column; gap:2px; padding:10px 8px; border:1px solid var(--gray-200); border-radius:6px; background:white; cursor:pointer; font-size:12px; text-align:center; }
+  .preset-btn:hover { border-color:var(--blue); background:#eff6ff; }
+  .preset-btn .ico { font-size:18px; }
+  .preset-btn .time { font-weight:700; font-size:14px; color:var(--gray-800); }
+  .preset-btn .lab { color:var(--gray-500); }
+  .modal-row { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+  .modal-row input[type=time] { padding:6px 10px; font-size:14px; border:1px solid var(--gray-200); border-radius:5px; }
+  .modal-row label { font-size:13px; cursor:pointer; }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
 </style>
 
 <div class="breadcrumb">
@@ -56,6 +72,7 @@
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('caption')" title="Genera la caption AI per tutti i post draft del mese">Genera tutte le caption</button>
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('image')" title="Renderizza l'immagine per tutti i post che hanno una caption">Genera tutte le immagini</button>
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('both')" title="Genera caption + immagine per tutti i post del mese">Genera caption + immagini</button>
+  <button class="btn btn-secondary btn-sm" onclick="openTimeModal()" title="Imposta in massa l'orario di pubblicazione (best time per FB / IG)">&#x1f550; Orario default</button>
   <% if (!schedule || !schedule.is_active) { %>
     <button class="btn btn-primary btn-sm" onclick="confirmMonth()" title="Attiva l'auto-publish: i post con status 'ready' e una scheduled_date passata verranno pubblicati automaticamente su Facebook + Instagram dal cron ogni 60s">Conferma Mese</button>
   <% } %>
@@ -321,6 +338,78 @@
       });
       if (res.error) { await showAlert(res.error); return; }
       toast('Post creato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  // ── Time bulk modal ──
+  const TIME_PRESETS = [
+    { ico: '\ud83d\udcd8', label: 'Facebook',   time: '14:00', note: 'Pausa pranzo / pomeriggio' },
+    { ico: '\ud83d\udcf7', label: 'Instagram',  time: '18:00', note: 'Aperitivo / dopo lavoro' },
+    { ico: '\ud83c\udf9b\ufe0f',  label: 'Misto FB+IG', time: '14:30', note: 'Compromesso ottimale' }
+  ];
+
+  function openTimeModal() {
+    if (!POSTS.length) { showAlert('Nessun post in questo mese.'); return; }
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-backdrop';
+    wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
+    const presetsHtml = TIME_PRESETS.map(p =>
+      `<div class="preset-btn" onclick="document.getElementById('tm-input').value='${p.time}'">
+        <div class="ico">${p.ico}</div>
+        <div class="time">${p.time}</div>
+        <div class="lab">${p.label}</div>
+        <div class="lab" style="font-size:10px;opacity:.7">${p.note}</div>
+      </div>`
+    ).join('');
+    const totalCount = POSTS.length;
+    wrap.innerHTML = `
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <h3>\u{1f550} Imposta orario di pubblicazione</h3>
+        <div class="modal-sub">Applica un orario in batch ai post di questo mese.</div>
+
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Preset best time (industry data)</div>
+        <div class="preset-grid">${presetsHtml}</div>
+
+        <div class="modal-row">
+          <label for="tm-input"><strong>Orario:</strong></label>
+          <input type="time" id="tm-input" value="14:30">
+          <span style="font-size:12px;color:var(--gray-500)">(o digita personalizzato)</span>
+        </div>
+        <div class="modal-row">
+          <label><input type="checkbox" id="tm-only-empty" checked> Applica solo ai post senza orario gi\u00e0 impostato</label>
+        </div>
+
+        <div style="font-size:11px;color:var(--gray-500);margin-top:10px">Saranno aggiornati fino a <strong>${totalCount}</strong> post di questo mese.</div>
+
+        <div class="modal-actions">
+          <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Annulla</button>
+          <button class="btn btn-sm btn-primary" onclick="applyBulkTime()">Applica</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+  }
+
+  async function applyBulkTime() {
+    const time = document.getElementById('tm-input').value;
+    const onlyEmpty = document.getElementById('tm-only-empty').checked;
+    if (!time) { showAlert('Specifica un orario'); return; }
+    const targetIds = onlyEmpty
+      ? POSTS.filter(p => !p.scheduled_time).map(p => p.id)
+      : POSTS.map(p => p.id);
+    if (!targetIds.length) {
+      showAlert('Tutti i post hanno gi\u00e0 un orario impostato. Deseleziona la checkbox per sovrascrivere.');
+      return;
+    }
+    try {
+      const res = await apiFetch('/dashboard/api/posts/bulk-time', {
+        method: 'POST',
+        body: { post_ids: targetIds, scheduled_time: time, only_unscheduled: onlyEmpty }
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast(res.updated + ' post aggiornati con orario ' + time);
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);

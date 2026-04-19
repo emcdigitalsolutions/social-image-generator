@@ -452,6 +452,24 @@ router.put('/:id/media-type', (req, res) => {
   res.json(updated);
 });
 
+// Bulk update scheduled_time per N post (usato dal "Imposta orario default")
+router.post('/bulk-time', (req, res) => {
+  const db = getDb();
+  const { post_ids, scheduled_time, only_unscheduled } = req.body;
+  if (!Array.isArray(post_ids) || !post_ids.length) return res.status(400).json({ error: 'post_ids richiesti' });
+  if (!scheduled_time || !/^\d{2}:\d{2}(:\d{2})?$/.test(scheduled_time)) {
+    return res.status(400).json({ error: 'scheduled_time deve essere HH:MM' });
+  }
+
+  let sql = "UPDATE posts SET scheduled_time = ?, updated_at = datetime('now') WHERE id IN (" + post_ids.map(() => '?').join(',') + ")";
+  const params = [scheduled_time, ...post_ids];
+  if (only_unscheduled) {
+    sql += " AND (scheduled_time IS NULL OR scheduled_time = '')";
+  }
+  const result = db.prepare(sql).run(...params);
+  res.json({ updated: result.changes });
+});
+
 // Crea un nuovo post manualmente (es. aggiungere un post extra in una settimana)
 router.post('/', (req, res) => {
   const db = getDb();
