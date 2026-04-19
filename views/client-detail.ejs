@@ -161,13 +161,12 @@
             <td><%= p.created_at %></td>
             <td style="display:flex;gap:4px" onclick="event.stopPropagation()">
               <a href="<%= planUrl %>" class="btn btn-sm btn-secondary">Apri</a>
-              <% if (p.status === 'draft') { %>
-                <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deletePlan('<%= p.id %>')">Elimina</button>
-              <% } else if (p.status === 'confirmed') { %>
+              <% if (p.status === 'confirmed') { %>
                 <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="activatePlan('<%= p.id %>')">Attiva</button>
               <% } else if (p.status === 'active') { %>
                 <button class="btn btn-sm" style="background:var(--gray-400);color:#fff" onclick="deactivatePlan('<%= p.id %>')">Disattiva</button>
               <% } %>
+              <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deletePlan('<%= p.id %>', '<%= p.status %>')">Elimina</button>
             </td>
           </tr>
           <% }) %>
@@ -827,13 +826,25 @@
     }
   }
 
-  // Delete plan (draft only)
-  async function deletePlan(id) {
-    if (!await showConfirm('Eliminare questo piano e i post collegati in draft?')) return;
+  // Delete plan — sempre permesso, ma con messaggio rafforzato per non-draft
+  async function deletePlan(id, status) {
+    let msg;
+    if (status === 'draft') {
+      msg = 'Eliminare questo piano e i post draft collegati?';
+    } else if (status === 'active') {
+      msg = '\u26a0\ufe0f Questo piano \u00e8 ATTIVO (auto-publish in corso). Eliminandolo:\n\n' +
+            '\u2022 i post draft del piano vengono cancellati\n' +
+            '\u2022 i post gi\u00e0 pubblicati / pronti restano nel DB ma scollegati dal piano\n' +
+            '\u2022 lo schedule auto-publish viene rimosso\n\n' +
+            'Procedere?';
+    } else {
+      msg = 'Eliminare questo piano (' + status + ')? I post draft verranno cancellati, i post gi\u00e0 pubblicati restano scollegati dal piano.';
+    }
+    if (!await showConfirm(msg)) return;
     try {
       const res = await apiFetch('/dashboard/api/plans/' + id, { method: 'DELETE' });
       if (res.error) { await showAlert(res.error); return; }
-      toast('Piano eliminato');
+      toast('Piano eliminato' + (res.draft_posts_removed ? ' (' + res.draft_posts_removed + ' post draft rimossi)' : ''));
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);

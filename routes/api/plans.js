@@ -145,12 +145,14 @@ router.post('/:id/confirm', (req, res) => {
   res.json(plan);
 });
 
-// Delete plan (only draft)
+// Delete plan — sempre permesso. I post draft del piano vengono cancellati
+// (file su disco inclusi). I post non-draft (ready/published/failed) restano
+// nel DB con editorial_plan_id = NULL via FK ON DELETE SET NULL — così la
+// storia delle pubblicazioni non si perde.
 router.delete('/:id', (req, res) => {
   const db = getDb();
   const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
   if (!plan) return res.status(404).json({ error: 'Plan not found' });
-  if (plan.status !== 'draft') return res.status(400).json({ error: 'Solo i piani in draft possono essere eliminati' });
 
   // Raccogli i post draft prima di cancellarli per pulire i file su disco
   const draftPosts = db.prepare("SELECT id, client_id FROM posts WHERE editorial_plan_id = ? AND status = 'draft'").all(req.params.id);
@@ -165,7 +167,7 @@ router.delete('/:id', (req, res) => {
     catch (err) { console.warn('[plans] cleanup failed for post', p.id, err.message); }
   }
 
-  res.json({ deleted: true });
+  res.json({ deleted: true, draft_posts_removed: draftPosts.length });
 });
 
 // Activate plan
