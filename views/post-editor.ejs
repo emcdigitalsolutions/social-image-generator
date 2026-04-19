@@ -225,7 +225,23 @@
         <% if (post.fb_post_id) { %><p style="font-size:12px;color:var(--gray-500)">FB: <%= post.fb_post_id %></p><% } %>
         <% if (post.ig_media_id) { %><p style="font-size:12px;color:var(--gray-500)">IG: <%= post.ig_media_id %></p><% } %>
       <% } %>
-      <button class="btn btn-primary" onclick="publishPost()" id="publish-btn" style="<%= post.status === 'published' ? 'margin-top:12px' : '' %>"><%= post.status === 'published' ? 'Pubblica di nuovo' : 'Pubblica su FB + IG' %></button>
+      <div style="display:flex;gap:14px;margin:<%= post.status === 'published' ? '12px 0 10px' : '0 0 10px' %>;flex-wrap:wrap">
+        <% if (client.fb_page_id) { %>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="chan-fb" checked onchange="refreshPublishState()"> Facebook
+          </label>
+        <% } else { %>
+          <span style="font-size:12px;color:var(--gray-400)">FB non configurato</span>
+        <% } %>
+        <% if (client.ig_user_id) { %>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="chan-ig" checked onchange="refreshPublishState()"> Instagram
+          </label>
+        <% } else { %>
+          <span style="font-size:12px;color:var(--gray-400)">IG non configurato</span>
+        <% } %>
+      </div>
+      <button class="btn btn-primary" onclick="publishPost()" id="publish-btn">Pubblica</button>
       <p class="help" id="publish-help" style="margin-top:8px;color:var(--gray-500)"></p>
       <% if (post.publish_error) { %>
         <div class="form-error" style="margin-top:8px"><%= post.publish_error %></div>
@@ -312,14 +328,38 @@
     return null;
   }
 
+  function selectedChannels() {
+    const c = [];
+    const fb = document.getElementById('chan-fb');
+    const ig = document.getElementById('chan-ig');
+    if (fb && fb.checked) c.push('fb');
+    if (ig && ig.checked) c.push('ig');
+    return c;
+  }
+
+  function publishLabel(channels) {
+    const prefix = POST.status === 'published' ? 'Pubblica di nuovo' : 'Pubblica';
+    if (channels.length === 2) return prefix + ' su FB + IG';
+    if (channels.length === 1) return prefix + ' su ' + (channels[0] === 'fb' ? 'Facebook' : 'Instagram');
+    return prefix;
+  }
+
   function refreshPublishState() {
     const btn  = document.getElementById('publish-btn');
     const help = document.getElementById('publish-help');
-    if (!btn) return; // post già pubblicato
+    if (!btn) return;
 
     const captionOk = !!document.getElementById('caption-text').value.trim();
     const err = validateMediaCoherence();
+    const channels = selectedChannels();
 
+    btn.textContent = publishLabel(channels);
+
+    if (!channels.length) {
+      btn.disabled = true;
+      help.textContent = 'Seleziona almeno una piattaforma (Facebook o Instagram)';
+      return;
+    }
     if (!captionOk) {
       btn.disabled = true;
       help.textContent = 'Scrivi/genera la caption prima di pubblicare';
@@ -593,19 +633,25 @@
   }
 
   async function publishPost() {
-    if (!await showConfirm('Pubblicare questo post su Facebook e Instagram?')) return;
+    const channels = selectedChannels();
+    if (!channels.length) return;
+    const platforms = channels.map(c => c === 'fb' ? 'Facebook' : 'Instagram').join(' e ');
+    if (!await showConfirm('Pubblicare questo post su ' + platforms + '?')) return;
     const btn = document.getElementById('publish-btn');
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> Pubblicazione...';
     try {
-      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/publish', { method: 'POST' });
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/publish', {
+        method: 'POST',
+        body: { channels }
+      });
       if (res.error) { await showAlert(res.error); return; }
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
-      btn.textContent = POST.status === 'published' ? 'Pubblica di nuovo' : 'Pubblica su FB + IG';
+      btn.textContent = publishLabel(selectedChannels());
     }
   }
 

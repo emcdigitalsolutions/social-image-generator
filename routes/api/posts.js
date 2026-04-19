@@ -172,8 +172,13 @@ router.post('/:id/publish', async (req, res) => {
     }
   }
 
+  // channels: array opzionale tipo ['fb'], ['ig'], ['fb','ig']. Default: entrambi.
+  const channels = Array.isArray(req.body.channels) && req.body.channels.length
+    ? req.body.channels.filter(c => c === 'fb' || c === 'ig')
+    : ['fb', 'ig'];
+
   try {
-    const result = await publishPost(client, { ...post, media_type: mediaType }, media);
+    const result = await publishPost(client, { ...post, media_type: mediaType }, media, { channels });
 
     const status = (result.fb_post_id || result.ig_media_id) ? 'published' : 'failed';
     db.prepare(`
