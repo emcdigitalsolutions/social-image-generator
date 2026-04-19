@@ -77,6 +77,23 @@
     transition: transform .1s, box-shadow .15s;
   }
   .media-item:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+  .media-item.selected { box-shadow:0 0 0 3px var(--blue), 0 4px 12px rgba(59,130,246,.25); border-color:var(--blue); }
+  .media-select {
+    position:absolute; top:6px; right:6px; z-index:4;
+    width:22px; height:22px; cursor:pointer;
+    background:rgba(255,255,255,0.9); border-radius:4px;
+    backdrop-filter:blur(4px); accent-color:var(--blue);
+  }
+
+  .media-toolbar {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:8px 12px; margin-top:14px;
+    background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px;
+    font-size:13px;
+  }
+  .media-toolbar-left { display:flex; align-items:center; gap:14px; }
+  .media-toolbar a { color:var(--blue); text-decoration:none; font-weight:500; cursor:pointer; }
+  .media-toolbar a:hover { text-decoration:underline; }
   .media-thumb {
     aspect-ratio:1/1; background:var(--gray-50);
     display:flex; align-items:center; justify-content:center;
@@ -251,6 +268,14 @@
         </div>
       </label>
 
+      <div id="media-toolbar" class="media-toolbar" style="display:none">
+        <div class="media-toolbar-left">
+          <span><strong id="media-sel-count">0</strong> selezionati</span>
+          <a onclick="selectAllMedia()">Seleziona tutti</a>
+          <a onclick="clearMediaSelection()">Deseleziona</a>
+        </div>
+        <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="bulkDeleteMedia()">&times; Rimuovi selezionati</button>
+      </div>
       <div id="media-grid" class="media-grid"></div>
     </div>
 
@@ -337,9 +362,13 @@
 
   function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+  let SELECTED = new Set();
+
   function renderMedia() {
     const grid = document.getElementById('media-grid');
     document.getElementById('media-count').textContent = MEDIA.length ? '(' + MEDIA.length + ')' : '';
+    // Pulisci la selezione dagli id non più presenti
+    SELECTED = new Set([...SELECTED].filter(id => MEDIA.some(m => m.id === id)));
     grid.innerHTML = MEDIA.map((m, i) => {
       const url = m.url + (m.created_at ? '?v=' + encodeURIComponent(m.created_at) : '');
       const thumb = m.kind === 'video'
@@ -354,7 +383,10 @@
         ? '<button class="btn-arrow" onclick="event.stopPropagation();moveMedia(\'' + m.id + '\', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Sposta a sinistra">\u2190</button>'
           + '<button class="btn-arrow" onclick="event.stopPropagation();moveMedia(\'' + m.id + '\', 1)" ' + (i === MEDIA.length - 1 ? 'disabled' : '') + ' title="Sposta a destra">\u2192</button>'
         : '';
-      return '<div class="media-item">'
+      const checked = SELECTED.has(m.id) ? 'checked' : '';
+      const selectedClass = SELECTED.has(m.id) ? ' selected' : '';
+      return '<div class="media-item' + selectedClass + '">'
+        + '<input type="checkbox" class="media-select" ' + checked + ' onclick="event.stopPropagation();toggleMediaSelect(\'' + m.id + '\')" title="Seleziona per rimozione massiva">'
         + '<div class="media-thumb" onclick="openLightbox(\'' + m.id + '\')" title="Clicca per ingrandire">' + thumb + srcBadge + posBadge + '</div>'
         + '<div class="media-actions">'
         +   stylizeBtn
@@ -363,7 +395,61 @@
         + '</div>'
         + '</div>';
     }).join('');
+    updateSelectionToolbar();
     refreshPublishState();
+  }
+
+  function updateSelectionToolbar() {
+    const tb = document.getElementById('media-toolbar');
+    if (!tb) return;
+    const n = SELECTED.size;
+    if (n === 0) {
+      tb.style.display = 'none';
+    } else {
+      tb.style.display = 'flex';
+      document.getElementById('media-sel-count').textContent = n;
+    }
+  }
+
+  function toggleMediaSelect(id) {
+    if (SELECTED.has(id)) SELECTED.delete(id);
+    else                  SELECTED.add(id);
+    // Aggiorna solo lo stile del singolo item invece di re-render completo
+    const item = document.querySelector('.media-item input[onclick*="' + id + '"]');
+    if (item) item.parentElement.classList.toggle('selected', SELECTED.has(id));
+    updateSelectionToolbar();
+  }
+
+  function selectAllMedia() {
+    MEDIA.forEach(m => SELECTED.add(m.id));
+    renderMedia();
+  }
+
+  function clearMediaSelection() {
+    SELECTED.clear();
+    renderMedia();
+  }
+
+  async function bulkDeleteMedia() {
+    if (SELECTED.size === 0) return;
+    const n = SELECTED.size;
+    if (!await showConfirm('Rimuovere ' + n + ' media? L\u2019operazione non si pu\u00f2 annullare.')) return;
+    const ids = [...SELECTED];
+    const results = await Promise.all(ids.map(id =>
+      apiFetch('/dashboard/api/posts/' + POST_ID + '/media/' + id, { method: 'DELETE' })
+        .then(() => ({ id, ok: true }))
+        .catch(err => ({ id, ok: false, err: err.message }))
+    ));
+    const okCount = results.filter(r => r.ok).length;
+    const failed  = results.filter(r => !r.ok);
+    MEDIA = MEDIA.filter(m => !ids.includes(m.id) || failed.some(f => f.id === m.id));
+    SELECTED.clear();
+    renderMedia();
+    if (failed.length === 0) {
+      toast(okCount + ' media rimossi');
+    } else {
+      await showAlert('Rimossi: ' + okCount + '. Falliti: ' + failed.length + ' (' + failed.map(f => f.err).join('; ') + ')');
+    }
   }
 
   // Valida media correnti vs media_type. Ritorna stringa errore o null.
