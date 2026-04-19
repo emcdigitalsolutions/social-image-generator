@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const os = require('os');
 const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { generateCaption } = require('../../lib/ai-provider');
@@ -449,6 +450,48 @@ router.put('/:id/media-type', (req, res) => {
   db.prepare("UPDATE posts SET media_type = ?, updated_at = datetime('now') WHERE id = ?").run(media_type, post.id);
   const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(post.id);
   res.json(updated);
+});
+
+// Crea un nuovo post manualmente (es. aggiungere un post extra in una settimana)
+router.post('/', (req, res) => {
+  const db = getDb();
+  const { client_id, editorial_plan_id, month_number, week_number, category, sub_topic, template, media_type, scheduled_date, scheduled_time } = req.body;
+
+  if (!client_id) return res.status(400).json({ error: 'client_id richiesto' });
+  if (!month_number || !week_number) return res.status(400).json({ error: 'month_number e week_number richiesti' });
+
+  const client = db.prepare('SELECT id FROM clients WHERE id = ?').get(client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const mt = MEDIA_TYPES.has(media_type) ? media_type : 'single_image';
+  const id = uuidv4();
+  db.prepare(`
+    INSERT INTO posts (id, client_id, editorial_plan_id, month_number, week_number, category, sub_topic, template, media_type, scheduled_date, scheduled_time, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
+  `).run(
+    id, client_id, editorial_plan_id || null,
+    parseInt(month_number), parseInt(week_number),
+    category || null, sub_topic || null,
+    template || 'quote', mt,
+    scheduled_date || null, scheduled_time || null
+  );
+
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(id);
+  res.status(201).json(post);
+});
+
+// Elimina un post (e i suoi media via cascade FK + cleanup file)
+router.delete('/:id', (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  // Cleanup file media su disco prima del DELETE (FK CASCADE elimina le righe DB)
+  try { postMedia.removePostDir(post.client_id, post.id); }
+  catch (err) { console.warn('[posts] cleanup post dir failed:', err.message); }
+
+  db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
 });
 
 module.exports = router;

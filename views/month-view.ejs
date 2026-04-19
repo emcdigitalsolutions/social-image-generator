@@ -67,7 +67,10 @@
 </div>
 
 <% if (posts.length === 0) { %>
-  <div class="empty-state"><h3>Nessun post per questo mese</h3></div>
+  <div class="empty-state">
+    <h3>Nessun post per questo mese</h3>
+    <button class="btn btn-primary" onclick="addPost(1)" style="margin-top:12px">+ Aggiungi primo post</button>
+  </div>
 <% } else { %>
 
   <div class="filter-chips">
@@ -198,8 +201,11 @@
     const weeks = {};
     visible.forEach(p => { const w = p.week_number || 1; (weeks[w] = weeks[w] || []).push(p); });
     let html = '';
+    // Calcola tutte le settimane presenti (anche quelle vuote, se mostriamo tutto)
     Object.keys(weeks).sort((a,b) => +a - +b).forEach(wn => {
-      html += '<div class="week-group"><h3>Settimana ' + wn + '</h3><div class="posts-grid">';
+      html += '<div class="week-group"><h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px">Settimana ' + wn
+        + '<button class="btn btn-sm btn-secondary" onclick="addPost(' + wn + ')" title="Aggiungi un post draft a questa settimana">+ Nuovo post</button>'
+        + '</h3><div class="posts-grid">';
       const TYPE_LABEL = {
         single_image: '\ud83d\uddbc Singola',
         carousel:     '\ud83c\udfa0 Carousel',
@@ -210,12 +216,21 @@
       weeks[wn].forEach(p => {
         const mt = p.media_type || 'single_image';
         const typeBadge = TYPE_LABEL[mt] || mt;
-        html += '<a href="/dashboard/posts/' + p.id + '" class="post-card" style="text-decoration:none;color:inherit">';
+        // Riga schedule: data + orario se presenti
+        let schedLine = '';
+        if (p.scheduled_date) {
+          const t = p.scheduled_time ? p.scheduled_time.slice(0,5) : '';
+          schedLine = '<p style="font-size:11px;color:var(--blue);margin:4px 0 6px;font-weight:500">\ud83d\udcc5 ' + escapeHtml(p.scheduled_date + (t ? ' \u00b7 ' + t : '')) + '</p>';
+        }
+        html += '<div class="post-card" style="position:relative">';
+        html += '<button onclick="deletePost(\'' + p.id + '\', event)" title="Elimina post" style="position:absolute;top:6px;right:6px;z-index:2;width:24px;height:24px;background:rgba(255,255,255,.92);border:1px solid var(--gray-200);border-radius:4px;cursor:pointer;color:var(--red);font-weight:600;line-height:1">\u00d7</button>';
+        html += '<a href="/dashboard/posts/' + p.id + '" style="text-decoration:none;color:inherit;display:block">';
         html += '<div class="post-card-image">' + (p.image_url ? '<img src="' + p.image_url + '">' : 'Nessuna immagine') + '</div>';
         html += '<div class="post-card-body"><h4>' + escapeHtml(p.category || 'Post') + '</h4>';
         html += '<p>' + escapeHtml(p.sub_topic || (p.caption ? p.caption.substring(0,80) + '...' : 'Nessun contenuto')) + '</p>';
+        html += schedLine;
         html += '<div class="post-card-footer"><span class="badge badge-' + p.status + '">' + p.status + '</span>';
-        html += '<span style="font-size:11px;color:var(--gray-500)">' + typeBadge + '</span></div></div></a>';
+        html += '<span style="font-size:11px;color:var(--gray-500)">' + typeBadge + '</span></div></div></a></div>';
       });
       html += '</div></div>';
     });
@@ -274,6 +289,55 @@
     if (!await showConfirm('Confermare il mese ' + MONTH + '? I post pronti verranno pubblicati automaticamente secondo lo schedule.')) return;
     await apiFetch('/dashboard/api/schedules/' + PLAN_ID + '/month/' + MONTH + '/confirm', { method: 'POST' });
     window.location.reload();
+  }
+
+  async function addPost(weekNumber) {
+    // Mini-prompt sequenziale: categoria, sub-topic, data, ora, tipo
+    const cat = prompt('Categoria del post (es. C7, "Eventi", lascia vuoto se non sai):', '');
+    if (cat === null) return;
+    const sub = prompt('Sub-topic / tema specifico:', '');
+    if (sub === null) return;
+    const dateStr = prompt('Data pubblicazione (YYYY-MM-DD, lascia vuoto se non sai):', '');
+    if (dateStr === null) return;
+    const timeStr = dateStr ? prompt('Ora pubblicazione (HH:MM, lascia vuoto se non sai):', '10:00') : '';
+    if (timeStr === null) return;
+    const mt = prompt('Tipo media (single_image / carousel / reel / story):', 'single_image');
+    if (mt === null) return;
+
+    try {
+      const res = await apiFetch('/dashboard/api/posts', {
+        method: 'POST',
+        body: {
+          client_id: CLIENT_ID,
+          editorial_plan_id: PLAN_ID,
+          month_number: MONTH,
+          week_number: weekNumber,
+          category: cat || null,
+          sub_topic: sub || null,
+          media_type: mt || 'single_image',
+          scheduled_date: dateStr || null,
+          scheduled_time: timeStr || null
+        }
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Post creato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  async function deletePost(postId, ev) {
+    if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+    if (!await showConfirm('Eliminare definitivamente questo post? L\u2019operazione non si pu\u00f2 annullare.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + postId, { method: 'DELETE' });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Post eliminato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
   }
 </script>
 

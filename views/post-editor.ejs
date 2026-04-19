@@ -165,8 +165,17 @@
 
 <div class="breadcrumb">
   <a href="/dashboard">Clienti</a> /
-  <a href="/dashboard/clients/<%= client.id %>"><%= client.display_name %></a> /
-  Post
+  <a href="/dashboard/clients/<%= client.id %>#piano"><%= client.display_name %></a>
+  <% if (post.editorial_plan_id) { %>
+    / <a href="/dashboard/clients/<%= client.id %>/plan/<%= post.editorial_plan_id %>">Piano</a>
+    <% if (post.month_number) { %>
+      / <a href="/dashboard/clients/<%= client.id %>/plan/<%= post.editorial_plan_id %>/month/<%= post.month_number %>">Mese <%= post.month_number %></a>
+    <% } %>
+  <% } %>
+  / Post
+  <% if (post.category || post.sub_topic) { %>
+    <span style="color:var(--gray-400)"> &mdash; <%= post.category || '' %><%= post.sub_topic ? (post.category ? ' · ' : '') + post.sub_topic.substring(0,40) : '' %></span>
+  <% } %>
 </div>
 
 <div class="page-header">
