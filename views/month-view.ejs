@@ -290,10 +290,16 @@
         method: 'POST',
         body: { post_ids: POST_IDS, action }
       });
-      const successes = res.results.filter(r => r.success).length;
-      const errors = res.results.filter(r => r.error);
-      await showAlert('Completato: ' + successes + '/' + POST_IDS.length + ' successi' +
-        (errors.length ? '\nErrori: ' + errors.map(e => e.error).join(', ') : ''));
+      const s = res.summary || {};
+      const lines = ['Completato (' + POST_IDS.length + ' post):'];
+      if (s.captions_ok)    lines.push('\u2705 ' + s.captions_ok + ' caption generate');
+      if (s.images_ok)      lines.push('\u2705 ' + s.images_ok + ' immagini generate');
+      if (s.skipped_image)  lines.push('\u2796 ' + s.skipped_image + ' immagini saltate (carousel/reel/story richiedono upload manuale)');
+      if (s.errors)         lines.push('\u274c ' + s.errors + ' errori');
+      // Lista degli errori specifici
+      const errs = res.results.filter(r => r.error);
+      if (errs.length) lines.push('\nDettaglio errori:\n' + errs.map(e => '\u2022 ' + (e.id || '') + ': ' + e.error).join('\n'));
+      await showAlert(lines.join('\n'));
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);

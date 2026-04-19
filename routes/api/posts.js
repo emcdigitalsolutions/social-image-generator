@@ -214,7 +214,14 @@ router.post('/:id/publish', async (req, res) => {
   }
 });
 
-// Bulk generate captions+images
+// Bulk generate captions+images per N post.
+// Caption: funziona per tutti i media_type (anche reel/story/carousel —
+//   ha senso una caption per ognuno).
+// Image: funziona SOLO per single_image. Per carousel/reel/story si fa
+//   skip esplicito perché:
+//   - carousel → l'utente carica N immagini lui
+//   - reel     → richiede un video, non un'immagine generata da template
+//   - story    → da pubblicare manualmente dal cliente, niente publish nostro
 router.post('/bulk-generate', async (req, res) => {
   const db = getDb();
   const { post_ids, action } = req.body; // action: 'caption', 'image', 'both'
@@ -222,14 +229,20 @@ router.post('/bulk-generate', async (req, res) => {
   if (!post_ids || !post_ids.length) {
     return res.status(400).json({ error: 'post_ids array required' });
   }
+  if (!['caption', 'image', 'both'].includes(action)) {
+    return res.status(400).json({ error: 'action deve essere caption, image o both' });
+  }
 
   const results = [];
+  const summary = { captions_ok: 0, images_ok: 0, skipped_image: 0, errors: 0 };
 
   for (const postId of post_ids) {
     const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId);
-    if (!post) { results.push({ id: postId, error: 'Not found' }); continue; }
+    if (!post) { results.push({ id: postId, error: 'Not found' }); summary.errors++; continue; }
 
     const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+    const mediaType = post.media_type || 'single_image';
+    const result = { id: postId, media_type: mediaType };
 
     try {
       if (action === 'caption' || action === 'both') {
@@ -238,40 +251,66 @@ router.post('/bulk-generate', async (req, res) => {
           UPDATE posts SET caption = ?, caption_ai_raw = ?, status = 'caption_generated', updated_at = datetime('now')
           WHERE id = ?
         `).run(captionResult.text, JSON.stringify(captionResult.raw), postId);
+        result.caption = 'ok';
+        summary.captions_ok++;
       }
 
       if (action === 'image' || action === 'both') {
-        const currentPost = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId);
-        const template = currentPost.template || 'quote';
-        const data = {
-          text: currentPost.caption ? currentPost.caption.split('\n')[0] : '',
-          title: currentPost.sub_topic || currentPost.category || '',
-          description: currentPost.caption ? currentPost.caption.split('\n')[0] : '',
-          image_url: currentPost.source_image_url || ''
-        };
-
-        const { filename } = await renderImage(template, currentPost.client_id, data);
-        const imageUrl = `${BASE_URL}/images/${currentPost.client_id}/${filename}`;
-
-        db.prepare(`
-          UPDATE posts SET image_url = ?, image_data = ?, status = 'image_generated', updated_at = datetime('now')
-          WHERE id = ?
-        `).run(imageUrl, JSON.stringify(data), postId);
+        if (mediaType !== 'single_image') {
+          result.image = 'skipped';
+          result.image_reason = `media_type=${mediaType}: ` + (
+            mediaType === 'carousel' ? 'carica le immagini manualmente' :
+            mediaType === 'reel'     ? 'serve un video MP4/MOV, non generabile da template' :
+            mediaType === 'story'    ? 'storia: pubblicazione manuale dal cliente' :
+            'tipo non gestito da bulk-generate'
+          );
+          summary.skipped_image++;
+        } else {
+          const currentPost = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId);
+          const template = currentPost.template || 'quote';
+          const data = {
+            text: currentPost.caption ? currentPost.caption.split('\n')[0] : '',
+            title: currentPost.sub_topic || currentPost.category || '',
+            description: currentPost.caption ? currentPost.caption.split('\n')[0] : '',
+            image_url: currentPost.source_image_url || ''
+          };
+          const { filename, filePath } = await renderImage(template, currentPost.client_id, data);
+          const imageUrl = `${BASE_URL}/images/${currentPost.client_id}/${filename}`;
+          db.prepare(`
+            UPDATE posts SET image_url = ?, image_data = ?, status = 'image_generated', updated_at = datetime('now')
+            WHERE id = ?
+          `).run(imageUrl, JSON.stringify(data), postId);
+          // Registra anche come post_media per la nuova UI (sposta il file in posts/{id}/)
+          try {
+            postMedia.attachGeneratedFile({
+              clientId: currentPost.client_id, postId,
+              absolutePath: filePath, source: 'generated', kind: 'image'
+            });
+          } catch (mErr) {
+            console.warn('[bulk-generate] post_media attach failed:', mErr.message);
+          }
+          result.image = 'ok';
+          summary.images_ok++;
+        }
       }
 
-      // Mark as ready if both caption and image exist
+      // Mark as ready solo per single_image con caption + immagine
       const finalPost = db.prepare('SELECT * FROM posts WHERE id = ?').get(postId);
-      if (finalPost.caption && finalPost.image_url) {
+      if ((finalPost.media_type || 'single_image') === 'single_image' && finalPost.caption && finalPost.image_url) {
         db.prepare("UPDATE posts SET status = 'ready', updated_at = datetime('now') WHERE id = ?").run(postId);
+        result.ready = true;
       }
 
-      results.push({ id: postId, success: true });
+      result.success = true;
+      results.push(result);
     } catch (err) {
-      results.push({ id: postId, error: err.message });
+      summary.errors++;
+      console.error('[bulk-generate]', postId, err.message);
+      results.push({ ...result, error: err.message });
     }
   }
 
-  res.json({ results });
+  res.json({ results, summary });
 });
 
 // ─────────────── Multi-media (carousel + video) ───────────────
