@@ -302,6 +302,50 @@ router.put('/:id/media/reorder', (req, res) => {
   res.json({ media: updated });
 });
 
+// Stylize an existing image media via Puppeteer template overlay.
+// Crea un NUOVO post_media con source='styled' e styled_from_id riferito all'originale.
+router.post('/:id/media/:mediaId/stylize', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const orig = postMedia.getMedia(req.params.mediaId);
+  if (!orig || orig.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+  if (orig.kind !== 'image') return res.status(400).json({ error: 'Solo immagini possono essere stilizzate' });
+
+  const template = req.body.template || 'image-overlay';
+  const includeCaption = req.body.include_caption !== false; // default true
+
+  const captionSnippet = includeCaption && post.caption
+    ? post.caption.split('\n')[0].slice(0, 240)
+    : '';
+
+  const data = {
+    image_url: orig.url,
+    caption_block: captionSnippet
+      ? `<div class="caption-strip">${captionSnippet.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>`
+      : '',
+    title: post.sub_topic || post.category || '',
+    description: post.caption ? post.caption.split('\n')[0].slice(0, 240) : ''
+  };
+
+  try {
+    const { filePath } = await renderImage(template, post.client_id, data);
+    const styled = postMedia.attachGeneratedFile({
+      clientId: post.client_id,
+      postId: post.id,
+      absolutePath: filePath,
+      source: 'styled',
+      styledFromId: orig.id,
+      kind: 'image'
+    });
+    res.status(201).json({ media: styled, original: orig });
+  } catch (err) {
+    console.error('[stylize] error:', err.message);
+    res.status(500).json({ error: 'Stilizzazione fallita', details: err.message });
+  }
+});
+
 // Change post media_type with coherence validation
 router.put('/:id/media-type', (req, res) => {
   const db = getDb();
