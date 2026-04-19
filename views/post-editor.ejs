@@ -1,5 +1,8 @@
 <%- include('layout', { title, user }) %>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
 <style>
   .type-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
   .type-chip {
@@ -82,6 +85,40 @@
   .media-actions button.danger:hover { background:#fef2f2; color:var(--red); }
   .media-actions button:disabled { opacity:.3; cursor:not-allowed; }
   .media-actions .btn-arrow { font-size:14px; font-weight:700; padding:3px 8px; }
+  .media-thumb { cursor:zoom-in; }
+
+  /* Lightbox modal */
+  .lightbox-backdrop {
+    position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:1000;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .lightbox-card {
+    background:white; border-radius:10px; max-width:95vw; max-height:95vh;
+    width:900px; display:flex; flex-direction:column; overflow:hidden;
+  }
+  .lightbox-header {
+    padding:12px 16px; border-bottom:1px solid var(--gray-200);
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .lightbox-header h3 { margin:0; font-size:15px; font-weight:600; }
+  .lightbox-body { flex:1; min-height:400px; max-height:70vh; overflow:auto; background:#111; display:flex; align-items:center; justify-content:center; }
+  .lightbox-body img.cropper-target { display:block; max-width:100%; }
+  .lightbox-body video { max-width:100%; max-height:70vh; }
+  .lightbox-footer {
+    padding:12px 16px; border-top:1px solid var(--gray-200);
+    display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+  }
+  .lightbox-ratios { display:flex; gap:4px; }
+  .lightbox-ratios button {
+    padding:4px 10px; font-size:12px; border-radius:4px;
+    border:1px solid var(--gray-200); background:white; cursor:pointer; color:var(--gray-700);
+  }
+  .lightbox-ratios button.active { background:var(--blue); color:white; border-color:var(--blue); }
+  .lightbox-close {
+    background:transparent; border:0; font-size:22px; line-height:1; cursor:pointer;
+    color:var(--gray-500); padding:4px 8px; border-radius:4px;
+  }
+  .lightbox-close:hover { background:var(--gray-100); color:var(--gray-800); }
 </style>
 
 <div class="breadcrumb">
@@ -197,6 +234,9 @@
   </div>
 </div>
 
+<!-- Lightbox modal -->
+<div id="lightbox" style="display:none"></div>
+
 <script>
   const POST_ID    = '<%= post.id %>';
   const CLIENT_ID  = '<%= client.id %>';
@@ -229,24 +269,25 @@
     const grid = document.getElementById('media-grid');
     document.getElementById('media-count').textContent = MEDIA.length ? '(' + MEDIA.length + ')' : '';
     grid.innerHTML = MEDIA.map((m, i) => {
+      const url = m.url + (m.created_at ? '?v=' + encodeURIComponent(m.created_at) : '');
       const thumb = m.kind === 'video'
-        ? '<video src="' + m.url + '" muted preload="metadata"></video>'
-        : '<img src="' + m.url + '" alt="">';
+        ? '<video src="' + url + '" muted preload="metadata"></video>'
+        : '<img src="' + url + '" alt="">';
       const srcBadge = m.source !== 'upload' ? '<span class="media-source-badge ' + m.source + '">' + m.source + '</span>' : '';
       const posBadge = MEDIA.length > 1 ? '<span class="media-pos-badge">' + (i + 1) + ' / ' + MEDIA.length + '</span>' : '';
       const stylizeBtn = m.kind === 'image' && m.source !== 'styled'
-        ? '<button onclick="stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>'
+        ? '<button onclick="event.stopPropagation();stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>'
         : '<span></span>';
       const arrows = MEDIA.length > 1
-        ? '<button class="btn-arrow" onclick="moveMedia(\'' + m.id + '\', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Sposta a sinistra">\u2190</button>'
-          + '<button class="btn-arrow" onclick="moveMedia(\'' + m.id + '\', 1)" ' + (i === MEDIA.length - 1 ? 'disabled' : '') + ' title="Sposta a destra">\u2192</button>'
+        ? '<button class="btn-arrow" onclick="event.stopPropagation();moveMedia(\'' + m.id + '\', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Sposta a sinistra">\u2190</button>'
+          + '<button class="btn-arrow" onclick="event.stopPropagation();moveMedia(\'' + m.id + '\', 1)" ' + (i === MEDIA.length - 1 ? 'disabled' : '') + ' title="Sposta a destra">\u2192</button>'
         : '';
       return '<div class="media-item">'
-        + '<div class="media-thumb">' + thumb + srcBadge + posBadge + '</div>'
+        + '<div class="media-thumb" onclick="openLightbox(\'' + m.id + '\')" title="Clicca per ingrandire">' + thumb + srcBadge + posBadge + '</div>'
         + '<div class="media-actions">'
         +   stylizeBtn
         +   '<div style="display:flex;gap:2px">' + arrows + '</div>'
-        +   '<button class="danger" onclick="deleteMedia(\'' + m.id + '\')" title="Rimuovi">\u00d7</button>'
+        +   '<button class="danger" onclick="event.stopPropagation();deleteMedia(\'' + m.id + '\')" title="Rimuovi">\u00d7</button>'
         + '</div>'
         + '</div>';
     }).join('');
@@ -291,6 +332,117 @@
     }
     btn.disabled = false;
     help.textContent = '';
+  }
+
+  // ── Lightbox ──
+
+  let cropperInstance = null;
+
+  function openLightbox(mediaId) {
+    const m = MEDIA.find(x => x.id === mediaId);
+    if (!m) return;
+    const box = document.getElementById('lightbox');
+    const url = m.url + (m.created_at ? '?v=' + encodeURIComponent(m.created_at) : '');
+
+    let bodyHtml, footerHtml, title;
+    if (m.kind === 'image') {
+      title = 'Anteprima immagine — ' + (m.source || 'upload');
+      bodyHtml = '<img id="lb-img" class="cropper-target" src="' + url + '" alt="">';
+      footerHtml =
+        '<div class="lightbox-ratios">'
+        + '<button class="active" onclick="setCropRatio(NaN, this)" title="Ratio libero">Libero</button>'
+        + '<button onclick="setCropRatio(1/1, this)" title="IG feed quadrato">1:1</button>'
+        + '<button onclick="setCropRatio(4/5, this)" title="IG feed verticale">4:5</button>'
+        + '<button onclick="setCropRatio(9/16, this)" title="IG Reel / Story">9:16</button>'
+        + '<button onclick="setCropRatio(16/9, this)" title="FB orizzontale">16:9</button>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px">'
+        + '<button class="btn btn-sm btn-secondary" onclick="closeLightbox()">Annulla</button>'
+        + '<button class="btn btn-sm btn-primary" onclick="saveCrop(\'' + m.id + '\')">Salva crop</button>'
+        + '</div>';
+    } else {
+      title = 'Anteprima video — ' + (m.source || 'upload');
+      bodyHtml = '<video controls autoplay src="' + url + '"></video>';
+      footerHtml =
+        '<span style="font-size:12px;color:var(--gray-500)">Trim video non ancora disponibile (coming soon)</span>'
+        + '<button class="btn btn-sm btn-secondary" onclick="closeLightbox()">Chiudi</button>';
+    }
+
+    box.innerHTML =
+      '<div class="lightbox-backdrop" onclick="if(event.target===this) closeLightbox()">'
+      +   '<div class="lightbox-card">'
+      +     '<div class="lightbox-header">'
+      +       '<h3>' + escapeHtml(title) + '</h3>'
+      +       '<button class="lightbox-close" onclick="closeLightbox()" title="Chiudi">\u00d7</button>'
+      +     '</div>'
+      +     '<div class="lightbox-body">' + bodyHtml + '</div>'
+      +     '<div class="lightbox-footer">' + footerHtml + '</div>'
+      +   '</div>'
+      + '</div>';
+    box.style.display = 'block';
+
+    if (m.kind === 'image') {
+      const img = document.getElementById('lb-img');
+      // Attendiamo il load per inizializzare Cropper.js con le dimensioni reali
+      img.onload = () => {
+        cropperInstance = new Cropper(img, {
+          viewMode: 1,
+          autoCropArea: 1,
+          background: false,
+          zoomable: true,
+          aspectRatio: NaN
+        });
+      };
+      if (img.complete) img.onload();
+    }
+
+    // ESC per chiudere
+    document.addEventListener('keydown', onLightboxKey);
+  }
+
+  function onLightboxKey(e) {
+    if (e.key === 'Escape') closeLightbox();
+  }
+
+  function setCropRatio(ratio, btn) {
+    if (!cropperInstance) return;
+    cropperInstance.setAspectRatio(ratio);
+    document.querySelectorAll('.lightbox-ratios button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function closeLightbox() {
+    if (cropperInstance) { try { cropperInstance.destroy(); } catch (_) {} cropperInstance = null; }
+    const box = document.getElementById('lightbox');
+    box.style.display = 'none';
+    box.innerHTML = '';
+    document.removeEventListener('keydown', onLightboxKey);
+  }
+
+  async function saveCrop(mediaId) {
+    if (!cropperInstance) return;
+    const canvas = cropperInstance.getCroppedCanvas({
+      imageSmoothingQuality: 'high',
+      maxWidth: 4096,
+      maxHeight: 4096
+    });
+    canvas.toBlob(async (blob) => {
+      if (!blob) { await showAlert('Crop fallito: canvas vuoto'); return; }
+      const fd = new FormData();
+      fd.append('file', blob, 'cropped.jpg');
+      const res = await fetch('/dashboard/api/posts/' + POST_ID + '/media/' + mediaId + '/crop', {
+        method: 'POST', body: fd,
+        headers: { 'Authorization': 'Bearer ' + getToken() }
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) { await showAlert('Errore: ' + (data.error || 'unknown')); return; }
+      // Update in-memory media entry with the fresh row (bytes + created_at cache-bust)
+      const idx = MEDIA.findIndex(m => m.id === mediaId);
+      if (idx >= 0 && data.media) MEDIA[idx] = data.media;
+      renderMedia();
+      closeLightbox();
+      toast('Crop salvato');
+    }, 'image/jpeg', 0.92);
   }
 
   // ── API actions ──

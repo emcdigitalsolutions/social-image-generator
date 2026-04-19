@@ -330,6 +330,45 @@ router.put('/:id/media/reorder', (req, res) => {
   res.json({ media: updated });
 });
 
+// Crop / edit: sovrascrive il file del media con il blob croppato ricevuto dal client
+// (es. da Cropper.js). Mantiene lo stesso id/filename per semplicità.
+router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const m = postMedia.getMedia(req.params.mediaId);
+  if (!m || m.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+  if (m.kind !== 'image') return res.status(400).json({ error: 'Solo immagini possono essere croppate' });
+  if (!req.file) return res.status(400).json({ error: 'Nessun file ricevuto' });
+
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    const dest = path.join(postMedia.postDir(post.client_id, post.id), m.filename);
+    // Sovrascrivi il file originale con il blob croppato
+    if (fs.existsSync(dest)) fs.unlinkSync(dest);
+    // Usa renameSync safe con EXDEV fallback via copyFile+unlink
+    try {
+      fs.renameSync(req.file.path, dest);
+    } catch (err) {
+      if (err.code !== 'EXDEV') throw err;
+      fs.copyFileSync(req.file.path, dest);
+      fs.unlinkSync(req.file.path);
+    }
+
+    const stat = fs.statSync(dest);
+    db.prepare(`UPDATE post_media SET bytes = ?, created_at = datetime('now') WHERE id = ?`).run(stat.size, m.id);
+
+    // cache-bust: il client aggiungerà ?v=<updated_at>
+    const updated = postMedia.getMedia(m.id);
+    res.json({ media: updated });
+  } catch (err) {
+    console.error('[crop] error:', err.message);
+    res.status(500).json({ error: 'Crop fallito', details: err.message });
+  }
+});
+
 // Stylize an existing image media via Puppeteer template overlay.
 // Crea un NUOVO post_media con source='styled' e styled_from_id riferito all'originale.
 router.post('/:id/media/:mediaId/stylize', async (req, res) => {
