@@ -422,9 +422,30 @@ router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), (req, res) =
   }
 });
 
+// Rate limit per /stylize: max 3 chiamate/min per utente.
+// Stylize è costoso (Puppeteer 5-10s di CPU). Senza limite, click ripetuti
+// rapidi possono saturare il browser pool.
+const stylizeWindow = new Map(); // userId -> [timestamps...]
+function stylizeRateLimit(req, res, next) {
+  const userId = req.user && req.user.id;
+  if (!userId) return next();
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxPerWindow = 3;
+  const arr = (stylizeWindow.get(userId) || []).filter(t => now - t < windowMs);
+  if (arr.length >= maxPerWindow) {
+    const retryAfter = Math.ceil((arr[0] + windowMs - now) / 1000);
+    res.setHeader('Retry-After', String(retryAfter));
+    return res.status(429).json({ error: `Troppe richieste di stilizzazione (max ${maxPerWindow}/min). Riprova tra ${retryAfter}s.` });
+  }
+  arr.push(now);
+  stylizeWindow.set(userId, arr);
+  next();
+}
+
 // Stylize an existing image media via Puppeteer template overlay.
 // Crea un NUOVO post_media con source='styled' e styled_from_id riferito all'originale.
-router.post('/:id/media/:mediaId/stylize', async (req, res) => {
+router.post('/:id/media/:mediaId/stylize', stylizeRateLimit, async (req, res) => {
   const db = getDb();
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Post not found' });
