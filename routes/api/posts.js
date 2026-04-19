@@ -324,7 +324,7 @@ router.get('/:id/media', (req, res) => {
 });
 
 // Upload one or more media files
-router.post('/:id/media', mediaUpload.array('media', postMedia.MAX_CAROUSEL_ITEMS), (req, res) => {
+router.post('/:id/media', mediaUpload.array('media', postMedia.MAX_CAROUSEL_ITEMS), async (req, res) => {
   const db = getDb();
   const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Post not found' });
@@ -335,7 +335,7 @@ router.post('/:id/media', mediaUpload.array('media', postMedia.MAX_CAROUSEL_ITEM
   const errors = [];
   for (const f of req.files) {
     try {
-      const m = postMedia.attachUploadedFile({
+      const m = await postMedia.attachUploadedFile({
         clientId: post.client_id,
         postId: post.id,
         tmpPath: f.path,
