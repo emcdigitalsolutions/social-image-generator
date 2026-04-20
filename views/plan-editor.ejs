@@ -505,8 +505,18 @@
     }
   }
 
-  // Carica le approvazioni alla pagina
-  if (PLAN_DATA && PLAN_DATA.months) loadApprovals();
+  // Carica le approvazioni — aspetta che layout-end abbia caricato dashboard.js
+  // (serve apiFetch, definita lì). Se DOM è già pronto, eseguo subito, altrimenti
+  // attendo DOMContentLoaded.
+  function _initApprovals() {
+    if (PLAN_DATA && PLAN_DATA.months && typeof apiFetch === 'function') loadApprovals();
+    else if (PLAN_DATA && PLAN_DATA.months) setTimeout(_initApprovals, 50);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _initApprovals);
+  } else {
+    _initApprovals();
+  }
 
   // ─────────────────────────── PDF Export ───────────────────────────
 
