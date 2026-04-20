@@ -556,7 +556,7 @@
     let bodyHtml, footerHtml, title;
     if (m.kind === 'image') {
       title = 'Anteprima immagine — ' + (m.source || 'upload');
-      bodyHtml = '<img id="lb-img" class="cropper-target" src="' + url + '" alt="">';
+      bodyHtml = '<img id="lb-img" class="cropper-target" crossorigin="anonymous" src="' + url + '" alt="">';
       footerHtml =
         '<div class="lightbox-ratios">'
         + '<button class="active" onclick="setCropRatio(NaN, this)" title="Ratio libero">Libero</button>'
@@ -591,18 +591,42 @@
     box.style.display = 'block';
 
     if (m.kind === 'image') {
-      const img = document.getElementById('lb-img');
-      // Attendiamo il load per inizializzare Cropper.js con le dimensioni reali
-      img.onload = () => {
-        cropperInstance = new Cropper(img, {
-          viewMode: 1,
-          autoCropArea: 1,
-          background: false,
-          zoomable: true,
-          aspectRatio: NaN
-        });
-      };
-      if (img.complete) img.onload();
+      // Aspetta il paint del modal prima di toccare il DOM
+      requestAnimationFrame(() => {
+        const img = document.getElementById('lb-img');
+        if (!img) { console.error('[lightbox] img element missing'); return; }
+
+        const initCropper = () => {
+          if (typeof Cropper === 'undefined') {
+            console.error('[lightbox] Cropper.js non caricato (CDN bloccata?)');
+            showAlert('Cropper.js non caricato. Ricarica la pagina (Ctrl+F5).');
+            return;
+          }
+          try {
+            cropperInstance = new Cropper(img, {
+              viewMode: 1,
+              autoCropArea: 1,
+              background: false,
+              zoomable: true,
+              aspectRatio: NaN
+            });
+            console.log('[lightbox] Cropper inizializzato');
+          } catch (err) {
+            console.error('[lightbox] Cropper init failed:', err);
+            showAlert('Errore Cropper: ' + err.message);
+          }
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+          initCropper();
+        } else {
+          img.addEventListener('load', initCropper, { once: true });
+          img.addEventListener('error', () => {
+            console.error('[lightbox] img load failed:', img.src);
+            showAlert('Impossibile caricare l\u2019immagine per il crop.');
+          }, { once: true });
+        }
+      });
     }
 
     // ESC per chiudere
@@ -629,28 +653,53 @@
   }
 
   async function saveCrop(mediaId) {
-    if (!cropperInstance) return;
-    const canvas = cropperInstance.getCroppedCanvas({
-      imageSmoothingQuality: 'high',
-      maxWidth: 4096,
-      maxHeight: 4096
-    });
-    canvas.toBlob(async (blob) => {
-      if (!blob) { await showAlert('Crop fallito: canvas vuoto'); return; }
-      const fd = new FormData();
-      fd.append('file', blob, 'cropped.jpg');
-      const res = await fetch('/dashboard/api/posts/' + POST_ID + '/media/' + mediaId + '/crop', {
-        method: 'POST', body: fd,
-        headers: { 'Authorization': 'Bearer ' + getToken() }
+    if (!cropperInstance) {
+      await showAlert('Cropper non pronto. Aspetta che l\u2019immagine sia caricata o chiudi e riapri la finestra.');
+      return;
+    }
+    let canvas;
+    try {
+      canvas = cropperInstance.getCroppedCanvas({
+        imageSmoothingQuality: 'high',
+        maxWidth: 4096,
+        maxHeight: 4096
       });
-      const data = await res.json();
-      if (!res.ok || data.error) { await showAlert('Errore: ' + (data.error || 'unknown')); return; }
-      // Update in-memory media entry with the fresh row (bytes + created_at cache-bust)
-      const idx = MEDIA.findIndex(m => m.id === mediaId);
-      if (idx >= 0 && data.media) MEDIA[idx] = data.media;
-      renderMedia();
-      closeLightbox();
-      toast('Crop salvato');
+    } catch (err) {
+      console.error('[saveCrop] getCroppedCanvas threw:', err);
+      await showAlert('Errore crop: ' + err.message);
+      return;
+    }
+    if (!canvas) {
+      await showAlert('Crop area vuota o immagine non leggibile dal browser.');
+      return;
+    }
+    // toBlob puo' restituire null se il canvas e' "tainted" (CORS)
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        await showAlert('Impossibile generare il blob (immagine cross-origin non accessibile). Ricarica la pagina e riprova.');
+        return;
+      }
+      try {
+        const fd = new FormData();
+        fd.append('file', blob, 'cropped.jpg');
+        const res = await fetch('/dashboard/api/posts/' + POST_ID + '/media/' + mediaId + '/crop', {
+          method: 'POST', body: fd,
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) {
+          await showAlert('Errore server: ' + (data.error || ('HTTP ' + res.status)));
+          return;
+        }
+        const idx = MEDIA.findIndex(m => m.id === mediaId);
+        if (idx >= 0 && data.media) MEDIA[idx] = data.media;
+        renderMedia();
+        closeLightbox();
+        toast('Crop salvato');
+      } catch (err) {
+        console.error('[saveCrop] upload error:', err);
+        await showAlert('Errore upload: ' + err.message);
+      }
     }, 'image/jpeg', 0.92);
   }
 
