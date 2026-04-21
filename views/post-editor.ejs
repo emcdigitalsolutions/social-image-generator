@@ -100,6 +100,16 @@
     overflow:hidden; position:relative;
   }
   .media-thumb img, .media-thumb video { width:100%; height:100%; object-fit:cover; display:block; }
+
+  /* Warning proporzioni Instagram */
+  .media-item.ratio-warn { box-shadow: 0 0 0 2px #dc2626, 0 4px 12px rgba(220,38,38,.15); border-color: #dc2626; }
+  .ratio-warn-badge {
+    position: absolute; top: 6px; right: 6px;
+    background: #dc2626; color: white;
+    font-size: 10px; font-weight: 800; padding: 3px 7px;
+    border-radius: 3px; letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  }
   .media-source-badge {
     position:absolute; top:6px; left:6px;
     padding:3px 8px; font-size:10px; font-weight:600; border-radius:4px;
@@ -533,6 +543,16 @@
         : '<img src="' + url + '" alt="">';
       const srcBadge = m.source !== 'upload' ? '<span class="media-source-badge ' + m.source + '">' + m.source + '</span>' : '';
       const posBadge = MEDIA.length > 1 ? '<span class="media-pos-badge">' + (i + 1) + ' / ' + MEDIA.length + '</span>' : '';
+      // Warning proporzioni IG: se il cliente ha IG e il ratio è fuori range, mostra un badge rosso
+      let ratioBadge = '';
+      let ratioItemClass = '';
+      if (HAS_IG && m.kind === 'image' && m.width && m.height) {
+        const r = m.width / m.height;
+        if (r < 0.8 || r > 1.91) {
+          ratioBadge = '<span class="ratio-warn-badge" title="Proporzioni ' + r.toFixed(2) + ':1 (' + m.width + '×' + m.height + ') fuori range IG. Click sulla thumb per croppare a 1:1 o 4:5.">\u26A0 RATIO</span>';
+          ratioItemClass = ' ratio-warn';
+        }
+      }
       const stylizeBtn = m.kind === 'image' && m.source !== 'styled'
         ? '<button onclick="event.stopPropagation();stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>'
         : '<span></span>';
@@ -542,9 +562,9 @@
         : '';
       const checked = SELECTED.has(m.id) ? 'checked' : '';
       const selectedClass = SELECTED.has(m.id) ? ' selected' : '';
-      return '<div class="media-item' + selectedClass + '">'
+      return '<div class="media-item' + selectedClass + ratioItemClass + '">'
         + '<input type="checkbox" class="media-select" ' + checked + ' onclick="event.stopPropagation();toggleMediaSelect(\'' + m.id + '\')" title="Seleziona per rimozione massiva">'
-        + '<div class="media-thumb" onclick="openLightbox(\'' + m.id + '\')" title="Clicca per ingrandire">' + thumb + srcBadge + posBadge + '</div>'
+        + '<div class="media-thumb" onclick="openLightbox(\'' + m.id + '\')" title="Clicca per ingrandire">' + thumb + srcBadge + posBadge + ratioBadge + '</div>'
         + '<div class="media-actions">'
         +   stylizeBtn
         +   '<div style="display:flex;gap:2px">' + arrows + '</div>'

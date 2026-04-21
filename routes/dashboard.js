@@ -173,6 +173,11 @@ router.get('/clients/:id/plan/:planId/month/:month', (req, res) => {
     WHERE post_id = ? AND author = 'client'
     ORDER BY created_at DESC LIMIT 1
   `);
+  // Check aspect ratio: se il cliente ha IG e almeno un'immagine è fuori range → flag has_bad_ratio
+  const hasIg = !!client.ig_user_id;
+  const imageMediaStmt = db.prepare(`
+    SELECT width, height FROM post_media WHERE post_id = ? AND kind = 'image' AND width IS NOT NULL AND height IS NOT NULL
+  `);
   for (const p of posts) {
     if (!p.image_url) {
       const row = previewStmt.get(p.id);
@@ -181,6 +186,14 @@ router.get('/clients/:id/plan/:planId/month/:month', (req, res) => {
     if (p.approval_status === 'change_requested' || p.approval_status === 'rejected') {
       const c = lastClientCommentStmt.get(p.id);
       if (c) { p.last_client_comment = c.text; p.last_client_comment_at = c.created_at; }
+    }
+    if (hasIg) {
+      const imgs = imageMediaStmt.all(p.id);
+      const badImg = imgs.find(m => { const r = m.width / m.height; return r < 0.8 || r > 1.91; });
+      if (badImg) {
+        p.has_bad_ratio = true;
+        p.bad_ratio_detail = `${(badImg.width / badImg.height).toFixed(2)}:1 (${badImg.width}×${badImg.height})`;
+      }
     }
   }
 

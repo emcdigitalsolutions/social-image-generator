@@ -36,6 +36,11 @@
   .post-card.drop-after  { box-shadow: 4px 0 0 0 var(--blue); }
   .drag-hint { font-size:11px; color:var(--gray-400); font-weight:400; margin-left:8px; }
 
+  /* Marcatori immagini fuori range Instagram */
+  .cal-post.bad-ratio, #view-list .post-card.bad-ratio { box-shadow: inset 4px 0 0 #dc2626; }
+  #view-list .post-card.bad-ratio { outline: 2px solid #dc2626; outline-offset: -2px; }
+  .ratio-card-badge { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; margin-left:4px; vertical-align:middle; background:#dc2626; color:white; letter-spacing:0.3px; }
+
   /* Marcatori approvazione cliente (Giuseppe Di Rosa ecc.) */
   .cal-post.ap-change_requested, #view-list .post-card.ap-change_requested { box-shadow: inset 4px 0 0 #d97706; background:#fffbeb; }
   .cal-post.ap-rejected, #view-list .post-card.ap-rejected { box-shadow: inset 4px 0 0 #dc2626; background:#fef2f2; }
@@ -158,6 +163,7 @@
     <span class="chip" data-filter="published">Pubblicati <span class="count" id="cnt-published"></span></span>
     <span class="chip" data-filter="failed">Falliti <span class="count" id="cnt-failed"></span></span>
     <span class="chip" data-filter="changes" id="chip-changes" style="border-color:#d97706;color:#92400e;display:none">✏️ Da rivedere (cliente) <span class="count" id="cnt-changes"></span></span>
+    <span class="chip" data-filter="ratio" id="chip-ratio" style="border-color:#dc2626;color:#991b1b;display:none">⚠️ Immagini da ricroppare <span class="count" id="cnt-ratio"></span></span>
   </div>
 
   <div id="view-cal"></div>
@@ -195,15 +201,17 @@
   function matchesFilter(post) {
     if (activeFilter === 'all') return true;
     if (activeFilter === 'changes') return post.approval_status === 'change_requested' || post.approval_status === 'rejected';
+    if (activeFilter === 'ratio') return !!post.has_bad_ratio;
     return bucket(post.status) === activeFilter;
   }
 
   // Aggiorna i conteggi sulle chip
   function updateCounts() {
-    const counts = { all: POSTS.length, todo: 0, ready: 0, published: 0, failed: 0, changes: 0 };
+    const counts = { all: POSTS.length, todo: 0, ready: 0, published: 0, failed: 0, changes: 0, ratio: 0 };
     POSTS.forEach(p => {
       counts[bucket(p.status)]++;
       if (p.approval_status === 'change_requested' || p.approval_status === 'rejected') counts.changes++;
+      if (p.has_bad_ratio) counts.ratio++;
     });
     Object.entries(counts).forEach(([k, v]) => {
       const el = document.getElementById('cnt-' + k);
@@ -215,6 +223,11 @@
       chipChanges.style.display = counts.changes > 0 ? '' : 'none';
       // Se l'utente era sul filtro 'changes' e ora è vuoto, torna a 'all'
       if (counts.changes === 0 && activeFilter === 'changes') setFilter('all');
+    }
+    const chipRatio = document.getElementById('chip-ratio');
+    if (chipRatio) {
+      chipRatio.style.display = counts.ratio > 0 ? '' : 'none';
+      if (counts.ratio === 0 && activeFilter === 'ratio') setFilter('all');
     }
   }
 
@@ -272,8 +285,10 @@
         const label = categoryName(p.category) + (p.scheduled_time ? ' · ' + p.scheduled_time.slice(0,5) : '');
         let titleAttr = p.sub_topic || p.status;
         if (p.last_client_comment) titleAttr += '\n\n✏️ Cliente: ' + p.last_client_comment;
+        if (p.has_bad_ratio) titleAttr += '\n\n⚠️ Immagine da ricroppare: ' + (p.bad_ratio_detail || 'fuori range IG');
         const apClass = p.approval_status ? ' ap-' + p.approval_status : '';
-        html += '<a href="/dashboard/posts/' + p.id + '" class="cal-post s-' + p.status + apClass + '" title="' + escapeHtml(titleAttr) + '">' + escapeHtml(label) + '</a>';
+        const ratioClass = p.has_bad_ratio ? ' bad-ratio' : '';
+        html += '<a href="/dashboard/posts/' + p.id + '" class="cal-post s-' + p.status + apClass + ratioClass + '" title="' + escapeHtml(titleAttr) + '">' + escapeHtml(label) + '</a>';
       });
       html += '</div>';
     }
@@ -339,17 +354,21 @@
           ? '<span class="cat-code" title="Codice categoria">' + escapeHtml(p.category) + '</span>' + escapeHtml(catName)
           : 'Post';
         const apClass = p.approval_status ? ' ap-' + p.approval_status : '';
+        const ratioClass = p.has_bad_ratio ? ' bad-ratio' : '';
         const apBadge = p.approval_status && p.approval_status !== 'pending'
           ? '<span class="ap-badge ap-' + p.approval_status + '" title="Stato approvazione cliente">' + ({ approved:'✓ OK', change_requested:'✏ mod.', rejected:'✗ NO' }[p.approval_status] || p.approval_status) + '</span>'
+          : '';
+        const ratioBadge = p.has_bad_ratio
+          ? '<span class="ratio-card-badge" title="' + escapeHtml('Immagine fuori range IG: ' + (p.bad_ratio_detail || '') + ' — apri il post e ricroppa a 1:1 o 4:5') + '">⚠ RATIO</span>'
           : '';
         const commentHtml = p.last_client_comment
           ? '<div class="client-comment" title="' + escapeHtml(p.last_client_comment) + '">' + escapeHtml(p.last_client_comment) + '</div>'
           : '';
-        html += '<div class="post-card' + apClass + '" draggable="true" data-post-id="' + p.id + '" style="position:relative">';
+        html += '<div class="post-card' + apClass + ratioClass + '" draggable="true" data-post-id="' + p.id + '" style="position:relative">';
         html += '<button onclick="deletePost(\'' + p.id + '\', event)" title="Elimina post" style="position:absolute;top:4px;right:4px;z-index:2;width:20px;height:20px;background:rgba(255,255,255,.92);border:1px solid var(--gray-200);border-radius:3px;cursor:pointer;color:var(--red);font-weight:600;line-height:1;font-size:12px;padding:0">\u00d7</button>';
         html += '<a href="/dashboard/posts/' + p.id + '" style="text-decoration:none;color:inherit;display:block">';
         html += '<div class="post-card-image">' + (p.image_url ? '<img src="' + escapeHtml(p.image_url) + '" alt="">' : '<span style="font-size:10px;color:var(--gray-400)">Nessuna immagine</span>') + '</div>';
-        html += '<div class="post-card-body"><h4 title="' + escapeHtml(catName) + '">' + titleHtml + apBadge + '</h4>';
+        html += '<div class="post-card-body"><h4 title="' + escapeHtml(catName) + '">' + titleHtml + apBadge + ratioBadge + '</h4>';
         html += '<p>' + escapeHtml(p.sub_topic || (p.caption ? p.caption.substring(0,80) + '...' : 'Nessun contenuto')) + '</p>';
         html += schedLine;
         html += commentHtml;
