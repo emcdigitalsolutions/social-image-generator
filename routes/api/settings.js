@@ -77,10 +77,12 @@ router.post('/test-smtp', async (req, res) => {
       // 587 = STARTTLS obbligatorio (senza, Aruba rifiuta AUTH in chiaro)
       requireTLS: !isSsl,
       auth: { user: smtpConfig.user, pass: smtpConfig.pass },
-      // Timeout corti per evitare hang infinito del pannello UI
-      connectionTimeout: 15000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000
+      // Timeout aggressivi: Traefik/Coolify davanti all'app ha un timeout di risposta
+      // attorno ai 30s. Se nodemailer supera, il proxy restituisce 502 Bad Gateway
+      // invece dell'errore vero. Teniamoci molto sotto.
+      connectionTimeout: 8000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000
     });
 
     await transporter.sendMail({

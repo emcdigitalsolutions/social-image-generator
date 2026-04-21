@@ -173,9 +173,21 @@ async function testSmtp() {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + getToken() }
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-    setBanner('smtpAlert', 'success', data.message);
+    // Risposta può essere non-JSON se il proxy davanti all'app (Traefik/Coolify)
+    // chiude la connessione con un Bad Gateway. In quel caso mostra un messaggio utile.
+    const ct = res.headers.get('content-type') || '';
+    const text = await res.text();
+    let data = {};
+    if (ct.includes('application/json')) {
+      try { data = JSON.parse(text); } catch (_) { data = {}; }
+    }
+    if (!res.ok) {
+      if (res.status === 502 || res.status === 504) {
+        throw new Error('Il proxy del server ha chiuso la connessione (HTTP ' + res.status + '). Il server SMTP probabilmente non risponde o le credenziali bloccano la connessione a lungo. Verifica host/porta/credenziali.');
+      }
+      throw new Error(data.error || text.slice(0, 200) || ('HTTP ' + res.status));
+    }
+    setBanner('smtpAlert', 'success', data.message || 'Email inviata.');
   } catch (err) {
     setBanner('smtpAlert','error', 'Errore: ' + err.message);
   }
