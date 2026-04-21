@@ -280,8 +280,17 @@
 </div>
 
 <div class="page-header">
-  <h1><%= post.category || 'Editor Post' %></h1>
-  <span class="badge badge-<%= post.status %>"><%= post.status %></span>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <h1 style="margin:0"><%= post.category || 'Editor Post' %></h1>
+    <span class="badge badge-<%= post.status %>" id="status-badge"><%= post.status %></span>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <% if (post.status !== 'ready' && post.status !== 'published') { %>
+      <button class="btn btn-secondary btn-sm" onclick="markReady()" title="Cambia lo stato in 'ready': il post verrà pubblicato automaticamente alla scheduled_date se lo schedule del mese è attivo.">&#9654; Segna pronto</button>
+    <% } else if (post.status === 'ready') { %>
+      <button class="btn btn-secondary btn-sm" onclick="markDraft()" title="Rimette il post in bozza (non verrà pubblicato automaticamente)">&#8617; Torna in draft</button>
+    <% } %>
+  </div>
 </div>
 
 <div class="post-editor-layout">
@@ -983,6 +992,37 @@
     });
     toast('Caption salvata');
     refreshPublishState();
+  }
+
+  async function markReady() {
+    const caption = (document.getElementById('caption-text').value || '').trim();
+    const mediaCount = (typeof MEDIA !== 'undefined' ? MEDIA.length : 0);
+    const hasLegacyImage = !!POST.image_url;
+    if (!caption) { await showAlert('Serve una caption prima di segnare il post come pronto.'); return; }
+    if (mediaCount === 0 && !hasLegacyImage) { await showAlert('Serve almeno un media (immagine o video) prima di segnare il post come pronto.'); return; }
+    if (!POST.scheduled_date) {
+      if (!await showConfirm('Il post non ha una scheduled_date impostata: non verrà pubblicato automaticamente finché non gliela imposti. Vuoi comunque segnarlo come pronto?')) return;
+    }
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'PUT', body: { status: 'ready' } });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Post pronto per publish');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  async function markDraft() {
+    if (!await showConfirm('Rimettere il post in bozza? Non verrà più pubblicato automaticamente dallo schedule.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'PUT', body: { status: 'draft' } });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Post in bozza');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
   }
 
   async function saveDetails() {
