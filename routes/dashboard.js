@@ -159,14 +159,34 @@ router.get('/clients/:id/plan/:planId/month/:month', (req, res) => {
   if (plan.plan_data) plan.plan_data = JSON.parse(plan.plan_data);
 
   const posts = db.prepare(`
-    SELECT * FROM posts WHERE editorial_plan_id = ? AND month_number = ? ORDER BY week_number
+    SELECT * FROM posts WHERE editorial_plan_id = ? AND month_number = ?
+    ORDER BY week_number ASC, position ASC, scheduled_date ASC, created_at ASC
   `).all(req.params.planId, parseInt(req.params.month));
+
+  // Per ogni post: se image_url (legacy) è vuoto, prendi il primo media immagine da post_media
+  const previewStmt = db.prepare(`
+    SELECT url FROM post_media WHERE post_id = ? AND kind = 'image' ORDER BY position ASC LIMIT 1
+  `);
+  for (const p of posts) {
+    if (!p.image_url) {
+      const row = previewStmt.get(p.id);
+      if (row) p.image_url = row.url;
+    }
+  }
+
+  // Mappa code → name delle categorie del piano (es. "C1" → "Servizi offerti")
+  const categoriesMap = {};
+  if (plan.plan_data && Array.isArray(plan.plan_data.categories)) {
+    for (const c of plan.plan_data.categories) {
+      if (c && c.code) categoriesMap[c.code] = c.name || c.code;
+    }
+  }
 
   const schedule = db.prepare('SELECT * FROM schedules WHERE editorial_plan_id = ? AND month_number = ?').get(req.params.planId, parseInt(req.params.month));
 
   res.render('month-view', {
     title: `Mese ${req.params.month} - ${client.display_name}`,
-    client, plan, posts, month: parseInt(req.params.month), schedule, user: req.user
+    client, plan, posts, month: parseInt(req.params.month), schedule, categoriesMap, user: req.user
   });
 });
 

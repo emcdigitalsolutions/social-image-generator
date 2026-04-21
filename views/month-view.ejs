@@ -36,6 +36,17 @@
   .post-card.drop-after  { box-shadow: 4px 0 0 0 var(--blue); }
   .drag-hint { font-size:11px; color:var(--gray-400); font-weight:400; margin-left:8px; }
 
+  /* Card compatte nella vista lista (override del globale .post-card) */
+  #view-list .posts-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:10px; }
+  #view-list .post-card { border-radius:6px; }
+  #view-list .post-card-image { height:110px; }
+  #view-list .post-card-body { padding:8px 10px; }
+  #view-list .post-card-body h4 { font-size:12px; font-weight:600; margin-bottom:3px; line-height:1.25; }
+  #view-list .post-card-body p { font-size:11px; margin-bottom:5px; -webkit-line-clamp:2; }
+  #view-list .post-card-body .post-card-footer { margin-top:2px; }
+  #view-list .post-card .badge { font-size:10px; padding:1px 6px; }
+  #view-list .post-card .cat-code { display:inline-block; background:var(--gray-100); color:var(--gray-600); font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; margin-right:4px; vertical-align:middle; }
+
   /* Ghost pulito da usare come drag image (rimpiazza screenshot default brutto) */
   .drag-ghost {
     position:absolute; top:-9999px; left:-9999px;
@@ -135,6 +146,12 @@
   const MONTH = <%= month %>;
   const POSTS = <%- JSON.stringify(posts) %>;
   const POST_IDS = POSTS.map(p => p.id);
+  // Mappa code → nome leggibile categoria (da plan.plan_data.categories)
+  const CATEGORIES_MAP = <%- JSON.stringify(categoriesMap || {}) %>;
+  function categoryName(code) {
+    if (!code) return 'Post';
+    return CATEGORIES_MAP[code] || code;
+  }
 
   // Filtro stato corrente
   let activeFilter = 'all';
@@ -212,7 +229,7 @@
       html += '<div class="' + cls.join(' ') + '">';
       html += '<div class="day">' + d.getDate() + '</div>';
       dayPosts.forEach(p => {
-        const label = (p.category || 'Post') + (p.scheduled_time ? ' · ' + p.scheduled_time.slice(0,5) : '');
+        const label = categoryName(p.category) + (p.scheduled_time ? ' · ' + p.scheduled_time.slice(0,5) : '');
         const titleAttr = escapeHtml(p.sub_topic || p.status);
         html += '<a href="/dashboard/posts/' + p.id + '" class="cal-post s-' + p.status + '" title="' + titleAttr + '">' + escapeHtml(label) + '</a>';
       });
@@ -270,15 +287,19 @@
           const t = p.scheduled_time ? p.scheduled_time.slice(0,5) : '';
           schedLine = '<p style="font-size:11px;color:var(--blue);margin:4px 0 6px;font-weight:500">\ud83d\udcc5 ' + escapeHtml(p.scheduled_date + (t ? ' \u00b7 ' + t : '')) + '</p>';
         }
+        const catName = categoryName(p.category);
+        const titleHtml = p.category
+          ? '<span class="cat-code" title="Codice categoria">' + escapeHtml(p.category) + '</span>' + escapeHtml(catName)
+          : 'Post';
         html += '<div class="post-card" draggable="true" data-post-id="' + p.id + '" style="position:relative">';
-        html += '<button onclick="deletePost(\'' + p.id + '\', event)" title="Elimina post" style="position:absolute;top:6px;right:6px;z-index:2;width:24px;height:24px;background:rgba(255,255,255,.92);border:1px solid var(--gray-200);border-radius:4px;cursor:pointer;color:var(--red);font-weight:600;line-height:1">\u00d7</button>';
+        html += '<button onclick="deletePost(\'' + p.id + '\', event)" title="Elimina post" style="position:absolute;top:4px;right:4px;z-index:2;width:20px;height:20px;background:rgba(255,255,255,.92);border:1px solid var(--gray-200);border-radius:3px;cursor:pointer;color:var(--red);font-weight:600;line-height:1;font-size:12px;padding:0">\u00d7</button>';
         html += '<a href="/dashboard/posts/' + p.id + '" style="text-decoration:none;color:inherit;display:block">';
-        html += '<div class="post-card-image">' + (p.image_url ? '<img src="' + p.image_url + '">' : 'Nessuna immagine') + '</div>';
-        html += '<div class="post-card-body"><h4>' + escapeHtml(p.category || 'Post') + '</h4>';
+        html += '<div class="post-card-image">' + (p.image_url ? '<img src="' + escapeHtml(p.image_url) + '" alt="">' : '<span style="font-size:10px;color:var(--gray-400)">Nessuna immagine</span>') + '</div>';
+        html += '<div class="post-card-body"><h4 title="' + escapeHtml(catName) + '">' + titleHtml + '</h4>';
         html += '<p>' + escapeHtml(p.sub_topic || (p.caption ? p.caption.substring(0,80) + '...' : 'Nessun contenuto')) + '</p>';
         html += schedLine;
         html += '<div class="post-card-footer"><span class="badge badge-' + p.status + '">' + p.status + '</span>';
-        html += '<span style="font-size:11px;color:var(--gray-500)">' + typeBadge + '</span></div></div></a></div>';
+        html += '<span style="font-size:10px;color:var(--gray-500)">' + typeBadge + '</span></div></div></a></div>';
       });
       html += '</div></div>';
     }
