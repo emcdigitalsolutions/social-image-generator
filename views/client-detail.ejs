@@ -161,13 +161,15 @@
             <td><%= monthCount %> mesi</td>
             <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
             <td><%= p.created_at %></td>
-            <td style="display:flex;gap:4px" onclick="event.stopPropagation()">
+            <td style="display:flex;gap:4px;align-items:center" onclick="event.stopPropagation()">
               <a href="<%= planUrl %>" class="btn btn-sm btn-secondary">Apri</a>
               <% if (p.status === 'confirmed') { %>
                 <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="activatePlan('<%= p.id %>')">Attiva</button>
               <% } else if (p.status === 'active') { %>
                 <button class="btn btn-sm" style="background:var(--gray-400);color:#fff" onclick="deactivatePlan('<%= p.id %>')">Disattiva</button>
               <% } %>
+              <button class="btn btn-sm btn-secondary" style="padding:4px 8px;min-width:28px" title="Rinomina piano" aria-label="Rinomina" onclick="renamePlanInList('<%= p.id %>', <%- JSON.stringify(p.title || '') %>)">&#9998;</button>
+              <button class="btn btn-sm btn-secondary" style="padding:4px 8px;min-width:28px" title="Duplica piano (copia tutti i post in stato draft)" aria-label="Duplica" onclick="duplicatePlanInList('<%= p.id %>', <%- JSON.stringify(p.title || 'Piano Editoriale') %>, '<%= client.id %>')">&#9112;</button>
               <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deletePlan('<%= p.id %>', '<%= p.status %>')">Elimina</button>
             </td>
           </tr>
@@ -855,6 +857,40 @@
     } finally {
       btn.disabled = false;
       btn.textContent = 'Genera Piano con AI';
+    }
+  }
+
+  // Rinomina piano dalla lista (riusa PUT /api/plans/:id con { title })
+  async function renamePlanInList(id, currentTitle) {
+    const next = prompt('Nuovo nome del piano editoriale:', currentTitle || '');
+    if (next === null) return;
+    const trimmed = (next || '').trim();
+    if (!trimmed) { await showAlert('Il nome non può essere vuoto.'); return; }
+    if (trimmed === currentTitle) return;
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + id, { method: 'PUT', body: { title: trimmed } });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Nome aggiornato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  // Duplica piano dalla lista (riusa POST /api/plans/:id/duplicate)
+  async function duplicatePlanInList(id, currentTitle, clientId) {
+    const suggested = 'Copia di ' + (currentTitle || 'Piano Editoriale');
+    const name = prompt('Nome del nuovo piano (duplicato):', suggested);
+    if (name === null) return;
+    const trimmed = (name || '').trim() || suggested;
+    if (!await showConfirm('Duplicare questo piano?\n\nVerranno copiati tutti i post (caption incluse) in stato draft. I media (foto/video) NON vengono duplicati: li ricaricherai nel nuovo piano.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + id + '/duplicate', { method: 'POST', body: { title: trimmed } });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Piano duplicato (' + res.posts_copied + ' post copiati)');
+      window.location.href = '/dashboard/clients/' + clientId + '/plan/' + res.plan.id;
+    } catch (err) {
+      await showAlert('Duplicazione fallita: ' + err.message);
     }
   }
 

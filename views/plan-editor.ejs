@@ -84,16 +84,41 @@
   .cat-table .cat-actions button.regen:hover { background:#eff6ff; color:var(--blue); border-color:#93c5fd; }
   .cat-dirty-bar { display:none; align-items:center; justify-content:space-between; gap:10px; padding:10px 14px; margin-top:10px; background:#fef3c7; border:1px solid #fde047; border-radius:6px; font-size:13px; }
   .cat-dirty-bar.show { display:flex; }
+
+  /* Page header sticky: titolo fisso a sinistra, azioni fisse a destra */
+  .page-header.plan-header {
+    position:sticky; top:0; z-index:20;
+    background:white; padding:14px 0; margin:0 0 20px;
+    border-bottom:1px solid var(--gray-200);
+    gap:16px;
+  }
+  .page-header.plan-header > div:first-child {
+    display:flex; flex-direction:column; gap:4px;
+    min-width:0; /* permette ellipsis */
+    flex:1 1 auto;
+  }
+  .page-header.plan-header h1 {
+    margin:0;
+    font-size:22px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .page-header.plan-header .plan-actions {
+    display:flex; gap:6px; flex:0 0 auto; flex-wrap:wrap; justify-content:flex-end;
+  }
+  @media (max-width:720px) {
+    .page-header.plan-header { flex-direction:row; flex-wrap:wrap; }
+    .page-header.plan-header .plan-actions { width:100%; justify-content:flex-start; }
+  }
 </style>
 
 <div class="breadcrumb">
   <a href="/dashboard">Clienti</a> / <a href="/dashboard/clients/<%= client.id %>"><%= client.display_name %></a> / Piano Editoriale
 </div>
 
-<div class="page-header">
+<div class="page-header plan-header">
   <div>
-    <h1><%= plan.title || 'Piano Editoriale' %></h1>
-    <span class="badge badge-<%= plan.status %>"><%= plan.status %></span>
+    <h1 title="<%= plan.title || 'Piano Editoriale' %>"><%= plan.title || 'Piano Editoriale' %></h1>
+    <span class="badge badge-<%= plan.status %>" style="align-self:flex-start"><%= plan.status %></span>
   </div>
   <div class="plan-actions">
     <button class="btn btn-secondary" onclick="renamePlan()" title="Cambia il nome del piano editoriale">&#9998; Rinomina</button>
