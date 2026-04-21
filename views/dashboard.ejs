@@ -1,7 +1,16 @@
-<%- include('layout', { title, user }) %>
+<%- include('layout', { title, user, activeNav: 'clients' }) %>
 
 <div class="page-header">
-  <h1>Clienti</h1>
+  <div>
+    <h1>Clienti</h1>
+    <p style="font-size:13px;color:var(--gray-500);margin-top:4px">
+      <%= clients.length %> <%= clients.length === 1 ? 'cliente in gestione' : 'clienti in gestione' %>
+      <% const activeCount = clients.filter(c => c.status === 'active').length; %>
+      <% if (activeCount > 0) { %>
+        · <span style="color:#16a34a;font-weight:500"><%= activeCount %> <%= activeCount === 1 ? 'attivo' : 'attivi' %></span>
+      <% } %>
+    </p>
+  </div>
   <button class="btn btn-primary" onclick="openModal('new-client-modal')">+ Nuovo Cliente</button>
 </div>
 
