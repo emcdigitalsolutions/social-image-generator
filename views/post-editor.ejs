@@ -171,7 +171,12 @@
   }
   .pv-avatar.ig { background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); padding:2px; }
   .pv-avatar.ig .pv-avatar-inner { background:white; width:100%; height:100%; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; }
-  .pv-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+  .pv-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; position:relative; z-index:2; }
+  /* Iniziale come fallback: visibile solo quando img è nascosta (onerror) o assente */
+  .pv-avatar .pv-avatar-init { position:absolute; z-index:1; }
+  .pv-avatar, .pv-avatar-inner { position:relative; }
+  .pv-avatar-inner[data-fallback="1"] .pv-avatar-init,
+  .pv-avatar[data-fallback="1"] .pv-avatar-init { z-index:3; }
   .pv-name { font-weight:600; font-size:14px; line-height:1.2; color:#050505; }
   .pv-meta { font-size:12px; color:#65676b; margin-top:2px; }
 
@@ -491,7 +496,9 @@
   const CLIENT_BRAND = {
     name: '<%= (client.brand_name || client.display_name || client.id).replace(/"/g, "&quot;") %>',
     website: '<%= (client.website || "").replace(/"/g, "&quot;") %>',
-    logo: '<%= client.logo_filename ? "/assets/" + client.logo_filename : "" %>'
+    // Endpoint dedicato che serve il logo estraendolo dal wrapper SVG (i raster dentro SVG non
+    // sono caricabili da <img> via data: URI su certi browser). /assets/ non è un mount static.
+    logo: '<%= client.logo_filename ? "/dashboard/api/clients/" + client.id + "/logo-preview" : "" %>'
   };
   let PREVIEW_PLATFORM = 'ig';
 
@@ -1163,17 +1170,15 @@
 
   function buildAvatar(platformClass) {
     const logo = CLIENT_BRAND.logo;
-    const initial = (CLIENT_BRAND.name || 'X').trim().charAt(0).toUpperCase();
-    if (logo) {
-      if (platformClass === 'ig') {
-        return '<div class="pv-avatar ig"><div class="pv-avatar-inner"><img src="' + logo + '" alt=""></div></div>';
-      }
-      return '<div class="pv-avatar"><img src="' + logo + '" alt=""></div>';
-    }
+    const initial = escapeHtml((CLIENT_BRAND.name || 'X').trim().charAt(0).toUpperCase());
+    // Fallback inline: se l'img logo fallisce a caricare, nasconde l'img e mostra l'iniziale dietro
+    const imgTag = logo
+      ? '<img src="' + escapeHtml(logo) + '" alt="" onerror="this.style.display=\'none\';this.parentNode.setAttribute(\'data-fallback\',\'1\');">'
+      : '';
     if (platformClass === 'ig') {
-      return '<div class="pv-avatar ig"><div class="pv-avatar-inner"><span>' + initial + '</span></div></div>';
+      return '<div class="pv-avatar ig"><div class="pv-avatar-inner">' + imgTag + '<span class="pv-avatar-init">' + initial + '</span></div></div>';
     }
-    return '<div class="pv-avatar"><span>' + initial + '</span></div>';
+    return '<div class="pv-avatar">' + imgTag + '<span class="pv-avatar-init">' + initial + '</span></div>';
   }
 
   // Caption con hashtag + URL colorati
