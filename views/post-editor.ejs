@@ -129,6 +129,107 @@
   .media-actions .btn-arrow { font-size:14px; font-weight:700; padding:3px 8px; }
   .media-thumb { cursor:zoom-in; }
 
+  /* ─── Anteprima post (simula FB/IG nativo) ─── */
+  .preview-tabs { display:flex; gap:4px; margin-bottom:12px; }
+  .preview-tab {
+    padding:6px 14px; font-size:13px; border-radius:14px;
+    border:1px solid var(--gray-200); background:white; cursor:pointer;
+  }
+  .preview-tab.active { background:#111; color:white; border-color:#111; }
+  .preview-frame {
+    background:#f0f2f5; padding:14px; border-radius:8px;
+    min-height:300px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
+  }
+  .pv-card {
+    background:white; border-radius:10px; overflow:hidden;
+    max-width:470px; margin:0 auto;
+    box-shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  .pv-header { display:flex; align-items:center; gap:10px; padding:10px 12px; }
+  .pv-avatar {
+    width:40px; height:40px; border-radius:50%; flex:none; overflow:hidden;
+    background:#e5e7eb; display:flex; align-items:center; justify-content:center;
+    font-weight:700; color:#6b7280; font-size:14px;
+  }
+  .pv-avatar.ig { background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); padding:2px; }
+  .pv-avatar.ig .pv-avatar-inner { background:white; width:100%; height:100%; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pv-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+  .pv-name { font-weight:600; font-size:14px; line-height:1.2; color:#050505; }
+  .pv-meta { font-size:12px; color:#65676b; margin-top:2px; }
+
+  /* FB body */
+  .pv-fb .pv-body { padding:0 12px 10px; font-size:14px; line-height:1.4; white-space:pre-wrap; word-wrap:break-word; color:#050505; }
+  .pv-fb .pv-hashtag { color:#385898; }
+  .pv-fb .pv-link { color:#385898; text-decoration:none; }
+  .pv-fb .pv-media {
+    background:#000; display:flex; justify-content:center; align-items:center;
+    max-height:500px; overflow:hidden;
+  }
+  .pv-fb .pv-media img, .pv-fb .pv-media video { width:100%; height:auto; display:block; }
+  .pv-fb .pv-actions {
+    display:flex; border-top:1px solid #ced0d4; padding:2px 0;
+    color:#65676b; font-size:13px; font-weight:600;
+  }
+  .pv-fb .pv-actions > div {
+    flex:1; padding:8px; text-align:center;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+
+  /* IG body */
+  .pv-ig .pv-media {
+    position:relative; background:#fafafa;
+    aspect-ratio:1/1; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pv-ig .pv-media.reel { aspect-ratio:9/16; max-height:520px; }
+  .pv-ig .pv-media img, .pv-ig .pv-media video { width:100%; height:100%; object-fit:cover; }
+  .pv-ig .pv-carousel-dots {
+    position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+    display:flex; gap:4px; z-index:2;
+  }
+  .pv-ig .pv-carousel-dots span {
+    width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.55);
+  }
+  .pv-ig .pv-carousel-dots span.active { background:white; }
+  .pv-ig .pv-reel-badge {
+    position:absolute; top:8px; right:8px; color:white; font-size:11px; font-weight:700;
+    background:rgba(0,0,0,.5); padding:4px 8px; border-radius:10px; z-index:2;
+  }
+  .pv-ig .pv-actions {
+    display:flex; justify-content:space-between; padding:10px 14px; font-size:22px;
+  }
+  .pv-ig .pv-actions-left { display:flex; gap:14px; }
+  .pv-ig .pv-body { padding:0 14px 10px; font-size:13px; line-height:1.45; color:#262626; }
+  .pv-ig .pv-body .ig-name { font-weight:700; margin-right:6px; }
+  .pv-ig .pv-body .pv-hashtag { color:#00376b; }
+  .pv-ig .pv-body .pv-link { color:#00376b; text-decoration:none; }
+  .pv-ig .pv-body .pv-more { color:#8e8e8e; cursor:pointer; }
+
+  /* Story: 9:16 full-bleed with text overlay */
+  .pv-story {
+    background:#000; aspect-ratio:9/16; max-width:260px; margin:0 auto;
+    border-radius:14px; overflow:hidden; position:relative;
+    display:flex; align-items:flex-end;
+  }
+  .pv-story-media { position:absolute; inset:0; }
+  .pv-story-media img, .pv-story-media video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .pv-story-bar { position:absolute; top:6px; left:8px; right:8px; height:2px; background:rgba(255,255,255,.3); border-radius:1px; z-index:3; }
+  .pv-story-bar::before { content:""; display:block; width:30%; height:100%; background:white; border-radius:1px; }
+  .pv-story-header {
+    position:absolute; top:14px; left:0; right:0; padding:0 10px;
+    display:flex; align-items:center; gap:8px; z-index:3;
+    color:white;
+  }
+  .pv-story-header .pv-avatar { width:30px; height:30px; font-size:12px; }
+  .pv-story-header .pv-name { color:white; font-size:13px; text-shadow:0 1px 2px rgba(0,0,0,.6); }
+  .pv-story-text {
+    position:relative; color:white; padding:18px 14px; font-size:14px; line-height:1.3; z-index:2;
+    text-shadow:0 1px 4px rgba(0,0,0,.8);
+    max-height:50%; overflow:hidden;
+  }
+  .pv-empty { padding:40px; text-align:center; color:#8e8e8e; }
+
   /* Lightbox modal */
   .lightbox-backdrop {
     position:fixed; inset:0; background:rgba(0,0,0,0.82); z-index:1000;
@@ -289,6 +390,15 @@
       <div id="media-grid" class="media-grid"></div>
     </div>
 
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>\u{1F441}\ufe0f Anteprima</h3></div>
+      <div class="preview-tabs">
+        <button type="button" class="preview-tab active" data-pv="ig" onclick="setPreviewPlatform('ig')">Instagram</button>
+        <button type="button" class="preview-tab" data-pv="fb" onclick="setPreviewPlatform('fb')">Facebook</button>
+      </div>
+      <div class="preview-frame" id="preview-frame"></div>
+    </div>
+
     <% if (post.status === 'published') { %>
     <div class="card" style="margin-bottom:16px">
       <div class="card-header">
@@ -340,6 +450,12 @@
   const POST       = <%- JSON.stringify(post) %>;
   let   MEDIA      = <%- JSON.stringify(media || []) %>;
   let   MEDIA_TYPE = POST.media_type || 'single_image';
+  const CLIENT_BRAND = {
+    name: '<%= (client.brand_name || client.display_name || client.id).replace(/"/g, "&quot;") %>',
+    website: '<%= (client.website || "").replace(/"/g, "&quot;") %>',
+    logo: '<%= client.logo_filename ? "/assets/" + client.logo_filename : "" %>'
+  };
+  let PREVIEW_PLATFORM = 'ig';
 
   const TYPE_HELP = {
     single_image: 'Una sola immagine. Caricala oppure generala da template.',
@@ -358,17 +474,16 @@
     MEDIA_TYPE = t;
     document.querySelectorAll('.type-chip').forEach(c => c.classList.toggle('active', c.dataset.type === t));
     document.getElementById('type-help').textContent = TYPE_HELP[t] || '';
-    // Mostra opzioni Reel solo per tipo reel/video (legacy)
     const reelOpts = document.getElementById('reel-options');
     if (reelOpts) {
       const isReelLike = (t === 'reel' || t === 'video');
       reelOpts.style.display = isReelLike ? 'block' : 'none';
       if (isReelLike) {
-        // Inizializza la checkbox dal valore corrente del post (default 1)
         document.getElementById('ig-share-to-feed').checked = (POST.ig_share_to_feed === 0 || POST.ig_share_to_feed === false) ? false : true;
       }
     }
     refreshPublishState();
+    if (typeof renderPreview === 'function') renderPreview();
   }
 
   async function onShareToFeedChange() {
@@ -418,6 +533,7 @@
     }).join('');
     updateSelectionToolbar();
     refreshPublishState();
+    if (typeof renderPreview === 'function') renderPreview();
   }
 
   function updateSelectionToolbar() {
@@ -907,6 +1023,163 @@
       btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera da template';
     }
   }
+
+  // ── Anteprima post (simula FB / IG nativi) ──
+  function setPreviewPlatform(p) {
+    PREVIEW_PLATFORM = p;
+    document.querySelectorAll('.preview-tab').forEach(b => b.classList.toggle('active', b.dataset.pv === p));
+    renderPreview();
+  }
+
+  function buildAvatar(platformClass) {
+    const logo = CLIENT_BRAND.logo;
+    const initial = (CLIENT_BRAND.name || 'X').trim().charAt(0).toUpperCase();
+    if (logo) {
+      if (platformClass === 'ig') {
+        return '<div class="pv-avatar ig"><div class="pv-avatar-inner"><img src="' + logo + '" alt=""></div></div>';
+      }
+      return '<div class="pv-avatar"><img src="' + logo + '" alt=""></div>';
+    }
+    if (platformClass === 'ig') {
+      return '<div class="pv-avatar ig"><div class="pv-avatar-inner"><span>' + initial + '</span></div></div>';
+    }
+    return '<div class="pv-avatar"><span>' + initial + '</span></div>';
+  }
+
+  // Caption con hashtag + URL colorati
+  function formatCaptionHtml(text) {
+    if (!text) return '';
+    let html = escapeHtml(text);
+    // URL
+    html = html.replace(/(https?:\/\/[^\s<]+)/g, '<span class="pv-link">$1</span>');
+    // Hashtag
+    html = html.replace(/(^|\s)(#[\p{L}\p{N}_]+)/gu, '$1<span class="pv-hashtag">$2</span>');
+    return html;
+  }
+
+  function mediaHtmlForPreview() {
+    if (!MEDIA.length) {
+      // Fallback a image_url legacy
+      if (POST.image_url) return '<img src="' + POST.image_url + '" alt="">';
+      return '';
+    }
+    const m = MEDIA[0];
+    if (m.kind === 'video') return '<video src="' + m.url + '" muted controls></video>';
+    return '<img src="' + m.url + '" alt="">';
+  }
+
+  function renderPreviewFb() {
+    const root = document.getElementById('preview-frame');
+    const captionHtml = formatCaptionHtml(document.getElementById('caption-text').value || POST.caption || '');
+    if (MEDIA_TYPE === 'story') {
+      root.innerHTML = '<div class="pv-empty">Su Facebook le Storie non si gestiscono da qui (le pubblica il cliente dalla app). Cambia tab Instagram per vedere come apparirebbe la Story.</div>';
+      return;
+    }
+    const av = buildAvatar('fb');
+    const mediaHtml = mediaHtmlForPreview();
+    root.innerHTML =
+      '<div class="pv-card pv-fb">'
+      + '<div class="pv-header">' + av
+      +   '<div><div class="pv-name">' + escapeHtml(CLIENT_BRAND.name) + '</div>'
+      +   '<div class="pv-meta">Ora · \u{1F30D}</div></div>'
+      + '</div>'
+      + (captionHtml ? '<div class="pv-body">' + captionHtml + '</div>' : '')
+      + (mediaHtml ? '<div class="pv-media">' + mediaHtml + '</div>' : '')
+      + '<div class="pv-actions">'
+      +   '<div>\u{1F44D} Mi piace</div>'
+      +   '<div>\u{1F4AC} Commenta</div>'
+      +   '<div>\u{1F501} Condividi</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  function renderPreviewIg() {
+    const root = document.getElementById('preview-frame');
+    const caption = document.getElementById('caption-text').value || POST.caption || '';
+    const captionHtml = formatCaptionHtml(caption);
+
+    if (MEDIA_TYPE === 'story') {
+      // Story layout verticale
+      const av = buildAvatar('ig');
+      const firstMedia = MEDIA[0];
+      const storyMedia = firstMedia
+        ? (firstMedia.kind === 'video'
+            ? '<video src="' + firstMedia.url + '" muted autoplay loop></video>'
+            : '<img src="' + firstMedia.url + '" alt="">')
+        : '';
+      root.innerHTML =
+        '<div class="pv-story">'
+        + '<div class="pv-story-media">' + storyMedia + '</div>'
+        + '<div class="pv-story-bar"></div>'
+        + '<div class="pv-story-header">' + av
+        +   '<div class="pv-name">' + escapeHtml(CLIENT_BRAND.name) + '</div>'
+        + '</div>'
+        + '<div class="pv-story-text">' + captionHtml + '</div>'
+        + '</div>';
+      return;
+    }
+
+    // Reel: 9:16 vertical, single video
+    const isReel = MEDIA_TYPE === 'reel' || MEDIA_TYPE === 'video';
+    const av = buildAvatar('ig');
+    const nameSpan = '<span class="ig-name">' + escapeHtml((CLIENT_BRAND.name || '').toLowerCase().replace(/\s+/g, '')) + '</span>';
+    // Media: single, carousel, reel
+    let mediaHtml = '';
+    if (MEDIA.length === 0 && POST.image_url) {
+      mediaHtml = '<img src="' + POST.image_url + '" alt="">';
+    } else if (MEDIA.length === 1) {
+      const m = MEDIA[0];
+      mediaHtml = m.kind === 'video'
+        ? '<video src="' + m.url + '" muted controls loop></video>'
+        : '<img src="' + m.url + '" alt="">';
+    } else if (MEDIA.length > 1) {
+      const m = MEDIA[0];
+      mediaHtml = m.kind === 'video'
+        ? '<video src="' + m.url + '" muted controls></video>'
+        : '<img src="' + m.url + '" alt="">';
+      mediaHtml += '<div class="pv-carousel-dots">'
+        + MEDIA.slice(0, 5).map((_, i) => '<span' + (i === 0 ? ' class="active"' : '') + '></span>').join('')
+        + '</div>';
+    }
+    const reelBadge = isReel ? '<div class="pv-reel-badge">\u25B6 REEL</div>' : '';
+
+    // Truncate caption IG: dopo ~80 char mostra "...altro"
+    let truncatedHtml = captionHtml;
+    const plain = caption.replace(/\s+/g, ' ');
+    if (plain.length > 120) {
+      const short = plain.slice(0, 110).replace(/\s\S*$/, '');
+      truncatedHtml = formatCaptionHtml(short) + '<span class="pv-more"> ... altro</span>';
+    }
+
+    root.innerHTML =
+      '<div class="pv-card pv-ig">'
+      + '<div class="pv-header">' + av
+      +   '<div><div class="pv-name" style="font-size:13px">' + escapeHtml((CLIENT_BRAND.name || '').toLowerCase().replace(/\s+/g, '')) + '</div></div>'
+      + '</div>'
+      + '<div class="pv-media' + (isReel ? ' reel' : '') + '">' + mediaHtml + reelBadge + '</div>'
+      + '<div class="pv-actions">'
+      +   '<div class="pv-actions-left"><span>\u2661</span><span>\u{1F4AC}</span><span>\u{1F501}</span></div>'
+      +   '<span>\u{1F516}</span>'
+      + '</div>'
+      + (truncatedHtml ? '<div class="pv-body">' + nameSpan + truncatedHtml + '</div>' : '')
+      + '</div>';
+  }
+
+  function renderPreview() {
+    if (!document.getElementById('preview-frame')) return;
+    if (PREVIEW_PLATFORM === 'fb') renderPreviewFb();
+    else renderPreviewIg();
+  }
+
+  // Re-render quando cambia qualcosa di rilevante
+  document.getElementById('caption-text').addEventListener('input', () => {
+    // Debounce leggero per non rendere troppe volte
+    clearTimeout(window._pvDebounce);
+    window._pvDebounce = setTimeout(renderPreview, 150);
+  });
+
+  // Init preview
+  setTimeout(renderPreview, 50);
 
   // ── Insights ──
   function renderInsights(insights) {
