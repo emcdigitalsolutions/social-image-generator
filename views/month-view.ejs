@@ -59,6 +59,16 @@
   .drag-ghost .dg-icon { font-size:14px; }
   .drag-ghost .dg-text { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
+  /* Chip selezione giorni settimana (modal distribuzione date) */
+  .wd-chip {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:44px; padding:6px 12px; font-size:12px; font-weight:600;
+    border:1px solid var(--gray-200); border-radius:20px; background:white;
+    cursor:pointer; user-select:none; color:var(--gray-600);
+  }
+  .wd-chip:hover { border-color:var(--blue); color:var(--blue); }
+  .wd-chip.active { background:var(--blue); color:white; border-color:var(--blue); }
+
   /* Time modal */
   .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; display:flex; align-items:center; justify-content:center; }
   .modal-card { background:white; border-radius:10px; max-width:500px; width:92vw; max-height:90vh; overflow:auto; padding:22px 24px; }
@@ -674,92 +684,98 @@
     }
   }
 
-  // ── Date bulk modal ──
+  // ── Date bulk modal (distribuzione intelligente per giorni settimana) ──
   function fmtLocalDate(d) {
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  }
-  function addDays(base, n) { const d = new Date(base); d.setDate(d.getDate() + n); return d; }
-  function nextWeekday(base, targetWeekday) {
-    // targetWeekday: 1=lunedì ... 7=domenica (usiamo convenzione getDay: 0=dom, 1=lun, ..., 6=sab)
-    const d = new Date(base); const cur = d.getDay();
-    let delta = (targetWeekday - cur + 7) % 7;
-    if (delta === 0) delta = 7; // "prossimo"
-    d.setDate(d.getDate() + delta);
-    return d;
-  }
-
-  function buildDatePresets() {
-    const today = new Date();
-    return [
-      { ico: '\u{1f4c5}', label: 'Oggi',           date: fmtLocalDate(today),              note: today.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) },
-      { ico: '\u2728',     label: 'Domani',        date: fmtLocalDate(addDays(today, 1)),  note: addDays(today, 1).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) },
-      { ico: '\u{1f4c6}', label: 'Tra 7 giorni',  date: fmtLocalDate(addDays(today, 7)),  note: addDays(today, 7).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) },
-      { ico: '\u{1f4c6}', label: 'Tra 14 giorni', date: fmtLocalDate(addDays(today, 14)), note: addDays(today, 14).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) },
-      { ico: '\u{1f4c5}', label: 'Prossimo Lun',  date: fmtLocalDate(nextWeekday(today, 1)), note: nextWeekday(today, 1).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) },
-      { ico: '\u{1f4c5}', label: 'Prossimo Mar',  date: fmtLocalDate(nextWeekday(today, 2)), note: nextWeekday(today, 2).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) }
-    ];
   }
 
   function openDateModal() {
     if (!POSTS.length) { showAlert('Nessun post in questo mese.'); return; }
+    // Conta i post per settimana per aiutare l'admin a scegliere quanti weekday selezionare
+    const byWeek = {};
+    POSTS.forEach(p => { const w = p.week_number || 1; byWeek[w] = (byWeek[w] || 0) + 1; });
+    const maxPerWeek = Math.max(...Object.values(byWeek), 1);
+    const avgPerWeek = (POSTS.length / Math.max(Object.keys(byWeek).length, 1)).toFixed(1);
+
+    const WEEKDAYS = [
+      { n: 1, label: 'Lun' }, { n: 2, label: 'Mar' }, { n: 3, label: 'Mer' },
+      { n: 4, label: 'Gio' }, { n: 5, label: 'Ven' }, { n: 6, label: 'Sab' }, { n: 7, label: 'Dom' }
+    ];
+    // Default: scelgo i primi N giorni infrasettimanali in base a maxPerWeek (Lun, Mer, Ven, Mar, Gio, Sab, Dom)
+    const defaultOrder = [2, 4, 6, 1, 3, 5, 7]; // Mar, Gio, Sab, poi Lun, Mer, Ven, Dom
+    const defaultSelected = new Set(defaultOrder.slice(0, Math.min(maxPerWeek, 7)));
+
+    const wdHtml = WEEKDAYS.map(w =>
+      `<label class="wd-chip${defaultSelected.has(w.n) ? ' active' : ''}" data-wd="${w.n}">
+        <input type="checkbox" value="${w.n}" ${defaultSelected.has(w.n) ? 'checked' : ''} style="display:none">
+        <span>${w.label}</span>
+      </label>`
+    ).join('');
+
+    const today = new Date();
+    // Default start: primo giorno del mese corrente (se MONTH 1 = primo mese del piano)
+    const defaultStart = fmtLocalDate(today);
+
     const wrap = document.createElement('div');
     wrap.className = 'modal-backdrop';
     wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
-    const presets = buildDatePresets();
-    const presetsHtml = presets.map(p =>
-      `<div class="preset-btn" onclick="document.getElementById('dm-input').value='${p.date}'">
-        <div class="ico">${p.ico}</div>
-        <div class="time">${p.label}</div>
-        <div class="lab" style="font-size:10px;opacity:.7">${p.note}</div>
-      </div>`
-    ).join('');
-    const totalCount = POSTS.length;
-    const defaultVal = fmtLocalDate(new Date());
     wrap.innerHTML = `
-      <div class="modal-card" onclick="event.stopPropagation()">
-        <h3>\u{1f4c5} Imposta data di pubblicazione</h3>
-        <div class="modal-sub">Applica una data in batch ai post di questo mese.</div>
-
-        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Preset</div>
-        <div class="preset-grid">${presetsHtml}</div>
+      <div class="modal-card" onclick="event.stopPropagation()" style="max-width:560px">
+        <h3>\u{1f4c5} Distribuisci date nel mese</h3>
+        <div class="modal-sub">
+          Ci sono <strong>${POSTS.length}</strong> post in ${Object.keys(byWeek).length} settimane (media ${avgPerWeek}/settimana, max ${maxPerWeek}/settimana).
+          Scegli la data di partenza e i giorni della settimana su cui distribuirli.
+        </div>
 
         <div class="modal-row">
-          <label for="dm-input"><strong>Data:</strong></label>
-          <input type="date" id="dm-input" value="${defaultVal}">
-          <span style="font-size:12px;color:var(--gray-500)">(o digita)</span>
+          <label for="dm-start"><strong>Data di partenza:</strong></label>
+          <input type="date" id="dm-start" value="${defaultStart}">
+          <span style="font-size:12px;color:var(--gray-500)">Il lunedì di questa settimana segna la <em>Settimana 1</em></span>
         </div>
+
+        <div style="font-size:13px;font-weight:600;margin:12px 0 6px">Giorni settimanali consentiti</div>
+        <div style="font-size:11px;color:var(--gray-500);margin-bottom:8px">Seleziona almeno <strong>${maxPerWeek}</strong> giorni (tanti quanti i post della settimana più piena)</div>
+        <div id="dm-weekdays" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${wdHtml}</div>
+
         <div class="modal-row">
           <label><input type="checkbox" id="dm-only-empty" checked> Applica solo ai post senza data già impostata</label>
         </div>
 
-        <div style="font-size:11px;color:var(--gray-500);margin-top:10px">Saranno aggiornati fino a <strong>${totalCount}</strong> post di questo mese.</div>
+        <div style="font-size:11px;color:var(--gray-500);margin-top:4px">
+          Esempio: 3 post/settimana con "Mar Gio Sab" → 1° post di ogni sett. sul Mar, 2° sul Gio, 3° sul Sab.
+        </div>
 
         <div class="modal-actions">
           <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Annulla</button>
-          <button class="btn btn-sm btn-primary" onclick="applyBulkDate()">Applica</button>
+          <button class="btn btn-sm btn-primary" onclick="applyBulkDistributeDates()">Distribuisci</button>
         </div>
       </div>`;
     document.body.appendChild(wrap);
+
+    // Toggle chip weekday
+    wrap.querySelectorAll('.wd-chip').forEach(chip => {
+      chip.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const cb = chip.querySelector('input');
+        cb.checked = !cb.checked;
+        chip.classList.toggle('active', cb.checked);
+      });
+    });
   }
 
-  async function applyBulkDate() {
-    const date = document.getElementById('dm-input').value;
+  async function applyBulkDistributeDates() {
+    const startDate = document.getElementById('dm-start').value;
+    if (!startDate) { showAlert('Specifica una data di partenza'); return; }
     const onlyEmpty = document.getElementById('dm-only-empty').checked;
-    if (!date) { showAlert('Specifica una data'); return; }
-    const targetIds = onlyEmpty
-      ? POSTS.filter(p => !p.scheduled_date).map(p => p.id)
-      : POSTS.map(p => p.id);
-    if (!targetIds.length) {
-      showAlert('Tutti i post hanno già una data impostata. Deseleziona la checkbox per sovrascrivere.');
-      return;
-    }
+    const weekdays = Array.from(document.querySelectorAll('#dm-weekdays input:checked')).map(i => parseInt(i.value, 10));
+    if (!weekdays.length) { showAlert('Seleziona almeno un giorno della settimana.'); return; }
     try {
-      const res = await apiFetch('/dashboard/api/posts/bulk-date', {
+      const res = await apiFetch('/dashboard/api/posts/bulk-distribute-dates', {
         method: 'POST',
-        body: { post_ids: targetIds, scheduled_date: date, only_unscheduled: onlyEmpty }
+        body: { plan_id: PLAN_ID, month: MONTH, start_date: startDate, weekdays, only_unscheduled: onlyEmpty }
       });
       if (res.error) { await showAlert(res.error); return; }
-      toast(res.updated + ' post aggiornati con data ' + date);
+      toast(res.updated + ' post distribuiti su ' + weekdays.length + ' giorni settimanali');
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
