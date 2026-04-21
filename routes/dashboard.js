@@ -167,10 +167,20 @@ router.get('/clients/:id/plan/:planId/month/:month', (req, res) => {
   const previewStmt = db.prepare(`
     SELECT url FROM post_media WHERE post_id = ? AND kind = 'image' ORDER BY position ASC LIMIT 1
   `);
+  // Ultimo commento del cliente per post con change_requested / rejected (per visualizzazione nella card)
+  const lastClientCommentStmt = db.prepare(`
+    SELECT text, created_at FROM post_comments
+    WHERE post_id = ? AND author = 'client'
+    ORDER BY created_at DESC LIMIT 1
+  `);
   for (const p of posts) {
     if (!p.image_url) {
       const row = previewStmt.get(p.id);
       if (row) p.image_url = row.url;
+    }
+    if (p.approval_status === 'change_requested' || p.approval_status === 'rejected') {
+      const c = lastClientCommentStmt.get(p.id);
+      if (c) { p.last_client_comment = c.text; p.last_client_comment_at = c.created_at; }
     }
   }
 

@@ -36,6 +36,21 @@
   .post-card.drop-after  { box-shadow: 4px 0 0 0 var(--blue); }
   .drag-hint { font-size:11px; color:var(--gray-400); font-weight:400; margin-left:8px; }
 
+  /* Marcatori approvazione cliente (Giuseppe Di Rosa ecc.) */
+  .cal-post.ap-change_requested, #view-list .post-card.ap-change_requested { box-shadow: inset 4px 0 0 #d97706; background:#fffbeb; }
+  .cal-post.ap-rejected, #view-list .post-card.ap-rejected { box-shadow: inset 4px 0 0 #dc2626; background:#fef2f2; }
+  .cal-post.ap-approved, #view-list .post-card.ap-approved { box-shadow: inset 4px 0 0 #16a34a; }
+  .ap-badge { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; margin-left:4px; vertical-align:middle; }
+  .ap-badge.ap-change_requested { background:#fef3c7; color:#92400e; }
+  .ap-badge.ap-rejected { background:#fee2e2; color:#991b1b; }
+  .ap-badge.ap-approved { background:#dcfce7; color:#14532d; }
+  .client-comment {
+    background:#fef3c7; border-left:3px solid #d97706; padding:6px 8px; margin:4px 0 0;
+    font-size:10.5px; color:#92400e; border-radius:0 4px 4px 0; font-style:italic; line-height:1.35;
+    max-height:60px; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+  }
+  .client-comment::before { content:'✏️ '; font-style:normal; }
+
   /* Card compatte nella vista lista (override del globale .post-card) */
   #view-list .posts-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:10px; }
   #view-list .post-card { border-radius:6px; }
@@ -142,6 +157,7 @@
     <span class="chip" data-filter="ready">Pronti <span class="count" id="cnt-ready"></span></span>
     <span class="chip" data-filter="published">Pubblicati <span class="count" id="cnt-published"></span></span>
     <span class="chip" data-filter="failed">Falliti <span class="count" id="cnt-failed"></span></span>
+    <span class="chip" data-filter="changes" style="border-color:#d97706;color:#92400e">✏️ Da rivedere (cliente) <span class="count" id="cnt-changes"></span></span>
   </div>
 
   <div id="view-cal"></div>
@@ -177,13 +193,18 @@
   }
 
   function matchesFilter(post) {
-    return activeFilter === 'all' || bucket(post.status) === activeFilter;
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'changes') return post.approval_status === 'change_requested' || post.approval_status === 'rejected';
+    return bucket(post.status) === activeFilter;
   }
 
   // Aggiorna i conteggi sulle chip
   function updateCounts() {
-    const counts = { all: POSTS.length, todo: 0, ready: 0, published: 0, failed: 0 };
-    POSTS.forEach(p => { counts[bucket(p.status)]++; });
+    const counts = { all: POSTS.length, todo: 0, ready: 0, published: 0, failed: 0, changes: 0 };
+    POSTS.forEach(p => {
+      counts[bucket(p.status)]++;
+      if (p.approval_status === 'change_requested' || p.approval_status === 'rejected') counts.changes++;
+    });
     Object.entries(counts).forEach(([k, v]) => {
       const el = document.getElementById('cnt-' + k);
       if (el) el.textContent = v ? '(' + v + ')' : '';
@@ -242,8 +263,10 @@
       html += '<div class="day">' + d.getDate() + '</div>';
       dayPosts.forEach(p => {
         const label = categoryName(p.category) + (p.scheduled_time ? ' · ' + p.scheduled_time.slice(0,5) : '');
-        const titleAttr = escapeHtml(p.sub_topic || p.status);
-        html += '<a href="/dashboard/posts/' + p.id + '" class="cal-post s-' + p.status + '" title="' + titleAttr + '">' + escapeHtml(label) + '</a>';
+        let titleAttr = p.sub_topic || p.status;
+        if (p.last_client_comment) titleAttr += '\n\n✏️ Cliente: ' + p.last_client_comment;
+        const apClass = p.approval_status ? ' ap-' + p.approval_status : '';
+        html += '<a href="/dashboard/posts/' + p.id + '" class="cal-post s-' + p.status + apClass + '" title="' + escapeHtml(titleAttr) + '">' + escapeHtml(label) + '</a>';
       });
       html += '</div>';
     }
@@ -308,13 +331,21 @@
         const titleHtml = p.category
           ? '<span class="cat-code" title="Codice categoria">' + escapeHtml(p.category) + '</span>' + escapeHtml(catName)
           : 'Post';
-        html += '<div class="post-card" draggable="true" data-post-id="' + p.id + '" style="position:relative">';
+        const apClass = p.approval_status ? ' ap-' + p.approval_status : '';
+        const apBadge = p.approval_status && p.approval_status !== 'pending'
+          ? '<span class="ap-badge ap-' + p.approval_status + '" title="Stato approvazione cliente">' + ({ approved:'✓ OK', change_requested:'✏ mod.', rejected:'✗ NO' }[p.approval_status] || p.approval_status) + '</span>'
+          : '';
+        const commentHtml = p.last_client_comment
+          ? '<div class="client-comment" title="' + escapeHtml(p.last_client_comment) + '">' + escapeHtml(p.last_client_comment) + '</div>'
+          : '';
+        html += '<div class="post-card' + apClass + '" draggable="true" data-post-id="' + p.id + '" style="position:relative">';
         html += '<button onclick="deletePost(\'' + p.id + '\', event)" title="Elimina post" style="position:absolute;top:4px;right:4px;z-index:2;width:20px;height:20px;background:rgba(255,255,255,.92);border:1px solid var(--gray-200);border-radius:3px;cursor:pointer;color:var(--red);font-weight:600;line-height:1;font-size:12px;padding:0">\u00d7</button>';
         html += '<a href="/dashboard/posts/' + p.id + '" style="text-decoration:none;color:inherit;display:block">';
         html += '<div class="post-card-image">' + (p.image_url ? '<img src="' + escapeHtml(p.image_url) + '" alt="">' : '<span style="font-size:10px;color:var(--gray-400)">Nessuna immagine</span>') + '</div>';
-        html += '<div class="post-card-body"><h4 title="' + escapeHtml(catName) + '">' + titleHtml + '</h4>';
+        html += '<div class="post-card-body"><h4 title="' + escapeHtml(catName) + '">' + titleHtml + apBadge + '</h4>';
         html += '<p>' + escapeHtml(p.sub_topic || (p.caption ? p.caption.substring(0,80) + '...' : 'Nessun contenuto')) + '</p>';
         html += schedLine;
+        html += commentHtml;
         html += '<div class="post-card-footer"><span class="badge badge-' + p.status + '">' + p.status + '</span>';
         html += '<span style="font-size:10px;color:var(--gray-500)">' + typeBadge + '</span></div></div></a></div>';
       });
