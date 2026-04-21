@@ -141,6 +141,8 @@
           <option value="12">12 mesi</option>
         </select>
         <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Piano con AI</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-plan-file').click()" title="Carica un piano editoriale preparato offline (JSON)">&uarr; Importa JSON</button>
+        <input type="file" id="import-plan-file" accept="application/json,.json" style="display:none" onchange="importPlanFromFile(event)">
       </div>
     </div>
     <% if (plans.length === 0) { %>
@@ -803,6 +805,36 @@
     const res = await apiFetch('/dashboard/api/questionnaires/' + id);
     document.getElementById('responses-content').textContent = JSON.stringify(res.responses || {}, null, 2);
     openModal('responses-modal');
+  }
+
+  // Import plan editoriale da file JSON (prepared offline)
+  async function importPlanFromFile(ev) {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    ev.target.value = ''; // reset input così puoi riuploadare lo stesso file dopo
+
+    let planData;
+    try {
+      const text = await file.text();
+      planData = JSON.parse(text);
+    } catch (err) {
+      await showAlert('Il file non è un JSON valido: ' + err.message);
+      return;
+    }
+
+    if (!await showConfirm('Importare questo piano editoriale? Verrà creato un nuovo piano in stato draft con i post ricostruiti dal JSON.')) return;
+
+    try {
+      const res = await apiFetch('/dashboard/api/plans/import', {
+        method: 'POST',
+        body: { client_id: CLIENT_ID, plan_data: planData, title: planData.title }
+      });
+      if (res.error) { await showAlert('Errore: ' + res.error); return; }
+      toast('Piano importato (' + (res.posts_created || 0) + ' post creati)');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
   }
 
   // Generate plan

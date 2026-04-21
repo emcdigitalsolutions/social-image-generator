@@ -40,8 +40,53 @@ function rebuildDraftPostsFromPlanData(db, clientId, planId, planData) {
   return created;
 }
 
+// Valida shape minima del plan_data JSON (usato da /import)
+function validatePlanData(pd) {
+  if (!pd || typeof pd !== 'object') return 'plan_data deve essere un oggetto JSON';
+  if (!Array.isArray(pd.months) || pd.months.length === 0) return 'plan_data.months deve essere un array non vuoto';
+  if (pd.categories && !Array.isArray(pd.categories)) return 'plan_data.categories deve essere un array (opzionale)';
+  for (const m of pd.months) {
+    if (typeof m.month_number !== 'number') return 'ogni month deve avere month_number numerico';
+    if (m.weeks && !Array.isArray(m.weeks)) return `month ${m.month_number}: weeks deve essere un array`;
+    for (const w of (m.weeks || [])) {
+      if (typeof w.week_number !== 'number') return `month ${m.month_number}: week senza week_number`;
+      if (w.posts && !Array.isArray(w.posts)) return `month ${m.month_number} week ${w.week_number}: posts deve essere un array`;
+    }
+  }
+  return null;
+}
+
 const router = express.Router();
 router.use(authMiddleware);
+
+// Importa un piano editoriale da JSON preparato offline (es. tramite Claude Code).
+// Accetta body { client_id, plan_data, title? }. Crea plan + draft post (stessa
+// logica di /generate ma senza chiamata AI).
+router.post('/import', (req, res) => {
+  const db = getDb();
+  const { client_id, plan_data, title } = req.body;
+
+  if (!client_id) return res.status(400).json({ error: 'client_id richiesto' });
+  const client = db.prepare('SELECT id, display_name FROM clients WHERE id = ?').get(client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const err = validatePlanData(plan_data);
+  if (err) return res.status(400).json({ error: 'plan_data non valido: ' + err });
+
+  const id = uuidv4();
+  const planTitle = title || plan_data.title || `Piano Editoriale - ${client.display_name}`;
+
+  db.prepare(`
+    INSERT INTO editorial_plans (id, client_id, title, status, plan_data, ai_raw)
+    VALUES (?, ?, ?, 'draft', ?, NULL)
+  `).run(id, client_id, planTitle, JSON.stringify(plan_data));
+
+  const postsCreated = rebuildDraftPostsFromPlanData(db, client_id, id, plan_data);
+
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(id);
+  if (plan.plan_data) plan.plan_data = JSON.parse(plan.plan_data);
+  res.status(201).json({ plan, posts_created: postsCreated });
+});
 
 // Generate plan from questionnaire
 router.post('/generate', async (req, res) => {
