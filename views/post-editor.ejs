@@ -151,6 +151,13 @@
     min-height:300px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif;
   }
+  .pv-ratio-warn {
+    background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; border-left: 4px solid #dc2626;
+    padding: 8px 12px; border-radius: 6px; font-size: 12px; line-height: 1.45;
+    margin-bottom: 10px;
+  }
+  .pv-ratio-warn strong { color: #7f1d1d; }
+
   .pv-card {
     background:white; border-radius:10px; overflow:hidden;
     max-width:470px; margin:0 auto;
@@ -421,7 +428,7 @@
     </div>
 
     <div class="card" style="margin-bottom:16px">
-      <div class="card-header"><h3>\u{1F441}\ufe0f Anteprima</h3></div>
+      <div class="card-header"><h3>👁️ Anteprima</h3></div>
       <div class="preview-tabs">
         <button type="button" class="preview-tab active" data-pv="ig" onclick="setPreviewPlatform('ig')">Instagram</button>
         <button type="button" class="preview-tab" data-pv="fb" onclick="setPreviewPlatform('fb')">Facebook</button>
@@ -1274,7 +1281,19 @@
       truncatedHtml = formatCaptionHtml(short) + '<span class="pv-more"> ... altro</span>';
     }
 
-    root.innerHTML =
+    // Warning aspect ratio: se la prima immagine è fuori range IG, avvisa in cima
+    let ratioWarn = '';
+    const firstImg = MEDIA.find(m => m.kind === 'image' && m.width && m.height);
+    if (firstImg) {
+      const r = firstImg.width / firstImg.height;
+      if (r < 0.8 || r > 1.91) {
+        ratioWarn = '<div class="pv-ratio-warn">⚠️ Immagine fuori range Instagram: proporzioni <strong>'
+          + r.toFixed(2) + ':1</strong> (' + firstImg.width + '×' + firstImg.height + '). '
+          + 'IG rifiuterà al publish. <strong>Click sulla thumb nel riquadro Media → ritaglia a 1:1 o 4:5.</strong></div>';
+      }
+    }
+
+    root.innerHTML = ratioWarn +
       '<div class="pv-card pv-ig">'
       + '<div class="pv-header">' + av
       +   '<div><div class="pv-name" style="font-size:13px">' + escapeHtml((CLIENT_BRAND.name || '').toLowerCase().replace(/\s+/g, '')) + '</div></div>'
