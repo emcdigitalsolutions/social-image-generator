@@ -22,11 +22,20 @@
   }
   .topbar {
     background: white; border-bottom: 1px solid var(--border);
-    padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
     position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 1px 8px rgba(15, 30, 74, 0.04);
   }
-  .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; }
-  .topbar .meta { font-size: 13px; color: var(--text-soft); }
+  .topbar-brand { display:flex; align-items:center; gap:14px; }
+  .topbar-brand .tb-mark { width:40px; height:40px; flex:none; }
+  .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing:-0.3px; }
+  .topbar .meta { font-size: 13px; color: var(--text-soft); margin-top:2px; }
+  .powered-by {
+    text-align:center; font-size:11px; color:var(--text-muted); padding:18px 12px 24px;
+    border-top: 1px solid var(--border-soft); margin-top:32px;
+  }
+  .powered-by a { color: var(--blue); text-decoration:none; font-weight:500; }
+  .powered-by a:hover { text-decoration:underline; }
   .topbar .progress {
     display: flex; align-items: center; gap: 10px; font-size: 13px;
   }
@@ -173,9 +182,22 @@
 <body>
 
 <div class="topbar">
-  <div>
-    <h1><%= client.display_name %></h1>
-    <div class="meta">Piano editoriale &middot; Mese <%= approval.month_number %></div>
+  <div class="topbar-brand">
+    <svg class="tb-mark" viewBox="0 0 100 100" aria-hidden="true">
+      <defs>
+        <linearGradient id="tb-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#2563eb"/>
+          <stop offset="1" stop-color="#7c3aed"/>
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="20" fill="url(#tb-grad)"/>
+      <path d="M28 28 L48 50 L28 72 M40 28 L60 50 L40 72 M52 28 L72 50 L52 72"
+            stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    <div>
+      <h1><%= client.display_name %></h1>
+      <div class="meta">Piano editoriale &middot; Mese <%= approval.month_number %></div>
+    </div>
   </div>
   <div class="progress">
     <span id="prog-label">Caricamento...</span>
@@ -198,6 +220,10 @@
 <div class="footer-cta">
   <div class="label" id="footer-label">Caricamento...</div>
   <button class="btn-approve-all" id="approve-all-btn" onclick="approveAll()" disabled>&#10003; Approva tutti i restanti</button>
+</div>
+
+<div class="powered-by">
+  Piattaforma di approvazione contenuti — <a href="https://www.emcdigitalsolutions.it" target="_blank" rel="noopener">EMC Digital Solutions</a>
 </div>
 
 <div id="toast" class="toast"></div>
