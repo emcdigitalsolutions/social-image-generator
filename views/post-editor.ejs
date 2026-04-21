@@ -289,6 +289,16 @@
       <div id="media-grid" class="media-grid"></div>
     </div>
 
+    <% if (post.status === 'published') { %>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <h3>\u{1F4CA} Insights</h3>
+        <button class="btn btn-sm btn-secondary" onclick="refreshInsights()" id="refresh-insights-btn" title="Forza il recupero delle metriche Meta pi\u00f9 recenti">\u21bb Aggiorna</button>
+      </div>
+      <div id="insights-container" style="font-size:13px;color:var(--gray-600)">Caricamento...</div>
+    </div>
+    <% } %>
+
     <div class="card">
       <div class="card-header"><h3>Pubblicazione</h3></div>
       <% if (post.status === 'published') { %>
@@ -896,6 +906,73 @@
       btn.disabled = false;
       btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera da template';
     }
+  }
+
+  // ── Insights ──
+  function renderInsights(insights) {
+    const c = document.getElementById('insights-container');
+    if (!c) return;
+    if (!insights || !insights.length) {
+      c.innerHTML = '<em style="color:var(--gray-500)">Nessun insight disponibile ancora. Meta impiega 15-60 minuti dopo la pubblicazione. Click \u201cAggiorna\u201d per forzare il recupero.</em>';
+      return;
+    }
+    const platformLabel = { fb: '\u{1F4D8} Facebook', ig: '\u{1F4F7} Instagram' };
+    let html = '';
+    for (const ins of insights) {
+      const pct = v => v != null ? v.toLocaleString('it-IT') : '—';
+      const stat = (label, val) => val != null
+        ? '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--gray-200)"><span>' + label + '</span><strong>' + pct(val) + '</strong></div>'
+        : '';
+      html += '<div style="margin-bottom:12px;padding:10px;border:1px solid var(--gray-200);border-radius:6px;background:var(--gray-50)">';
+      html += '<div style="font-weight:600;margin-bottom:6px">' + (platformLabel[ins.platform] || ins.platform) + '</div>';
+      if (ins.error) {
+        html += '<div style="color:var(--red);font-size:12px">Errore Meta: ' + escapeHtml(ins.error) + '</div>';
+      } else {
+        html += stat('\u{1F441}\ufe0f Impressioni', ins.impressions);
+        html += stat('\u{1F3AF} Reach (unici)', ins.reach);
+        html += stat('\u{1F44D} Like / Reaction', ins.likes);
+        html += stat('\u{1F4AC} Commenti', ins.comments);
+        html += stat('\u{1F501} Condivisioni', ins.shares);
+        html += stat('\u{1F516} Salvati', ins.saves);
+        html += stat('\u{1F446} Click', ins.clicks);
+        html += stat('\u{1F3AC} Video views', ins.video_views);
+        html += stat('\u{1F4AA} Engagement totale', ins.engagement);
+      }
+      const ago = ins.fetched_at ? new Date(ins.fetched_at.replace(' ', 'T') + 'Z').toLocaleString('it-IT') : '';
+      html += '<div style="font-size:10px;color:var(--gray-400);margin-top:6px;text-align:right">Aggiornato: ' + ago + '</div>';
+      html += '</div>';
+    }
+    c.innerHTML = html;
+  }
+
+  async function loadInsights(refresh = false) {
+    const c = document.getElementById('insights-container');
+    if (!c) return;
+    const url = '/dashboard/api/posts/' + POST_ID + '/insights' + (refresh ? '?refresh=1' : '');
+    try {
+      if (refresh) c.innerHTML = '<em>Recupero metriche da Meta in corso...</em>';
+      const res = await apiFetch(url);
+      if (res.error) { c.innerHTML = '<div style="color:var(--red)">Errore: ' + escapeHtml(res.error) + '</div>'; return; }
+      if (res.note) { c.innerHTML = '<em style="color:var(--gray-500)">' + escapeHtml(res.note) + '</em>'; return; }
+      renderInsights(res.insights);
+    } catch (err) {
+      c.innerHTML = '<div style="color:var(--red)">Errore: ' + escapeHtml(err.message) + '</div>';
+    }
+  }
+
+  async function refreshInsights() {
+    const btn = document.getElementById('refresh-insights-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '...'; }
+    await loadInsights(true);
+    if (btn) { btn.disabled = false; btn.textContent = '\u21bb Aggiorna'; }
+  }
+
+  // Auto-load on page open se post published
+  if (POST.status === 'published' && typeof apiFetch === 'function') {
+    loadInsights(false);
+  } else if (POST.status === 'published') {
+    // Ritardo se apiFetch non ancora pronto (layout-end non caricato)
+    setTimeout(() => { if (typeof apiFetch === 'function') loadInsights(false); }, 100);
   }
 
   async function publishPost() {

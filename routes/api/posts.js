@@ -6,8 +6,9 @@ const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { generateCaption } = require('../../lib/ai-provider');
-const { publishPost } = require('../../lib/meta-publish');
+const { publishPost, getPageToken } = require('../../lib/meta-publish');
 const { notifyPublishFailed, notifyPublishPartial } = require('../../lib/notifier');
+const { snapshotPostInsights, getLatestInsights } = require('../../lib/insights');
 const { renderImage } = require('../../lib/renderer');
 const postMedia = require('../../lib/post-media');
 
@@ -556,6 +557,30 @@ router.post('/bulk-time', (req, res) => {
   }
   const result = db.prepare(sql).run(...params);
   res.json({ updated: result.changes });
+});
+
+// Insights di un post (ultimo snapshot, o refresh forzato via ?refresh=1)
+router.get('/:id/insights', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  if (post.status !== 'published') return res.json({ insights: [], note: 'Post non ancora pubblicato' });
+
+  const refresh = req.query.refresh === '1';
+  if (refresh) {
+    const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+    if (!client || !client.fb_system_user_token || !client.fb_page_id) {
+      return res.status(400).json({ error: 'Credenziali Meta del cliente mancanti' });
+    }
+    try {
+      const pageToken = await getPageToken(client.fb_system_user_token, client.fb_page_id);
+      await snapshotPostInsights(pageToken, post);
+    } catch (err) {
+      return res.status(500).json({ error: 'Refresh insights fallito', details: err.message });
+    }
+  }
+
+  res.json({ insights: getLatestInsights(post.id) });
 });
 
 // Crea un nuovo post manualmente (es. aggiungere un post extra in una settimana)
