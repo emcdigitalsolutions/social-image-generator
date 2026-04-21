@@ -35,6 +35,7 @@ router.use(authMiddleware);
 
 const ALLOWED_KEYS = [
   'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_notify_to',
+  'google_script_url',
   'anthropic_api_key', 'gemini_api_key',
   'base_url'
 ];
@@ -123,6 +124,51 @@ router.post('/test-smtp', async (req, res) => {
     else if (err.code === 'ETIMEDOUT' || err.code === 'ECONNECTION') hint = ` — Connessione fallita verso ${smtpConfig.host}:${smtpConfig.port}. Verifica host/porta e che il firewall del server permetta la connessione in uscita.`;
     else if (err.code === 'ESOCKET' || (err.message || '').includes('self signed')) hint = ' — Problema TLS. Se il server SMTP usa un certificato self-signed contatta il supporto.';
     res.status(500).json({ error: 'Errore invio email: ' + code + err.message + hint });
+  }
+});
+
+// POST - invia email di test tramite Google Apps Script (bypassa SMTP)
+router.post('/test-google-script', async (req, res) => {
+  const url = settings.getGoogleScriptUrl();
+  if (!url) return res.status(400).json({ error: 'URL Google Apps Script non configurato. Incolla il webhook dello script nel campo apposito e salva prima di testare.' });
+  try {
+    const https = require('https');
+    const { URL } = require('url');
+    const u = new URL(url);
+    const smtpConfig = settings.getSmtpConfig();
+    const payload = JSON.stringify({
+      site: 'social-image-generator',
+      name: 'Social Image Generator - Test',
+      email: smtpConfig.user || 'noreply@example.com',
+      phone: '',
+      message: '[TEST] Questa è una email di test dalla dashboard SIG. Se la ricevi, Google Apps Script è configurato correttamente.',
+      subject: 'SIG - Test Google Script'
+    });
+    const result = await new Promise((resolve, reject) => {
+      const req2 = https.request({
+        hostname: u.hostname, path: u.pathname + u.search, method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
+      }, (r) => {
+        let data = ''; r.on('data', c => data += c);
+        r.on('end', () => {
+          if (r.statusCode === 302 && r.headers.location) {
+            https.get(r.headers.location, (r2) => {
+              let d2 = ''; r2.on('data', c => d2 += c);
+              r2.on('end', () => resolve({ status: r2.statusCode, body: d2 }));
+            }).on('error', reject);
+          } else if (r.statusCode >= 200 && r.statusCode < 400) resolve({ status: r.statusCode, body: data });
+          else reject(new Error(`HTTP ${r.statusCode}: ${data.slice(0, 200)}`));
+        });
+      });
+      req2.on('error', reject);
+      req2.setTimeout(10000, () => req2.destroy(new Error('Timeout verso Google Script')));
+      req2.write(payload);
+      req2.end();
+    });
+    res.json({ message: `Richiesta inviata a Google Script (HTTP ${result.status}). Controlla la tua email.` });
+  } catch (err) {
+    console.error('[Settings test-google-script]', err.message);
+    res.status(500).json({ error: 'Errore invio via Google Script: ' + err.message });
   }
 });
 

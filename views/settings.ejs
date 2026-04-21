@@ -78,9 +78,22 @@
       <label>Email destinatario notifiche</label>
       <input type="email" id="setSmtpNotifyTo" placeholder="Es. admin@esempio.it (lasciare vuoto per usare lo username)">
     </div>
-    <div style="display:flex; gap:8px;">
+
+    <hr style="margin:20px 0; border:0; border-top:1px dashed var(--gray-200)">
+    <h4 style="margin:0 0 6px; font-size:14px">Canale alternativo — Google Apps Script</h4>
+    <p style="font-size:12px; color:var(--gray-500); margin-bottom:10px;">
+      Se il server non riesce a connettersi a un SMTP (es. Hetzner blocca outbound SMTP), puoi inviare le notifiche tramite un webhook Google Apps Script che usa MailApp via HTTPS:443.
+      Se questo campo è compilato ha <strong>priorità</strong> su SMTP. Formato: <code>https://script.google.com/macros/s/…/exec</code>.
+    </p>
+    <div class="form-group">
+      <label>Google Apps Script URL</label>
+      <input type="url" id="setGoogleScriptUrl" placeholder="https://script.google.com/macros/s/…/exec">
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap">
       <button type="submit" class="btn btn-primary">Salva</button>
-      <button type="button" class="btn btn-secondary" onclick="testSmtp()">Invia Email di Test</button>
+      <button type="button" class="btn btn-secondary" onclick="testSmtp()">Invia Email di Test (SMTP)</button>
+      <button type="button" class="btn btn-secondary" onclick="testGoogleScript()">Test Google Script</button>
     </div>
   </form>
 </div>
@@ -99,6 +112,7 @@ async function loadSettings() {
     document.getElementById('setSmtpUser').value = s.smtp_user || '';
     document.getElementById('setSmtpPass').value = s.smtp_pass || '';
     document.getElementById('setSmtpNotifyTo').value = s.smtp_notify_to || '';
+    document.getElementById('setGoogleScriptUrl').value = s.google_script_url || '';
     document.getElementById('setAnthropicKey').value = s.anthropic_api_key || '';
     document.getElementById('setGeminiKey').value = s.gemini_api_key || '';
     document.getElementById('setBaseUrl').value = s.base_url || '';
@@ -155,7 +169,8 @@ async function saveSmtp(e) {
         smtp_port: document.getElementById('setSmtpPort').value,
         smtp_user: document.getElementById('setSmtpUser').value,
         smtp_pass: document.getElementById('setSmtpPass').value,
-        smtp_notify_to: document.getElementById('setSmtpNotifyTo').value
+        smtp_notify_to: document.getElementById('setSmtpNotifyTo').value,
+        google_script_url: document.getElementById('setGoogleScriptUrl').value
       }})
     });
     const data = await res.json();
@@ -188,6 +203,27 @@ async function testSmtp() {
       throw new Error(data.error || text.slice(0, 200) || ('HTTP ' + res.status));
     }
     setBanner('smtpAlert', 'success', data.message || 'Email inviata.');
+  } catch (err) {
+    setBanner('smtpAlert','error', 'Errore: ' + err.message);
+  }
+}
+
+async function testGoogleScript() {
+  try {
+    setBanner('smtpAlert','info', 'Invio via Google Script in corso...');
+    const res = await fetch('/dashboard/api/settings/test-google-script', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    const ct = res.headers.get('content-type') || '';
+    const text = await res.text();
+    let data = {};
+    if (ct.includes('application/json')) { try { data = JSON.parse(text); } catch (_) {} }
+    if (!res.ok) {
+      if (res.status === 502 || res.status === 504) throw new Error('Proxy timeout (HTTP ' + res.status + ').');
+      throw new Error(data.error || text.slice(0, 200) || ('HTTP ' + res.status));
+    }
+    setBanner('smtpAlert','success', data.message || 'Richiesta inviata.');
   } catch (err) {
     setBanner('smtpAlert','error', 'Errore: ' + err.message);
   }
