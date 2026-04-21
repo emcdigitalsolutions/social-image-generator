@@ -482,7 +482,14 @@ router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), (req, res) =
     }
 
     const stat = fs.statSync(dest);
-    db.prepare(`UPDATE post_media SET bytes = ?, created_at = datetime('now') WHERE id = ?`).run(stat.size, m.id);
+    // Rileggi dimensioni aggiornate (width/height/ratio cambiano dopo il crop!)
+    let w = null, h = null;
+    try {
+      const imageSize = require('image-size');
+      const dim = imageSize(dest);
+      if (dim && dim.width && dim.height) { w = dim.width; h = dim.height; }
+    } catch (e) { console.warn('[crop] image-size failed:', e.message); }
+    db.prepare(`UPDATE post_media SET bytes = ?, width = ?, height = ?, created_at = datetime('now') WHERE id = ?`).run(stat.size, w, h, m.id);
 
     // cache-bust: il client aggiungerà ?v=<updated_at>
     const updated = postMedia.getMedia(m.id);

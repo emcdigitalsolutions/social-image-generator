@@ -39,10 +39,15 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Static files — serve generated images
+// Static files — serve generated images.
+// NB: NO immutable qui. I file di post_media vengono sovrascritti dal crop-tool,
+// con immutable Meta/CDN li mettono in cache alla prima versione e non rileggono
+// mai la modifica → IG rifiuta al publish pensando che le proporzioni siano ancora
+// quelle originali. Cache breve + ETag basato su mtime permette di rileggere.
 app.use('/images', express.static(path.join(__dirname, 'public', 'images'), {
-  maxAge: '7d',
-  immutable: true,
+  maxAge: '1h',
+  etag: true,
+  lastModified: true
 }));
 
 // Static files — dashboard assets (CSS/JS only)
