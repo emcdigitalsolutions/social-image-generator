@@ -40,10 +40,44 @@ router.get('/by-plan/:planId/month/:month', (req, res) => {
   const posts = db.prepare(`
     SELECT * FROM posts
     WHERE editorial_plan_id = ? AND month_number = ?
-    ORDER BY week_number, scheduled_date
+    ORDER BY week_number ASC, position ASC, scheduled_date ASC, created_at ASC
   `).all(req.params.planId, parseInt(req.params.month));
   posts.forEach(p => { if (p.image_data) p.image_data = JSON.parse(p.image_data); });
   res.json(posts);
+});
+
+// Bulk reorder: aggiorna week_number + position per più post in una sola transazione.
+// Body: { items: [{ id, week_number, position }, ...] }
+// Tutti i post devono appartenere allo stesso editorial_plan_id (verifica di coerenza).
+router.post('/bulk-reorder', (req, res) => {
+  const db = getDb();
+  const items = Array.isArray(req.body.items) ? req.body.items : null;
+  if (!items || !items.length) return res.status(400).json({ error: 'items richiesto' });
+
+  // Verifica struttura items
+  for (const it of items) {
+    if (!it.id || typeof it.id !== 'string') return res.status(400).json({ error: 'item.id richiesto (string)' });
+    const wn = parseInt(it.week_number, 10);
+    const pos = parseInt(it.position, 10);
+    if (!Number.isInteger(wn) || wn < 1 || wn > 5) return res.status(400).json({ error: 'item.week_number deve essere 1-5' });
+    if (!Number.isInteger(pos) || pos < 0) return res.status(400).json({ error: 'item.position deve essere >= 0' });
+  }
+
+  // Verifica che tutti i post esistano e siano dello stesso plan
+  const ids = items.map(i => i.id);
+  const placeholders = ids.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT id, editorial_plan_id FROM posts WHERE id IN (${placeholders})`).all(...ids);
+  if (rows.length !== ids.length) return res.status(404).json({ error: 'Uno o più post non trovati' });
+  const planIds = new Set(rows.map(r => r.editorial_plan_id));
+  if (planIds.size !== 1) return res.status(400).json({ error: 'Tutti gli item devono appartenere allo stesso piano' });
+
+  const upd = db.prepare(`UPDATE posts SET week_number = ?, position = ?, updated_at = datetime('now') WHERE id = ?`);
+  const tx = db.transaction((list) => {
+    for (const it of list) upd.run(parseInt(it.week_number, 10), parseInt(it.position, 10), it.id);
+  });
+  tx(items);
+
+  res.json({ updated: items.length });
 });
 
 // Get single post
