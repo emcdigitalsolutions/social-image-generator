@@ -69,14 +69,18 @@ router.post('/test-smtp', async (req, res) => {
 
     const recipient = smtpConfig.notify_to || smtpConfig.user;
 
+    const isSsl = smtpConfig.port === 465;
     const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
       port: smtpConfig.port,
-      secure: smtpConfig.port === 465,
-      auth: {
-        user: smtpConfig.user,
-        pass: smtpConfig.pass
-      }
+      secure: isSsl,
+      // 587 = STARTTLS obbligatorio (senza, Aruba rifiuta AUTH in chiaro)
+      requireTLS: !isSsl,
+      auth: { user: smtpConfig.user, pass: smtpConfig.pass },
+      // Timeout corti per evitare hang infinito del pannello UI
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
     });
 
     await transporter.sendMail({
