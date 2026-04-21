@@ -468,6 +468,7 @@
   const POST_ID    = '<%= post.id %>';
   const CLIENT_ID  = '<%= client.id %>';
   const POST       = <%- JSON.stringify(post) %>;
+  const HAS_IG     = <%= client.ig_user_id ? 'true' : 'false' %>;
   let   MEDIA      = <%- JSON.stringify(media || []) %>;
   let   MEDIA_TYPE = POST.media_type || 'single_image';
   const CLIENT_BRAND = {
@@ -1030,6 +1031,15 @@
     const hasLegacyImage = !!POST.image_url;
     if (!caption) { await showAlert('Serve una caption prima di segnare il post come pronto.'); return; }
     if (mediaCount === 0 && !hasLegacyImage) { await showAlert('Serve almeno un media (immagine o video) prima di segnare il post come pronto.'); return; }
+    // Validazione aspect ratio Instagram (solo se cliente ha IG configurato, assunto se HAS_IG è true)
+    if (typeof HAS_IG !== 'undefined' && HAS_IG && typeof MEDIA !== 'undefined') {
+      const badImage = (MEDIA || []).find(m => m.kind === 'image' && m.width && m.height && (m.width / m.height < 0.8 || m.width / m.height > 1.91));
+      if (badImage) {
+        const r = (badImage.width / badImage.height).toFixed(2);
+        await showAlert(`L'immagine ha proporzioni ${r}:1 (${badImage.width}×${badImage.height}), fuori dal range accettato da Instagram (0.8-1.91). Croppa a 1:1 (quadrato) cliccando sulla thumbnail, poi riprova.`);
+        return;
+      }
+    }
     if (!POST.scheduled_date) {
       if (!await showConfirm('Il post non ha una scheduled_date impostata: non verrà pubblicato automaticamente finché non gliela imposti. Vuoi comunque segnarlo come pronto?')) return;
     }

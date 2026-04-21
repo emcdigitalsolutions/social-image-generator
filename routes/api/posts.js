@@ -667,18 +667,29 @@ router.post('/bulk-distribute-dates', (req, res) => {
   res.json({ updated, total: posts.length });
 });
 
-// Segna in stato 'ready' tutti i post indicati che soddisfano le pre-condizioni
-// (caption non vuota + almeno un media OR image_url legacy). I post che non passano
-// vengono ritornati nel summary con il motivo — l'admin può sistemarli manualmente.
-// Body: { post_ids: [...], force?: boolean } — force salta la validazione caption/media.
+// Segna in stato 'ready' tutti i post indicati che soddisfano le pre-condizioni:
+//   - caption non vuota
+//   - almeno un media (post_media OR image_url legacy)
+//   - se il cliente ha IG configurato: TUTTE le immagini devono avere aspect ratio
+//     nel range [0.8, 1.91] (verticale 4:5 → orizzontale 1.91:1), altrimenti IG
+//     rifiuta al publish con "Proporzioni non valide"
+// I post che non passano vengono ritornati nel summary con il motivo.
+// Body: { post_ids: [...], force?: boolean } — force salta TUTTE le validazioni.
 router.post('/bulk-ready', (req, res) => {
   const db = getDb();
   const { post_ids, force } = req.body;
   if (!Array.isArray(post_ids) || !post_ids.length) return res.status(400).json({ error: 'post_ids richiesti' });
 
   const placeholders = post_ids.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT id, caption, image_url, status FROM posts WHERE id IN (${placeholders})`).all(...post_ids);
-  const mediaCount = db.prepare(`SELECT COUNT(*) AS n FROM post_media WHERE post_id = ?`);
+  const rows = db.prepare(`
+    SELECT p.id, p.caption, p.image_url, p.status, p.client_id, c.ig_user_id
+    FROM posts p LEFT JOIN clients c ON c.id = p.client_id
+    WHERE p.id IN (${placeholders})
+  `).all(...post_ids);
+  const mediaStmt = db.prepare(`
+    SELECT id, kind, width, height FROM post_media WHERE post_id = ? ORDER BY position ASC
+  `);
+  const IG_MIN_RATIO = 0.8, IG_MAX_RATIO = 1.91;
 
   const updated = [], skipped = [];
   const upd = db.prepare("UPDATE posts SET status = 'ready', updated_at = datetime('now') WHERE id = ?");
@@ -690,9 +701,23 @@ router.post('/bulk-ready', (req, res) => {
       }
       if (!force) {
         const hasCaption = p.caption && p.caption.trim();
-        const hasMedia = !!p.image_url || mediaCount.get(p.id).n > 0;
+        const mediaList = mediaStmt.all(p.id);
+        const hasMedia = !!p.image_url || mediaList.length > 0;
         if (!hasCaption) { skipped.push({ id: p.id, reason: 'caption mancante' }); continue; }
         if (!hasMedia)   { skipped.push({ id: p.id, reason: 'nessun media' }); continue; }
+        // Validazione aspect ratio Instagram: solo se il cliente ha IG configurato
+        if (p.ig_user_id) {
+          const badImage = mediaList.find(m => {
+            if (m.kind !== 'image' || !m.width || !m.height) return false;
+            const r = m.width / m.height;
+            return r < IG_MIN_RATIO || r > IG_MAX_RATIO;
+          });
+          if (badImage) {
+            const r = (badImage.width / badImage.height).toFixed(2);
+            skipped.push({ id: p.id, reason: `proporzioni ${r}:1 (${badImage.width}x${badImage.height}) fuori range IG — croppa a 1:1 o 4:5` });
+            continue;
+          }
+        }
       }
       upd.run(p.id);
       updated.push(p.id);
