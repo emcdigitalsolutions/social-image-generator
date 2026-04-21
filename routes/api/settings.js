@@ -59,13 +59,13 @@ router.put('/', (req, res) => {
 
 // POST - invia email di test
 router.post('/test-smtp', async (req, res) => {
+  // Scoped fuori dal try così il catch può leggere host/port per il messaggio di errore.
+  const nodemailer = require('nodemailer');
+  const smtpConfig = settings.getSmtpConfig();
+  if (!smtpConfig.host || !smtpConfig.user || !smtpConfig.pass) {
+    return res.status(400).json({ error: 'Configurazione SMTP incompleta. Salva host, user e password prima di testare.' });
+  }
   try {
-    const nodemailer = require('nodemailer');
-    const smtpConfig = settings.getSmtpConfig();
-
-    if (!smtpConfig.host || !smtpConfig.user || !smtpConfig.pass) {
-      return res.status(400).json({ error: 'Configurazione SMTP incompleta. Salva host, user e password prima di testare.' });
-    }
 
     const recipient = smtpConfig.notify_to || smtpConfig.user;
 
