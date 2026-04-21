@@ -157,7 +157,7 @@
     <span class="chip" data-filter="ready">Pronti <span class="count" id="cnt-ready"></span></span>
     <span class="chip" data-filter="published">Pubblicati <span class="count" id="cnt-published"></span></span>
     <span class="chip" data-filter="failed">Falliti <span class="count" id="cnt-failed"></span></span>
-    <span class="chip" data-filter="changes" style="border-color:#d97706;color:#92400e">✏️ Da rivedere (cliente) <span class="count" id="cnt-changes"></span></span>
+    <span class="chip" data-filter="changes" id="chip-changes" style="border-color:#d97706;color:#92400e;display:none">✏️ Da rivedere (cliente) <span class="count" id="cnt-changes"></span></span>
   </div>
 
   <div id="view-cal"></div>
@@ -209,6 +209,13 @@
       const el = document.getElementById('cnt-' + k);
       if (el) el.textContent = v ? '(' + v + ')' : '';
     });
+    // La chip "Da rivedere (cliente)" è inutile se non ci sono richieste: nascondila.
+    const chipChanges = document.getElementById('chip-changes');
+    if (chipChanges) {
+      chipChanges.style.display = counts.changes > 0 ? '' : 'none';
+      // Se l'utente era sul filtro 'changes' e ora è vuoto, torna a 'all'
+      if (counts.changes === 0 && activeFilter === 'changes') setFilter('all');
+    }
   }
 
   function setFilter(f) {
