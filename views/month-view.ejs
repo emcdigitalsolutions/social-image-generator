@@ -283,9 +283,14 @@
         const mt = p.media_type || 'single_image';
         const typeBadge = TYPE_LABEL[mt] || mt;
         let schedLine = '';
-        if (p.scheduled_date) {
-          const t = p.scheduled_time ? p.scheduled_time.slice(0,5) : '';
-          schedLine = '<p style="font-size:11px;color:var(--blue);margin:4px 0 6px;font-weight:500">\ud83d\udcc5 ' + escapeHtml(p.scheduled_date + (t ? ' \u00b7 ' + t : '')) + '</p>';
+        const t = p.scheduled_time ? p.scheduled_time.slice(0,5) : '';
+        if (p.scheduled_date && t) {
+          schedLine = '<p style="font-size:11px;color:var(--blue);margin:3px 0 4px;font-weight:500">\ud83d\udcc5 ' + escapeHtml(p.scheduled_date) + ' \u00b7 ' + escapeHtml(t) + '</p>';
+        } else if (p.scheduled_date) {
+          schedLine = '<p style="font-size:11px;color:var(--blue);margin:3px 0 4px;font-weight:500">\ud83d\udcc5 ' + escapeHtml(p.scheduled_date) + '</p>';
+        } else if (t) {
+          // Solo orario (es. cadenza settimanale del post, data non ancora fissata)
+          schedLine = '<p style="font-size:11px;color:var(--gray-500);margin:3px 0 4px;font-weight:500">\ud83d\udd52 ' + escapeHtml(t) + '</p>';
         }
         const catName = categoryName(p.category);
         const titleHtml = p.category
