@@ -89,8 +89,14 @@ router.post('/test-smtp', async (req, res) => {
 
     res.json({ message: `Email di test inviata a ${recipient}` });
   } catch (err) {
-    console.error('[Settings test-smtp]', err.message);
-    res.status(500).json({ error: 'Errore invio email: ' + err.message });
+    console.error('[Settings test-smtp]', err.code || '', err.message);
+    // Espone codice errore SMTP + suggerimento diagnostico così il bug è autodiagnostico.
+    const code = err.code ? `[${err.code}] ` : '';
+    let hint = '';
+    if (err.code === 'EAUTH') hint = ' — Credenziali rifiutate dal server. Verifica user/password (Gmail richiede una "App Password" se hai 2FA attivo).';
+    else if (err.code === 'ETIMEDOUT' || err.code === 'ECONNECTION') hint = ` — Connessione fallita verso ${smtpConfig.host}:${smtpConfig.port}. Verifica host/porta e che il firewall del server permetta la connessione in uscita.`;
+    else if (err.code === 'ESOCKET' || (err.message || '').includes('self signed')) hint = ' — Problema TLS. Se il server SMTP usa un certificato self-signed contatta il supporto.';
+    res.status(500).json({ error: 'Errore invio email: ' + code + err.message + hint });
   }
 });
 

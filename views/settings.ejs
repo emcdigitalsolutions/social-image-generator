@@ -103,7 +103,7 @@ async function loadSettings() {
     document.getElementById('setGeminiKey').value = s.gemini_api_key || '';
     document.getElementById('setBaseUrl').value = s.base_url || '';
   } catch (err) {
-    showAlert('smtpAlert', 'error', 'Errore nel caricamento: ' + err.message);
+    setBanner('smtpAlert','error', 'Errore nel caricamento: ' + err.message);
   }
 }
 
@@ -120,9 +120,9 @@ async function saveApi(e) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    showAlert('apiAlert', 'success', 'API keys salvate.');
+    setBanner('apiAlert', 'success', 'API keys salvate.');
   } catch (err) {
-    showAlert('apiAlert', 'error', 'Errore: ' + err.message);
+    setBanner('apiAlert', 'error', 'Errore: ' + err.message);
   }
 }
 
@@ -138,9 +138,9 @@ async function saveGen(e) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    showAlert('genAlert', 'success', 'Impostazioni generali salvate.');
+    setBanner('genAlert', 'success', 'Impostazioni generali salvate.');
   } catch (err) {
-    showAlert('genAlert', 'error', 'Errore: ' + err.message);
+    setBanner('genAlert', 'error', 'Errore: ' + err.message);
   }
 }
 
@@ -160,29 +160,33 @@ async function saveSmtp(e) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    showAlert('smtpAlert', 'success', 'Impostazioni salvate con successo.');
+    setBanner('smtpAlert','success', 'Impostazioni salvate con successo.');
   } catch (err) {
-    showAlert('smtpAlert', 'error', 'Errore: ' + err.message);
+    setBanner('smtpAlert','error', 'Errore: ' + err.message);
   }
 }
 
 async function testSmtp() {
   try {
-    showAlert('smtpAlert', 'info', 'Invio email di test in corso...');
+    setBanner('smtpAlert','info', 'Invio email di test in corso...');
     const res = await fetch('/dashboard/api/settings/test-smtp', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + getToken() }
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
-    showAlert('smtpAlert', 'success', data.message);
+    setBanner('smtpAlert', 'success', data.message);
   } catch (err) {
-    showAlert('smtpAlert', 'error', 'Errore: ' + err.message);
+    setBanner('smtpAlert','error', 'Errore: ' + err.message);
   }
 }
 
-function showAlert(elId, type, msg) {
+// NB: rinominata per evitare conflitto con la showAlert globale (modale) di dashboard.js
+// che accetta un solo argomento (message) e aprirebbe la modale mostrando il primo
+// argomento literale (es. "smtpAlert") invece del messaggio reale.
+function setBanner(elId, type, msg) {
   const el = document.getElementById(elId);
+  if (!el) return;
   const colors = {
     success: { bg: 'var(--green-light)', color: 'var(--green)' },
     error: { bg: 'var(--red-light)', color: 'var(--red)' },
