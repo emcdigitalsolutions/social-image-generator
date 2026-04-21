@@ -336,8 +336,15 @@
       </div>
       <div class="form-group">
         <textarea id="caption-text" rows="10" style="width:100%"><%= post.caption || '' %></textarea>
+        <p style="font-size:11px;color:var(--gray-500);margin-top:4px;line-height:1.5">
+          💡 <strong>Markdown supportato</strong> (FB e IG non lo fanno nativo, lo convertiamo in Unicode bold/italic):
+          <code>**grassetto**</code>, <code>*corsivo*</code>, <code># Titolo</code>, <code>- lista</code> → clicca <em>Converti markdown</em> per vedere il risultato nel textarea.
+        </p>
       </div>
-      <button class="btn btn-sm btn-primary" onclick="saveCaption()">Salva Caption</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-primary" onclick="saveCaption()">Salva Caption</button>
+        <button class="btn btn-sm btn-secondary" onclick="convertMarkdown()" title="Converte ** *asterischi* e # titoli e - liste nel testo della caption in caratteri Unicode che FB/Instagram mostrano come grassetto/corsivo nativi">✨ Converti markdown</button>
+      </div>
     </div>
 
     <div class="card" style="margin-bottom:16px">
@@ -1049,6 +1056,52 @@
       btn.disabled = false;
       btn.textContent = 'Genera Caption';
     }
+  }
+
+  // ─── Conversione markdown → Unicode bold/italic per FB/IG ───
+  // Stessa logica del backend lib/ai.js mdToSocialUnicode, replicata client-side
+  // per feedback immediato nel textarea.
+  function _toUnicodeBold(s) {
+    return s.replace(/[A-Za-z0-9]/g, c => {
+      const code = c.charCodeAt(0);
+      if (code >= 65 && code <= 90)  return String.fromCodePoint(0x1D5D4 + code - 65);
+      if (code >= 97 && code <= 122) return String.fromCodePoint(0x1D5EE + code - 97);
+      if (code >= 48 && code <= 57)  return String.fromCodePoint(0x1D7EC + code - 48);
+      return c;
+    });
+  }
+  function _toUnicodeItalic(s) {
+    return s.replace(/[A-Za-z]/g, c => {
+      const code = c.charCodeAt(0);
+      if (code >= 65 && code <= 90)  return String.fromCodePoint(0x1D608 + code - 65);
+      if (code >= 97 && code <= 122) return String.fromCodePoint(0x1D622 + code - 97);
+      return c;
+    });
+  }
+  function mdToSocialUnicode(s) {
+    if (!s) return s;
+    let out = s;
+    out = out.replace(/^#{1,6}\s+(.+)$/gm, (_, t) => _toUnicodeBold(t));
+    out = out.replace(/\*\*([^\n*]+?)\*\*/g, (_, t) => _toUnicodeBold(t));
+    out = out.replace(/__([^\n_]+?)__/g,     (_, t) => _toUnicodeBold(t));
+    out = out.replace(/^\s*[*\-]\s{2,}/gm, '• ');
+    out = out.replace(/^\s*[*\-]\s(?=\S)/gm, '• ');
+    out = out.replace(/(?<=\s|^)\*([^\s*][^*\n]*?[^\s*])\*(?=\s|[.,;:!?)]|$)/g, (_, t) => _toUnicodeItalic(t));
+    return out;
+  }
+
+  function convertMarkdown() {
+    const ta = document.getElementById('caption-text');
+    const current = ta.value || '';
+    const converted = mdToSocialUnicode(current);
+    if (converted === current) {
+      toast('Nessun markdown trovato nel testo');
+      return;
+    }
+    ta.value = converted;
+    toast('Markdown convertito in Unicode — ricordati di cliccare "Salva Caption"');
+    // Trigger refresh del preview se presente
+    if (typeof renderPreview === 'function') renderPreview();
   }
 
   async function saveCaption() {
