@@ -34,7 +34,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // ── Middleware ──
-app.use(express.json());
+// limit 10mb: serve per import piani editoriali lunghi (es. 6 mesi × 28 post con caption)
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
