@@ -80,7 +80,7 @@
         <textarea name="subscription_notes" rows="2" placeholder="es. canone 80&euro;/anno, social 150&euro;+IVA"><%= client.subscription_notes || '' %></textarea>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button type="button" class="btn btn-secondary" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Scansiona Sito</button>
+        <button type="button" class="btn btn-secondary" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi"><span style="margin-right:3px">✨</span>Scansiona Sito</button>
         <button type="submit" class="btn btn-primary">Salva Profilo</button>
       </div>
     </form>
@@ -140,7 +140,7 @@
           <option value="6" selected>6 mesi</option>
           <option value="12">12 mesi</option>
         </select>
-        <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Piano con AI</button>
+        <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn"><span style="margin-right:3px">✨</span>Genera Piano con AI</button>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-plan-file').click()" title="Carica un piano editoriale preparato offline (JSON)">&uarr; Importa JSON</button>
         <input type="file" id="import-plan-file" accept="application/json,.json" style="display:none" onchange="importPlanFromFile(event)">
       </div>
@@ -230,7 +230,7 @@
       <div class="form-group">
         <label>System Instruction (prompt personalizzato)</label>
         <textarea name="system_instruction" id="system-instruction-textarea" rows="8"><%= client.system_instruction || '' %></textarea>
-        <button type="button" class="btn btn-secondary btn-sm" id="generate-si-btn" onclick="generateSystemInstruction()" style="margin-top:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera con AI</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="generate-si-btn" onclick="generateSystemInstruction()" style="margin-top:8px"><span style="margin-right:3px">✨</span>Genera con AI</button>
       </div>
       <button type="submit" class="btn btn-primary">Salva AI Config</button>
     </form>
@@ -240,7 +240,7 @@
       <h3>Logo e Tema</h3>
       <div style="display:flex;align-items:center;gap:8px">
         <span id="branding-status" style="font-size:12px;display:none"></span>
-        <button type="button" class="btn btn-sm btn-primary" id="scan-branding-btn" onclick="scanBranding()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Importa da Sito</button>
+        <button type="button" class="btn btn-sm btn-primary" id="scan-branding-btn" onclick="scanBranding()"><span style="margin-right:3px">✨</span>Importa da Sito</button>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
@@ -276,7 +276,7 @@
               <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore terziario (opzionale)</label><input type="text" id="brand-hex-3" value="#e8eaed" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
             </div>
           </div>
-          <button type="button" class="btn btn-sm btn-primary" id="generate-theme-btn" onclick="generateTheme()" style="margin-top:10px;width:100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>Genera Tema da colori</button>
+          <button type="button" class="btn btn-sm btn-primary" id="generate-theme-btn" onclick="generateTheme()" style="margin-top:10px;width:100%"><span style="margin-right:3px">✨</span>Genera Tema da colori</button>
         </div>
         <!-- Theme CSS variables editor (visible when theme exists) -->
         <div id="theme-colors-container" style="display:none;border-top:1px solid var(--gray-200);padding-top:12px;margin-bottom:12px">
