@@ -106,4 +106,25 @@ router.post('/test-smtp', async (req, res) => {
   }
 });
 
+// Endpoint diagnostico: verifica raggiungibilità TCP di un host:port dal container.
+// Utile per capire se Hetzner/Coolify blocca porta SMTP outbound.
+// GET /api/settings/net-test?host=smtps.aruba.it&port=465
+router.get('/net-test', async (req, res) => {
+  const net = require('net');
+  const host = String(req.query.host || 'smtps.aruba.it').slice(0, 200);
+  const port = parseInt(req.query.port, 10) || 465;
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return res.status(400).json({ error: 'port invalido' });
+
+  const start = Date.now();
+  const result = await new Promise((resolve) => {
+    const socket = net.createConnection({ host, port, timeout: 5000 });
+    let done = false;
+    const finish = (payload) => { if (done) return; done = true; try { socket.destroy(); } catch (_) {} resolve(payload); };
+    socket.once('connect', () => finish({ ok: true, ms: Date.now() - start }));
+    socket.once('timeout', () => finish({ ok: false, error: 'TCP timeout (porta probabilmente bloccata dal firewall)', ms: Date.now() - start }));
+    socket.once('error', (err) => finish({ ok: false, error: err.code || err.message, ms: Date.now() - start }));
+  });
+  res.json({ host, port, ...result });
+});
+
 module.exports = router;
