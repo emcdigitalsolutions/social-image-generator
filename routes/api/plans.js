@@ -221,9 +221,12 @@ router.post('/:id/activate', (req, res) => {
   const db = getDb();
   const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
   if (!plan) return res.status(404).json({ error: 'Plan not found' });
-  if (plan.status !== 'confirmed') return res.status(400).json({ error: 'Solo i piani confirmed possono essere attivati' });
-
-  db.prepare("UPDATE editorial_plans SET status = 'active', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
+  if (plan.status === 'active') return res.status(400).json({ error: 'Piano già attivo' });
+  // Consente l'attivazione diretta da draft (l'admin bypassa il passaggio 'confirmed').
+  // confirmed_at viene valorizzato solo se non lo era già, per tracciare il momento
+  // in cui il piano è uscito da 'draft'.
+  db.prepare(`UPDATE editorial_plans SET status = 'active', updated_at = datetime('now'),
+              confirmed_at = COALESCE(confirmed_at, datetime('now')) WHERE id = ?`).run(req.params.id);
 
   const updated = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
   if (updated.plan_data) updated.plan_data = JSON.parse(updated.plan_data);

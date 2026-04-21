@@ -163,10 +163,10 @@
             <td><%= p.created_at %></td>
             <td style="display:flex;gap:4px;align-items:center" onclick="event.stopPropagation()">
               <a href="<%= planUrl %>" class="btn btn-sm btn-secondary">Apri</a>
-              <% if (p.status === 'confirmed') { %>
-                <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="activatePlan('<%= p.id %>')">Attiva</button>
-              <% } else if (p.status === 'active') { %>
-                <button class="btn btn-sm" style="background:var(--gray-400);color:#fff" onclick="deactivatePlan('<%= p.id %>')">Disattiva</button>
+              <% if (p.status !== 'active') { %>
+                <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="activatePlan('<%= p.id %>')" title="Attiva auto-publish del piano">&#9654; Attiva</button>
+              <% } else { %>
+                <button class="btn btn-sm" style="background:var(--gray-400);color:#fff" onclick="deactivatePlan('<%= p.id %>')" title="Disattiva auto-publish">&#9208; Disattiva</button>
               <% } %>
               <button class="btn btn-sm btn-secondary" style="padding:4px 8px;min-width:28px" title="Rinomina piano" aria-label="Rinomina" onclick="renamePlanInList('<%= p.id %>', <%- JSON.stringify(p.title || '') %>)">&#9998;</button>
               <button class="btn btn-sm btn-secondary" style="padding:4px 8px;min-width:28px" title="Duplica piano (copia tutti i post in stato draft)" aria-label="Duplica" onclick="duplicatePlanInList('<%= p.id %>', <%- JSON.stringify(p.title || 'Piano Editoriale') %>, '<%= client.id %>')">&#9112;</button>

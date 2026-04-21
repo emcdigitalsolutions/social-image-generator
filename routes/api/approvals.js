@@ -103,6 +103,76 @@ router.delete('/admin/:approvalId', authMiddleware, (req, res) => {
   res.json({ deleted: true });
 });
 
+// Admin: imposta approval_status di un singolo post (bypassa il flusso token cliente).
+// Body: { status: 'pending'|'approved'|'change_requested'|'rejected', comment?: string }
+// Se esiste un'approvazione mensile per il post, ricalcola il suo status aggregato.
+const ADMIN_APPROVAL_STATES = new Set(['pending', 'approved', 'change_requested', 'rejected']);
+router.post('/admin/posts/:postId/set-approval', authMiddleware, (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.postId);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const status = req.body && req.body.status;
+  if (!ADMIN_APPROVAL_STATES.has(status)) return res.status(400).json({ error: 'status deve essere pending/approved/change_requested/rejected' });
+  const comment = req.body && req.body.comment ? String(req.body.comment).trim().slice(0, 2000) : '';
+
+  db.prepare("UPDATE posts SET approval_status = ?, updated_at = datetime('now') WHERE id = ?")
+    .run(status, post.id);
+
+  // Cerca l'approvazione mensile corrispondente; se c'è, aggiungi il commento con author='admin'
+  // e ricalcola lo status aggregato (stessa logica di recordPostAction).
+  const approval = db.prepare('SELECT * FROM monthly_approvals WHERE editorial_plan_id = ? AND month_number = ?')
+    .get(post.editorial_plan_id, post.month_number);
+  if (comment) {
+    db.prepare("INSERT INTO post_comments (id, post_id, approval_id, author, text) VALUES (?, ?, ?, 'admin', ?)")
+      .run(uuidv4(), post.id, approval ? approval.id : null, comment);
+  }
+  if (approval) {
+    const counts = db.prepare(`
+      SELECT
+        SUM(CASE WHEN approval_status = 'approved' THEN 1 ELSE 0 END) AS approved,
+        SUM(CASE WHEN approval_status = 'change_requested' THEN 1 ELSE 0 END) AS change_requested,
+        SUM(CASE WHEN approval_status = 'pending' THEN 1 ELSE 0 END) AS pending,
+        COUNT(*) AS total
+      FROM posts WHERE editorial_plan_id = ? AND month_number = ?
+    `).get(approval.editorial_plan_id, approval.month_number);
+    let newApprovalStatus;
+    if (counts.change_requested > 0) newApprovalStatus = 'changes_requested';
+    else if (counts.pending === 0 && counts.approved > 0) newApprovalStatus = 'approved';
+    else newApprovalStatus = 'in_review';
+    const setApprovedAt = newApprovalStatus === 'approved' && approval.status !== 'approved'
+      ? ", approved_at = datetime('now')" : '';
+    db.prepare(`UPDATE monthly_approvals SET status = ?, last_action_at = datetime('now')${setApprovedAt} WHERE id = ?`)
+      .run(newApprovalStatus, approval.id);
+  }
+  res.json({ ok: true, approval_status: status });
+});
+
+// Admin: approva in massa tutti i post di un mese senza passare dal cliente.
+// Opzionale: crea automaticamente un'approvazione mensile se non esiste, così
+// l'aggregato monthly_approvals resta coerente.
+router.post('/admin/plans/:planId/months/:month/approve-all', authMiddleware, (req, res) => {
+  const db = getDb();
+  const planId = req.params.planId;
+  const month = parseInt(req.params.month);
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(planId);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+
+  const approved = db.prepare(`
+    UPDATE posts SET approval_status = 'approved', updated_at = datetime('now')
+    WHERE editorial_plan_id = ? AND month_number = ?
+      AND approval_status IN ('pending', 'change_requested', 'rejected')
+  `).run(planId, month);
+
+  // Se esiste un'approvazione mensile, passa a 'approved' per coerenza col publish guard
+  const existing = db.prepare('SELECT * FROM monthly_approvals WHERE editorial_plan_id = ? AND month_number = ?').get(planId, month);
+  if (existing) {
+    db.prepare(`UPDATE monthly_approvals
+                SET status = 'approved', approved_at = datetime('now'), last_action_at = datetime('now')
+                WHERE id = ?`).run(existing.id);
+  }
+  res.json({ ok: true, approved: approved.changes, approval_updated: !!existing });
+});
+
 // ─────────────── PUBLIC endpoints (token-based) ───────────────
 
 function loadPublicContext(req, res, next) {

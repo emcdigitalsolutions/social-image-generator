@@ -125,8 +125,10 @@
     <button class="btn btn-secondary" onclick="duplicatePlan()" title="Crea una copia del piano con tutti i post (senza media e in stato draft)">&#9112; Duplica</button>
     <button class="btn btn-secondary" onclick="exportJson()" title="Scarica il piano come file JSON (re-importabile, con caption correnti)">&#8595; Esporta JSON</button>
     <button class="btn btn-secondary" onclick="exportPdf()" title="Scarica un PDF stampabile del piano">&#8595; Esporta PDF</button>
-    <% if (plan.status === 'draft') { %>
-      <button class="btn btn-primary" onclick="confirmPlan()" title="Approva il piano: i post resteranno editabili ma il piano passa a 'confirmed'.">Conferma Piano</button>
+    <% if (plan.status !== 'active') { %>
+      <button class="btn btn-primary" onclick="activatePlan()" title="Attiva il piano: da questo momento i post con status 'ready' e scheduled_date passata verranno pubblicati automaticamente su FB/IG ogni 60s.">▶ Attiva piano</button>
+    <% } else { %>
+      <button class="btn btn-secondary" onclick="deactivatePlan()" title="Disattiva l'auto-publish (il piano torna a 'confirmed').">⏸ Disattiva</button>
     <% } %>
   </div>
 </div>
@@ -326,10 +328,28 @@
     }
   })();
 
-  async function confirmPlan() {
-    if (!await showConfirm('Confermare questo piano editoriale?')) return;
-    await apiFetch('/dashboard/api/plans/' + PLAN_ID + '/confirm', { method: 'POST' });
-    window.location.reload();
+  async function activatePlan() {
+    if (!await showConfirm('Attivare questo piano?\n\nDa ora in poi i post con status "ready" e data di pubblicazione passata verranno pubblicati automaticamente su Facebook / Instagram ogni 60 secondi.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + PLAN_ID + '/activate', { method: 'POST', body: {} });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Piano attivato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  async function deactivatePlan() {
+    if (!await showConfirm('Disattivare l\'auto-publish? Il piano tornerà in stato "confirmed" e nessun post sarà pubblicato automaticamente finché non riattivi.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + PLAN_ID + '/deactivate', { method: 'POST', body: {} });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Piano disattivato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
   }
 
   // ─────────────────────────── Editor categorie ───────────────────────────
