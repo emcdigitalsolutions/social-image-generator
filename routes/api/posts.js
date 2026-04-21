@@ -601,6 +601,28 @@ router.post('/bulk-time', (req, res) => {
   res.json({ updated: result.changes });
 });
 
+// Imposta la stessa scheduled_date per più post in un colpo solo.
+// Body: { post_ids: [...], scheduled_date: "YYYY-MM-DD", only_unscheduled: boolean }
+router.post('/bulk-date', (req, res) => {
+  const db = getDb();
+  const { post_ids, scheduled_date, only_unscheduled } = req.body;
+  if (!Array.isArray(post_ids) || !post_ids.length) return res.status(400).json({ error: 'post_ids richiesti' });
+  if (!scheduled_date || !/^\d{4}-\d{2}-\d{2}$/.test(scheduled_date)) {
+    return res.status(400).json({ error: 'scheduled_date deve essere YYYY-MM-DD' });
+  }
+  // Valida che la data sia effettivamente valida (es. non 2026-02-30)
+  const d = new Date(scheduled_date + 'T00:00:00');
+  if (isNaN(d.getTime()) || scheduled_date !== d.toISOString().slice(0, 10)) {
+    return res.status(400).json({ error: 'Data non valida' });
+  }
+
+  let sql = "UPDATE posts SET scheduled_date = ?, updated_at = datetime('now') WHERE id IN (" + post_ids.map(() => '?').join(',') + ")";
+  const params = [scheduled_date, ...post_ids];
+  if (only_unscheduled) sql += " AND (scheduled_date IS NULL OR scheduled_date = '')";
+  const result = db.prepare(sql).run(...params);
+  res.json({ updated: result.changes });
+});
+
 // Insights di un post (ultimo snapshot, o refresh forzato via ?refresh=1)
 router.get('/:id/insights', async (req, res) => {
   const db = getDb();

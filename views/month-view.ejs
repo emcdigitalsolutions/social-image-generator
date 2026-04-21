@@ -104,6 +104,7 @@
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('caption')" title="Genera la caption AI per tutti i post draft del mese">Genera tutte le caption</button>
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('image')" title="Renderizza l'immagine per tutti i post che hanno una caption">Genera tutte le immagini</button>
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('both')" title="Genera caption + immagine per tutti i post del mese">Genera caption + immagini</button>
+  <button class="btn btn-secondary btn-sm" onclick="openDateModal()" title="Imposta in massa la data di pubblicazione (preset o custom)">&#x1f4c5; Data default</button>
   <button class="btn btn-secondary btn-sm" onclick="openTimeModal()" title="Imposta in massa l'orario di pubblicazione (best time per FB / IG)">&#x1f550; Orario default</button>
   <button class="btn btn-secondary btn-sm" onclick="approveAllAsAdmin()" title="Approva in massa tutti i post del mese come amministratore (senza aspettare il feedback del cliente). Utile quando gestisci il piano in autonomia o per sbloccare il publish guard.">&#10003; Approva mese (admin)</button>
   <% if (!schedule || !schedule.is_active) { %>
@@ -667,6 +668,98 @@
       });
       if (res.error) { await showAlert(res.error); return; }
       toast(res.updated + ' post aggiornati con orario ' + time);
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  // ── Date bulk modal ──
+  function fmtLocalDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function addDays(base, n) { const d = new Date(base); d.setDate(d.getDate() + n); return d; }
+  function nextWeekday(base, targetWeekday) {
+    // targetWeekday: 1=lunedì ... 7=domenica (usiamo convenzione getDay: 0=dom, 1=lun, ..., 6=sab)
+    const d = new Date(base); const cur = d.getDay();
+    let delta = (targetWeekday - cur + 7) % 7;
+    if (delta === 0) delta = 7; // "prossimo"
+    d.setDate(d.getDate() + delta);
+    return d;
+  }
+
+  function buildDatePresets() {
+    const today = new Date();
+    return [
+      { ico: '\u{1f4c5}', label: 'Oggi',           date: fmtLocalDate(today),              note: today.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) },
+      { ico: '\u2728',     label: 'Domani',        date: fmtLocalDate(addDays(today, 1)),  note: addDays(today, 1).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) },
+      { ico: '\u{1f4c6}', label: 'Tra 7 giorni',  date: fmtLocalDate(addDays(today, 7)),  note: addDays(today, 7).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) },
+      { ico: '\u{1f4c6}', label: 'Tra 14 giorni', date: fmtLocalDate(addDays(today, 14)), note: addDays(today, 14).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' }) },
+      { ico: '\u{1f4c5}', label: 'Prossimo Lun',  date: fmtLocalDate(nextWeekday(today, 1)), note: nextWeekday(today, 1).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) },
+      { ico: '\u{1f4c5}', label: 'Prossimo Mar',  date: fmtLocalDate(nextWeekday(today, 2)), note: nextWeekday(today, 2).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }) }
+    ];
+  }
+
+  function openDateModal() {
+    if (!POSTS.length) { showAlert('Nessun post in questo mese.'); return; }
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-backdrop';
+    wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
+    const presets = buildDatePresets();
+    const presetsHtml = presets.map(p =>
+      `<div class="preset-btn" onclick="document.getElementById('dm-input').value='${p.date}'">
+        <div class="ico">${p.ico}</div>
+        <div class="time">${p.label}</div>
+        <div class="lab" style="font-size:10px;opacity:.7">${p.note}</div>
+      </div>`
+    ).join('');
+    const totalCount = POSTS.length;
+    const defaultVal = fmtLocalDate(new Date());
+    wrap.innerHTML = `
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <h3>\u{1f4c5} Imposta data di pubblicazione</h3>
+        <div class="modal-sub">Applica una data in batch ai post di questo mese.</div>
+
+        <div style="font-size:13px;font-weight:600;margin-bottom:6px">Preset</div>
+        <div class="preset-grid">${presetsHtml}</div>
+
+        <div class="modal-row">
+          <label for="dm-input"><strong>Data:</strong></label>
+          <input type="date" id="dm-input" value="${defaultVal}">
+          <span style="font-size:12px;color:var(--gray-500)">(o digita)</span>
+        </div>
+        <div class="modal-row">
+          <label><input type="checkbox" id="dm-only-empty" checked> Applica solo ai post senza data già impostata</label>
+        </div>
+
+        <div style="font-size:11px;color:var(--gray-500);margin-top:10px">Saranno aggiornati fino a <strong>${totalCount}</strong> post di questo mese.</div>
+
+        <div class="modal-actions">
+          <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Annulla</button>
+          <button class="btn btn-sm btn-primary" onclick="applyBulkDate()">Applica</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+  }
+
+  async function applyBulkDate() {
+    const date = document.getElementById('dm-input').value;
+    const onlyEmpty = document.getElementById('dm-only-empty').checked;
+    if (!date) { showAlert('Specifica una data'); return; }
+    const targetIds = onlyEmpty
+      ? POSTS.filter(p => !p.scheduled_date).map(p => p.id)
+      : POSTS.map(p => p.id);
+    if (!targetIds.length) {
+      showAlert('Tutti i post hanno già una data impostata. Deseleziona la checkbox per sovrascrivere.');
+      return;
+    }
+    try {
+      const res = await apiFetch('/dashboard/api/posts/bulk-date', {
+        method: 'POST',
+        body: { post_ids: targetIds, scheduled_date: date, only_unscheduled: onlyEmpty }
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast(res.updated + ' post aggiornati con data ' + date);
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
