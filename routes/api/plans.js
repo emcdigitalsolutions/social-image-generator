@@ -18,20 +18,21 @@ function rebuildDraftPostsFromPlanData(db, clientId, planId, planData) {
   db.prepare("DELETE FROM posts WHERE editorial_plan_id = ? AND status = 'draft'").run(planId);
 
   const insertPost = db.prepare(`
-    INSERT INTO posts (id, client_id, editorial_plan_id, month_number, week_number, category, sub_topic, template, media_type, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
+    INSERT INTO posts (id, client_id, editorial_plan_id, month_number, week_number, category, sub_topic, template, media_type, caption, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')
   `);
   let created = 0;
   for (const month of planData.months) {
     for (const week of month.weeks || []) {
       for (const post of week.posts || []) {
         const mediaType = VALID_MEDIA_TYPES.has(post.media_type) ? post.media_type : 'single_image';
+        const caption = typeof post.caption === 'string' && post.caption.trim() ? post.caption : null;
         insertPost.run(
           uuidv4(), clientId, planId,
           month.month_number, week.week_number,
           post.category || null, post.sub_topic || null,
           post.template || 'quote',
-          mediaType
+          mediaType, caption
         );
         created++;
       }

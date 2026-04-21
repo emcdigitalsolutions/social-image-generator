@@ -79,6 +79,7 @@ Endpoint che accetta questo formato: `POST /api/plans/import`
 | `day` | no | string | Solo per documentazione (es. "martedì"). Non blocca nulla. |
 | `time` | no | string | Come sopra. Per auto-publish l'orario va impostato dopo l'import dalla UI. |
 | `notes` | no | string | Note interne, non usate in pubblicazione |
+| `caption` | no | string | Testo caption già pronto. Se presente, il post viene creato con caption popolata (skip della fase "Genera caption con AI"). Utile per import bulk di caption preparate offline. |
 
 ---
 
