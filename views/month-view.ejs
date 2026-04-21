@@ -27,6 +27,12 @@
 
   .unscheduled-bar { margin-top:24px; padding:12px; background:#fef9c3; border:1px solid #fde047; border-radius:6px; font-size:13px; }
 
+  /* Drag & drop tra settimane */
+  .post-card[draggable="true"] { cursor:grab; }
+  .post-card.dragging { opacity:0.4; cursor:grabbing; }
+  .week-group.drop-target > .posts-grid { outline:2px dashed var(--blue); outline-offset:4px; border-radius:8px; background:#eff6ff; }
+  .drag-hint { font-size:11px; color:var(--gray-400); font-weight:400; margin-left:8px; }
+
   /* Time modal */
   .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; display:flex; align-items:center; justify-content:center; }
   .modal-card { background:white; border-radius:10px; max-width:500px; width:92vw; max-height:90vh; overflow:auto; padding:22px 24px; }
@@ -209,37 +215,44 @@
     }
   }
 
-  // Renderizza vista lista per settimana (storica)
+  // Renderizza vista lista per settimana (storica).
+  // Mostra sempre le settimane 1..maxWeek così il drop target esiste anche per settimane vuote.
   function renderList() {
     const root = document.getElementById('view-list');
     if (!root) return;
     const visible = POSTS.filter(matchesFilter);
-    if (!visible.length) { root.innerHTML = '<div class="empty-state"><h3>Nessun post per il filtro selezionato</h3></div>'; return; }
+    if (!POSTS.length) { root.innerHTML = '<div class="empty-state"><h3>Nessun post in questo mese</h3></div>'; return; }
     const weeks = {};
     visible.forEach(p => { const w = p.week_number || 1; (weeks[w] = weeks[w] || []).push(p); });
+    // Max week: o la più alta presente nei post (anche non filtrati) o 4 (default mese di 4 settimane)
+    const maxWeekInPosts = POSTS.reduce((acc, p) => Math.max(acc, p.week_number || 1), 1);
+    const maxWeek = Math.max(4, maxWeekInPosts);
     let html = '';
-    // Calcola tutte le settimane presenti (anche quelle vuote, se mostriamo tutto)
-    Object.keys(weeks).sort((a,b) => +a - +b).forEach(wn => {
-      html += '<div class="week-group"><h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px">Settimana ' + wn
-        + '<button class="btn btn-sm btn-secondary" onclick="addPost(' + wn + ')" title="Aggiungi un post draft a questa settimana">+ Nuovo post</button>'
+    const TYPE_LABEL = {
+      single_image: '\ud83d\uddbc Singola',
+      carousel:     '\ud83c\udfa0 Carousel',
+      reel:         '\ud83c\udfac Reel',
+      video:        '\ud83c\udfac Video',
+      story:        '\u2728 Storia (cliente)'
+    };
+    for (let wn = 1; wn <= maxWeek; wn++) {
+      const weekPosts = weeks[wn] || [];
+      html += '<div class="week-group" data-week="' + wn + '"><h3 style="display:flex;align-items:center;justify-content:space-between;gap:8px">Settimana ' + wn
+        + '<span><span class="drag-hint">trascina i post per cambiare settimana</span>'
+        + '<button class="btn btn-sm btn-secondary" onclick="addPost(' + wn + ')" title="Aggiungi un post draft a questa settimana" style="margin-left:8px">+ Nuovo post</button></span>'
         + '</h3><div class="posts-grid">';
-      const TYPE_LABEL = {
-        single_image: '\ud83d\uddbc Singola',
-        carousel:     '\ud83c\udfa0 Carousel',
-        reel:         '\ud83c\udfac Reel',
-        video:        '\ud83c\udfac Video',
-        story:        '\u2728 Storia (cliente)'
-      };
-      weeks[wn].forEach(p => {
+      if (!weekPosts.length) {
+        html += '<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--gray-400);font-size:12px;border:1px dashed var(--gray-200);border-radius:6px">Nessun post in questa settimana (puoi trascinarne uno qui)</div>';
+      }
+      weekPosts.forEach(p => {
         const mt = p.media_type || 'single_image';
         const typeBadge = TYPE_LABEL[mt] || mt;
-        // Riga schedule: data + orario se presenti
         let schedLine = '';
         if (p.scheduled_date) {
           const t = p.scheduled_time ? p.scheduled_time.slice(0,5) : '';
           schedLine = '<p style="font-size:11px;color:var(--blue);margin:4px 0 6px;font-weight:500">\ud83d\udcc5 ' + escapeHtml(p.scheduled_date + (t ? ' \u00b7 ' + t : '')) + '</p>';
         }
-        html += '<div class="post-card" style="position:relative">';
+        html += '<div class="post-card" draggable="true" data-post-id="' + p.id + '" style="position:relative">';
         html += '<button onclick="deletePost(\'' + p.id + '\', event)" title="Elimina post" style="position:absolute;top:6px;right:6px;z-index:2;width:24px;height:24px;background:rgba(255,255,255,.92);border:1px solid var(--gray-200);border-radius:4px;cursor:pointer;color:var(--red);font-weight:600;line-height:1">\u00d7</button>';
         html += '<a href="/dashboard/posts/' + p.id + '" style="text-decoration:none;color:inherit;display:block">';
         html += '<div class="post-card-image">' + (p.image_url ? '<img src="' + p.image_url + '">' : 'Nessuna immagine') + '</div>';
@@ -250,8 +263,80 @@
         html += '<span style="font-size:11px;color:var(--gray-500)">' + typeBadge + '</span></div></div></a></div>';
       });
       html += '</div></div>';
-    });
+    }
     root.innerHTML = html;
+    attachDragHandlers();
+  }
+
+  // ── Drag & drop tra settimane (aggiorna week_number nel DB) ──
+  let draggedPostId = null;
+
+  function attachDragHandlers() {
+    document.querySelectorAll('#view-list .post-card[draggable="true"]').forEach(card => {
+      card.addEventListener('dragstart', onCardDragStart);
+      card.addEventListener('dragend',   onCardDragEnd);
+    });
+    document.querySelectorAll('#view-list .week-group').forEach(group => {
+      group.addEventListener('dragover',  onWeekDragOver);
+      group.addEventListener('dragleave', onWeekDragLeave);
+      group.addEventListener('drop',      onWeekDrop);
+    });
+  }
+
+  function onCardDragStart(ev) {
+    draggedPostId = ev.currentTarget.dataset.postId;
+    ev.currentTarget.classList.add('dragging');
+    // Necessario per abilitare drop in Firefox
+    try { ev.dataTransfer.setData('text/plain', draggedPostId); } catch (_) {}
+    ev.dataTransfer.effectAllowed = 'move';
+  }
+
+  function onCardDragEnd(ev) {
+    ev.currentTarget.classList.remove('dragging');
+    draggedPostId = null;
+    document.querySelectorAll('#view-list .week-group.drop-target').forEach(g => g.classList.remove('drop-target'));
+  }
+
+  function onWeekDragOver(ev) {
+    if (!draggedPostId) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = 'move';
+    ev.currentTarget.classList.add('drop-target');
+  }
+
+  function onWeekDragLeave(ev) {
+    // Rimuove highlight solo se lasciamo davvero il gruppo (non un figlio)
+    if (ev.currentTarget.contains(ev.relatedTarget)) return;
+    ev.currentTarget.classList.remove('drop-target');
+  }
+
+  async function onWeekDrop(ev) {
+    ev.preventDefault();
+    ev.currentTarget.classList.remove('drop-target');
+    const targetWeek = parseInt(ev.currentTarget.dataset.week, 10);
+    const postId = draggedPostId;
+    draggedPostId = null;
+    if (!postId || !Number.isInteger(targetWeek)) return;
+    const post = POSTS.find(p => p.id === postId);
+    if (!post) return;
+    const currentWeek = post.week_number || 1;
+    if (currentWeek === targetWeek) return; // no-op
+    // Optimistic UI update
+    post.week_number = targetWeek;
+    renderList();
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + postId, {
+        method: 'PUT',
+        body: { week_number: targetWeek }
+      });
+      if (res.error) throw new Error(res.error);
+      toast('Post spostato in settimana ' + targetWeek);
+    } catch (err) {
+      // Rollback
+      post.week_number = currentWeek;
+      renderList();
+      showAlert('Spostamento fallito: ' + err.message);
+    }
   }
 
   function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }

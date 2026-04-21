@@ -60,14 +60,22 @@ router.put('/:id', (req, res) => {
   const db = getDb();
   const fields = ['category', 'sub_topic', 'template', 'caption', 'image_data',
     'source_image_url', 'scheduled_date', 'scheduled_time', 'status', 'media_type',
-    'ig_share_to_feed'];
+    'ig_share_to_feed', 'week_number'];
 
   const updates = [];
   const values = [];
 
   for (const field of fields) {
     if (req.body[field] !== undefined) {
-      const val = field === 'image_data' ? JSON.stringify(req.body[field]) : req.body[field];
+      let val = req.body[field];
+      if (field === 'image_data') val = JSON.stringify(val);
+      if (field === 'week_number') {
+        const n = parseInt(val, 10);
+        if (!Number.isInteger(n) || n < 1 || n > 5) {
+          return res.status(400).json({ error: 'week_number deve essere un intero tra 1 e 5' });
+        }
+        val = n;
+      }
       updates.push(`${field} = ?`);
       values.push(val);
     }
