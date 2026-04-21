@@ -96,6 +96,9 @@
     <span class="badge badge-<%= plan.status %>"><%= plan.status %></span>
   </div>
   <div class="plan-actions">
+    <button class="btn btn-secondary" onclick="renamePlan()" title="Cambia il nome del piano editoriale">&#9998; Rinomina</button>
+    <button class="btn btn-secondary" onclick="duplicatePlan()" title="Crea una copia del piano con tutti i post (senza media e in stato draft)">&#9112; Duplica</button>
+    <button class="btn btn-secondary" onclick="exportJson()" title="Scarica il piano come file JSON (re-importabile, con caption correnti)">&#8595; Esporta JSON</button>
     <button class="btn btn-secondary" onclick="exportPdf()" title="Scarica un PDF stampabile del piano">&#8595; Esporta PDF</button>
     <% if (plan.status === 'draft') { %>
       <button class="btn btn-primary" onclick="confirmPlan()" title="Approva il piano: i post resteranno editabili ma il piano passa a 'confirmed'.">Conferma Piano</button>
@@ -516,6 +519,74 @@
     document.addEventListener('DOMContentLoaded', _initApprovals);
   } else {
     _initApprovals();
+  }
+
+  // ─────────────────────── Rinomina / Duplica / Export JSON ───────────────────────
+
+  async function renamePlan() {
+    const current = <%- JSON.stringify(plan.title || '') %>;
+    const next = prompt('Nuovo nome del piano editoriale:', current);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed) { await showAlert('Il nome non può essere vuoto.'); return; }
+    if (trimmed === current) return;
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + PLAN_ID, {
+        method: 'PUT',
+        body: { title: trimmed }
+      });
+      if (res.error) throw new Error(res.error);
+      toast('Nome aggiornato');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  async function duplicatePlan() {
+    const baseName = <%- JSON.stringify(plan.title || 'Piano Editoriale') %>;
+    const suggested = 'Copia di ' + baseName;
+    const name = prompt('Nome del nuovo piano (duplicato):', suggested);
+    if (name === null) return;
+    const trimmed = name.trim() || suggested;
+    if (!await showConfirm('Duplicare questo piano?\n\nVerranno copiati tutti i ' + (typeof PLAN_DATA !== 'undefined' && PLAN_DATA.months ? '' : '') + 'post (caption incluse), in stato draft. I media (foto/video) NON vengono duplicati: li ricaricherai nel nuovo piano.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + PLAN_ID + '/duplicate', {
+        method: 'POST',
+        body: { title: trimmed }
+      });
+      if (res.error) throw new Error(res.error);
+      toast('Piano duplicato (' + res.posts_copied + ' post copiati)');
+      // Vai al nuovo piano
+      window.location.href = '/dashboard/clients/' + CLIENT_ID + '/plan/' + res.plan.id;
+    } catch (err) {
+      await showAlert('Duplicazione fallita: ' + err.message);
+    }
+  }
+
+  async function exportJson() {
+    try {
+      toast('Export JSON in corso...');
+      const res = await fetch('/dashboard/api/plans/' + PLAN_ID + '/export', {
+        headers: { 'Authorization': 'Bearer ' + getToken() }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        await showAlert('Export fallito: ' + (err.error || ('HTTP ' + res.status)));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '<%= (plan.title || "piano").replace(/[^a-z0-9_-]/gi, "_").slice(0,60) %>.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
   }
 
   // ─────────────────────────── PDF Export ───────────────────────────

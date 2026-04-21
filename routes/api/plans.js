@@ -384,4 +384,106 @@ router.get('/:id/pdf', async (req, res) => {
   }
 });
 
+// Duplica un piano esistente: crea una nuova copia draft con lo stesso plan_data
+// e cloning dei post (stato resettato a 'draft', senza riferimenti a publish/media).
+// NOTA: i post_media (file su disco) NON vengono duplicati — l'utente dovrà
+// ricaricarli nel nuovo piano. Questo mantiene l'operazione veloce e senza rischi
+// di file references condivisi.
+router.post('/:id/duplicate', (req, res) => {
+  const db = getDb();
+  const src = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (!src) return res.status(404).json({ error: 'Plan not found' });
+
+  const newId = uuidv4();
+  const customTitle = typeof req.body.title === 'string' && req.body.title.trim() ? req.body.title.trim() : null;
+  const newTitle = customTitle || `Copia di ${src.title || 'Piano Editoriale'}`;
+
+  db.prepare(`
+    INSERT INTO editorial_plans (id, client_id, title, status, plan_data, ai_raw)
+    VALUES (?, ?, ?, 'draft', ?, NULL)
+  `).run(newId, src.client_id, newTitle, src.plan_data);
+
+  // Clona i post (solo i campi utili al piano editoriale, reset di stato/publish)
+  const srcPosts = db.prepare('SELECT * FROM posts WHERE editorial_plan_id = ? ORDER BY month_number, week_number, position').all(req.params.id);
+  const insertPost = db.prepare(`
+    INSERT INTO posts (id, client_id, editorial_plan_id, month_number, week_number, position,
+      category, sub_topic, template, media_type, caption, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', datetime('now'))
+  `);
+  const tx = db.transaction(() => {
+    for (const p of srcPosts) {
+      insertPost.run(
+        uuidv4(), p.client_id, newId,
+        p.month_number, p.week_number, p.position || 0,
+        p.category, p.sub_topic, p.template || 'quote',
+        p.media_type || 'single_image',
+        p.caption
+      );
+    }
+  });
+  tx();
+
+  const newPlan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(newId);
+  if (newPlan.plan_data) newPlan.plan_data = JSON.parse(newPlan.plan_data);
+  res.json({ plan: newPlan, posts_copied: srcPosts.length });
+});
+
+// Esporta il piano come JSON scaricabile, ricostruito dai post correnti nel DB.
+// Include caption/sub_topic/media_type/template/week/month/scheduled_time aggiornati.
+// Il JSON risultante è ri-importabile via POST /api/plans/import.
+router.get('/:id/export', (req, res) => {
+  const db = getDb();
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+  const planData = plan.plan_data ? JSON.parse(plan.plan_data) : {};
+
+  const posts = db.prepare(`
+    SELECT * FROM posts
+    WHERE editorial_plan_id = ?
+    ORDER BY month_number ASC, week_number ASC, position ASC, created_at ASC
+  `).all(req.params.id);
+
+  // Deriva numero mesi dal plan_data originale, fallback sui post
+  const totalMonths = (planData.months && planData.months.length)
+    || posts.reduce((a, p) => Math.max(a, p.month_number || 0), 0)
+    || 1;
+
+  const months = [];
+  for (let m = 1; m <= totalMonths; m++) {
+    const mPosts = posts.filter(p => p.month_number === m);
+    const maxWeek = mPosts.reduce((a, p) => Math.max(a, p.week_number || 1), 1);
+    const weeks = [];
+    for (let w = 1; w <= Math.max(4, maxWeek); w++) {
+      const wPosts = mPosts.filter(p => p.week_number === w);
+      if (!wPosts.length) continue;
+      weeks.push({
+        week_number: w,
+        posts: wPosts.map(p => {
+          const obj = {
+            category: p.category || null,
+            sub_topic: p.sub_topic || null,
+            media_type: p.media_type || 'single_image'
+          };
+          if (p.template) obj.template = p.template;
+          if (p.scheduled_time) obj.time = p.scheduled_time.slice(0, 5);
+          if (p.caption) obj.caption = p.caption;
+          return obj;
+        })
+      });
+    }
+    months.push({ month_number: m, weeks });
+  }
+
+  const exportData = {
+    title: plan.title || planData.title || 'Piano Editoriale',
+    categories: Array.isArray(planData.categories) ? planData.categories : [],
+    months
+  };
+
+  const safeTitle = (plan.title || 'piano').replace(/[^a-z0-9_-]/gi, '_').slice(0, 60);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.json"`);
+  res.send(JSON.stringify(exportData, null, 2));
+});
+
 module.exports = router;
