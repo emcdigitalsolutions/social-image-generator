@@ -136,13 +136,14 @@ router.post('/test-google-script', async (req, res) => {
     const { URL } = require('url');
     const u = new URL(url);
     const smtpConfig = settings.getSmtpConfig();
+    // site='emcdigitalsolutions' così lo script GAS routa il destinatario su EMC
+    // (lo stesso target dei form contatti del sito emcdigitalsolutions).
     const payload = JSON.stringify({
-      site: 'social-image-generator',
-      name: 'Social Image Generator - Test',
-      email: smtpConfig.user || 'noreply@example.com',
+      site: 'emcdigitalsolutions',
+      name: '[SIG TEST] Configurazione Google Apps Script',
+      email: smtpConfig.user || 'noreply@emcdigitalsolutions.it',
       phone: '',
-      message: '[TEST] Questa è una email di test dalla dashboard SIG. Se la ricevi, Google Apps Script è configurato correttamente.',
-      subject: 'SIG - Test Google Script'
+      message: 'Questa è una email di test dalla dashboard SIG. Se la ricevi, Google Apps Script è configurato correttamente per inviare le notifiche admin (publish failed/partial, approvazioni cliente).'
     });
     const result = await new Promise((resolve, reject) => {
       const req2 = https.request({
