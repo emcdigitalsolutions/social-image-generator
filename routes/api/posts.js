@@ -660,6 +660,41 @@ router.post('/bulk-distribute-dates', (req, res) => {
   res.json({ updated, total: posts.length });
 });
 
+// Segna in stato 'ready' tutti i post indicati che soddisfano le pre-condizioni
+// (caption non vuota + almeno un media OR image_url legacy). I post che non passano
+// vengono ritornati nel summary con il motivo — l'admin può sistemarli manualmente.
+// Body: { post_ids: [...], force?: boolean } — force salta la validazione caption/media.
+router.post('/bulk-ready', (req, res) => {
+  const db = getDb();
+  const { post_ids, force } = req.body;
+  if (!Array.isArray(post_ids) || !post_ids.length) return res.status(400).json({ error: 'post_ids richiesti' });
+
+  const placeholders = post_ids.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT id, caption, image_url, status FROM posts WHERE id IN (${placeholders})`).all(...post_ids);
+  const mediaCount = db.prepare(`SELECT COUNT(*) AS n FROM post_media WHERE post_id = ?`);
+
+  const updated = [], skipped = [];
+  const upd = db.prepare("UPDATE posts SET status = 'ready', updated_at = datetime('now') WHERE id = ?");
+  const tx = db.transaction(() => {
+    for (const p of rows) {
+      if (p.status === 'ready' || p.status === 'published') {
+        skipped.push({ id: p.id, reason: 'già ' + p.status });
+        continue;
+      }
+      if (!force) {
+        const hasCaption = p.caption && p.caption.trim();
+        const hasMedia = !!p.image_url || mediaCount.get(p.id).n > 0;
+        if (!hasCaption) { skipped.push({ id: p.id, reason: 'caption mancante' }); continue; }
+        if (!hasMedia)   { skipped.push({ id: p.id, reason: 'nessun media' }); continue; }
+      }
+      upd.run(p.id);
+      updated.push(p.id);
+    }
+  });
+  tx();
+  res.json({ updated: updated.length, skipped });
+});
+
 // Imposta la stessa scheduled_date per più post in un colpo solo.
 // Body: { post_ids: [...], scheduled_date: "YYYY-MM-DD", only_unscheduled: boolean }
 router.post('/bulk-date', (req, res) => {
