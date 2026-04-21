@@ -900,6 +900,25 @@
         renderMedia();
         dzEl.classList.remove('is-uploading');
         progressEl.style.display = 'none';
+
+        // Check warnings proporzioni Instagram: se il backend ha flaggato un media,
+        // avvisa l'utente e proponi il crop tool subito (preset 1:1 quadrato = sempre OK).
+        const withWarnings = (data.media || []).filter(m => m._warnings && m._warnings.length);
+        if (withWarnings.length) {
+          const first = withWarnings[0];
+          const warn = first._warnings[0];
+          const msg = withWarnings.length > 1
+            ? `⚠️ ${withWarnings.length} immagini hanno proporzioni non adatte a Instagram.\n\nPrima immagine:\n${warn}\n\nVuoi aprire ora lo strumento di ritaglio per sistemarla a 1:1 (quadrato, sempre compatibile)?`
+            : `⚠️ ${warn}\n\nVuoi aprire ora lo strumento di ritaglio per sistemarla a 1:1 (quadrato, sempre compatibile)?`;
+          if (await showConfirm(msg)) {
+            // Apri lightbox e dopo un tick imposta il ratio 1:1
+            openLightbox(first.id);
+            setTimeout(() => {
+              if (typeof setCropRatio === 'function') setCropRatio(1);
+              else if (typeof cropperInstance !== 'undefined' && cropperInstance) { try { cropperInstance.setAspectRatio(1); } catch (_) {} }
+            }, 600);
+          }
+        }
         resolve();
       };
 
