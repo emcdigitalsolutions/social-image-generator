@@ -7,6 +7,7 @@ const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { generateCaption } = require('../../lib/ai-provider');
 const { publishPost } = require('../../lib/meta-publish');
+const { notifyPublishFailed, notifyPublishPartial } = require('../../lib/notifier');
 const { renderImage } = require('../../lib/renderer');
 const postMedia = require('../../lib/post-media');
 
@@ -221,9 +222,22 @@ router.post('/:id/publish', async (req, res) => {
       post.id
     );
 
+    // Email admin su errori (fire-and-forget, non blocca la risposta UI)
+    if (status === 'failed' && result.errors.length) {
+      notifyPublishFailed(post, client, result.errors.join('; '))
+        .catch(e => console.error('[notifier] publish failed notify error:', e.message));
+    } else if (status === 'published' && result.errors.length) {
+      // Partial success: un canale OK, l'altro fallito (solo se utente NON ha deselezionato il canale)
+      notifyPublishPartial(post, client, result)
+        .catch(e => console.error('[notifier] publish partial notify error:', e.message));
+    }
+
     const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(post.id);
     res.json({ post: updated, publish_result: result });
   } catch (err) {
+    // Eccezione non catturata dal flusso normale (es. crash Puppeteer, errore DB)
+    notifyPublishFailed(post, client, 'Exception: ' + err.message)
+      .catch(e => console.error('[notifier] publish exception notify error:', e.message));
     res.status(500).json({ error: 'Publishing failed', details: err.message });
   }
 });
