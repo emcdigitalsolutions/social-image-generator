@@ -36,6 +36,12 @@ app.set('views', path.join(__dirname, 'views'));
 // ── Middleware ──
 // limit 10mb: serve per import piani editoriali lunghi (es. 6 mesi × 28 post con caption)
 app.use(express.json({ limit: '10mb' }));
+
+// Asset version fissato al boot: cambia ad ogni deploy/restart, fa cache-bust
+// sui CSS/JS senza invalidare ad ogni request. Esposto come res.locals.assetVersion
+// e come variable nell'EJS.
+const ASSET_VERSION = String(Date.now());
+app.use((req, res, next) => { res.locals.assetVersion = ASSET_VERSION; next(); });
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
