@@ -1,5 +1,23 @@
     </main>
   </div>
   <script src="/dashboard/js/dashboard.js"></script>
+  <script>
+    // Mobile sidebar toggle
+    function toggleSidebar() {
+      document.body.classList.toggle('sidebar-open');
+    }
+    // Chiudi sidebar cliccando su un link (mobile)
+    document.querySelectorAll('.sidebar-nav a').forEach(a => {
+      a.addEventListener('click', () => {
+        if (window.innerWidth <= 900) document.body.classList.remove('sidebar-open');
+      });
+    });
+    // Chiudi con tasto Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
+        document.body.classList.remove('sidebar-open');
+      }
+    });
+  </script>
 </body>
 </html>
