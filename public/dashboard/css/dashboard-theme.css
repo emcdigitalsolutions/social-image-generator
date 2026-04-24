@@ -675,10 +675,26 @@ tr:hover td { background: var(--surface-tint); }
     left: 0;
     bottom: 0;
     width: 280px;
+    height: 100vh;
+    height: 100dvh;
     z-index: 200;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 0 60px rgba(0,0,0,0.5);
+    /* Sovrascrive desktop (`overflow: hidden` + `position: relative`):
+       in mobile il ::before decorativo, con position:fixed+transform, può
+       creare contesti di stacking anomali che coprivano il contenuto. */
+    overflow-y: auto;
+    background: var(--grad-sidebar);
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar::before { display: none; }
+  .sidebar-brand,
+  .sidebar-nav,
+  .sidebar-user {
+    position: relative;
+    z-index: 2;
   }
   body.sidebar-open .sidebar { transform: translateX(0); }
 

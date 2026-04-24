@@ -1198,12 +1198,16 @@
       await saveDetails();
       const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-image', { method: 'POST' });
       if (res.error) { await showAlert(res.error); return; }
-      // Ricarico la lista media (l'endpoint legacy ha aggiornato post.image_url, non post_media)
+      // Ricarico la lista media. L'endpoint registra il file in post_media
+      // (via attachGeneratedFile, che sposta il file in posts/{id}/ → URL diverso
+      // da res.image_url). Se generavamo un fallback legacy basato su res.image_url
+      // si creava un duplicato fantasma non eliminabile ("media not found").
+      // Usiamo post_media come unica sorgente di verità; un fallback legacy ha senso
+      // SOLO se post_media è rimasto vuoto (attachGeneratedFile fallito).
       const mediaRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media');
-      MEDIA = mediaRes.media || MEDIA;
-      // Se non c'è ancora una riga post_media per la generata, aggiungo manualmente come fallback
-      if (res.image_url && !MEDIA.some(m => m.url === res.image_url)) {
-        MEDIA.push({ id: 'legacy-' + Date.now(), kind: 'image', source: 'generated', url: res.image_url, position: MEDIA.length });
+      MEDIA = mediaRes.media || [];
+      if (!MEDIA.length && res.image_url) {
+        MEDIA.push({ id: 'legacy-' + Date.now(), kind: 'image', source: 'generated', url: res.image_url, position: 0 });
       }
       renderMedia();
     } catch (err) {

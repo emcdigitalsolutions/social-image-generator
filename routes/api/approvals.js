@@ -22,7 +22,7 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { notifyApprovalAction } = require('../../lib/notifier');
+const { notifyApprovalSummary } = require('../../lib/notifier');
 
 const router = express.Router();
 
@@ -235,6 +235,7 @@ function recordPostAction(db, approval, post, newStatus, commentText) {
     SELECT
       SUM(CASE WHEN approval_status = 'approved' THEN 1 ELSE 0 END) AS approved,
       SUM(CASE WHEN approval_status = 'change_requested' THEN 1 ELSE 0 END) AS change_requested,
+      SUM(CASE WHEN approval_status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
       SUM(CASE WHEN approval_status = 'pending' THEN 1 ELSE 0 END) AS pending,
       COUNT(*) AS total
     FROM posts WHERE editorial_plan_id = ? AND month_number = ?
@@ -249,12 +250,27 @@ function recordPostAction(db, approval, post, newStatus, commentText) {
     ? ", approved_at = datetime('now')" : '';
   db.prepare(`UPDATE monthly_approvals SET status = ?, last_action_at = datetime('now')${setApprovedAt} WHERE id = ?`)
     .run(newApprovalStatus, approval.id);
+
+  return { counts, newApprovalStatus };
 }
 
-function notifyAdminFireAndForget(req, post, action, comment) {
-  // Email admin: fire-and-forget per non bloccare la risposta al cliente
-  notifyApprovalAction(req.approval, req.plan, req.client, post, action, comment)
-    .catch(err => console.error('[approval notifier]', err.message));
+// Invia UNA email di riepilogo all'admin quando il cliente ha completato la
+// revisione (pending === 0). Sostituisce il comportamento precedente che
+// mandava una mail per ogni singola azione del cliente.
+function notifySummaryIfComplete(req, counts, newApprovalStatus) {
+  if (!counts || counts.pending !== 0) return;
+  const db = getDb();
+  const posts = db.prepare(`
+    SELECT p.id, p.category, p.sub_topic, p.week_number, p.month_number, p.approval_status,
+      (SELECT GROUP_CONCAT(text, '||')
+         FROM post_comments
+         WHERE post_id = p.id AND author = 'client') AS client_comments
+    FROM posts p
+    WHERE editorial_plan_id = ? AND month_number = ?
+    ORDER BY week_number ASC, id ASC
+  `).all(req.approval.editorial_plan_id, req.approval.month_number);
+  notifyApprovalSummary(req.approval, req.plan, req.client, posts, counts, newApprovalStatus)
+    .catch(err => console.error('[approval summary notifier]', err.message));
 }
 
 router.post('/public/:token/posts/:postId/approve', loadPublicContext, (req, res) => {
@@ -262,8 +278,8 @@ router.post('/public/:token/posts/:postId/approve', loadPublicContext, (req, res
   const post = db.prepare('SELECT * FROM posts WHERE id = ? AND editorial_plan_id = ? AND month_number = ?')
     .get(req.params.postId, req.approval.editorial_plan_id, req.approval.month_number);
   if (!post) return res.status(404).json({ error: 'Post not found in this approval' });
-  recordPostAction(db, req.approval, post, 'approved', null);
-  notifyAdminFireAndForget(req, post, 'approved', null);
+  const { counts, newApprovalStatus } = recordPostAction(db, req.approval, post, 'approved', null);
+  notifySummaryIfComplete(req, counts, newApprovalStatus);
   res.json({ ok: true });
 });
 
@@ -274,8 +290,8 @@ router.post('/public/:token/posts/:postId/request', loadPublicContext, (req, res
   if (!post) return res.status(404).json({ error: 'Post not found in this approval' });
   const text = req.body && req.body.comment ? req.body.comment : '';
   if (!text || !text.trim()) return res.status(400).json({ error: 'Per chiedere una modifica scrivi un commento' });
-  recordPostAction(db, req.approval, post, 'change_requested', text);
-  notifyAdminFireAndForget(req, post, 'change_requested', text);
+  const { counts, newApprovalStatus } = recordPostAction(db, req.approval, post, 'change_requested', text);
+  notifySummaryIfComplete(req, counts, newApprovalStatus);
   res.json({ ok: true });
 });
 
@@ -285,8 +301,8 @@ router.post('/public/:token/posts/:postId/reject', loadPublicContext, (req, res)
     .get(req.params.postId, req.approval.editorial_plan_id, req.approval.month_number);
   if (!post) return res.status(404).json({ error: 'Post not found in this approval' });
   const text = req.body && req.body.comment ? req.body.comment : '';
-  recordPostAction(db, req.approval, post, 'rejected', text);
-  notifyAdminFireAndForget(req, post, 'rejected', text);
+  const { counts, newApprovalStatus } = recordPostAction(db, req.approval, post, 'rejected', text);
+  notifySummaryIfComplete(req, counts, newApprovalStatus);
   res.json({ ok: true });
 });
 
@@ -299,6 +315,19 @@ router.post('/public/:token/approve-all', loadPublicContext, (req, res) => {
 
   db.prepare("UPDATE monthly_approvals SET status = 'approved', approved_at = datetime('now'), last_action_at = datetime('now') WHERE id = ?")
     .run(req.approval.id);
+
+  // Ricalcola conteggi e manda un riepilogo unico (il cliente ha usato
+  // "approva tutto", quindi pending ora è 0).
+  const counts = db.prepare(`
+    SELECT
+      SUM(CASE WHEN approval_status = 'approved' THEN 1 ELSE 0 END) AS approved,
+      SUM(CASE WHEN approval_status = 'change_requested' THEN 1 ELSE 0 END) AS change_requested,
+      SUM(CASE WHEN approval_status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
+      SUM(CASE WHEN approval_status = 'pending' THEN 1 ELSE 0 END) AS pending,
+      COUNT(*) AS total
+    FROM posts WHERE editorial_plan_id = ? AND month_number = ?
+  `).get(req.approval.editorial_plan_id, req.approval.month_number);
+  notifySummaryIfComplete(req, counts, 'approved');
 
   res.json({ ok: true, approved: result.changes });
 });
