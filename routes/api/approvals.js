@@ -121,6 +121,29 @@ router.delete('/admin/:approvalId', authMiddleware, (req, res) => {
   res.json({ deleted: true });
 });
 
+// Helper: manda la stessa email di riepilogo che riceve il cliente quando ha
+// terminato la revisione, ma con wording "approvato dal tuo gestore social".
+// Si attiva solo se pending === 0 (ovvero il mese è "chiuso"). CC al cliente
+// quando lo stato finale è 'approved' e client.contact_email è presente.
+function sendAdminSummaryIfComplete(db, approval, planId, monthNumber, counts, newApprovalStatus) {
+  if (!counts || counts.pending !== 0) return;
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(planId);
+  if (!plan) return;
+  const client = db.prepare('SELECT id, display_name, brand_name, logo_filename, contact_email FROM clients WHERE id = ?').get(plan.client_id);
+  if (!client) return;
+  const posts = db.prepare(`
+    SELECT p.id, p.category, p.sub_topic, p.week_number, p.month_number, p.approval_status,
+      (SELECT GROUP_CONCAT(text, '||')
+         FROM post_comments
+         WHERE post_id = p.id AND author = 'client') AS client_comments
+    FROM posts p
+    WHERE editorial_plan_id = ? AND month_number = ?
+    ORDER BY week_number ASC, id ASC
+  `).all(planId, monthNumber);
+  notifyApprovalSummary(approval, plan, client, posts, counts, newApprovalStatus, 'admin')
+    .catch(err => console.error('[approval summary notifier admin]', err.message));
+}
+
 // Admin: imposta approval_status di un singolo post (bypassa il flusso token cliente).
 // Body: { status: 'pending'|'approved'|'change_requested'|'rejected', comment?: string }
 // Se esiste un'approvazione mensile per il post, ricalcola il suo status aggregato.
@@ -149,6 +172,7 @@ router.post('/admin/posts/:postId/set-approval', authMiddleware, (req, res) => {
       SELECT
         SUM(CASE WHEN approval_status = 'approved' THEN 1 ELSE 0 END) AS approved,
         SUM(CASE WHEN approval_status = 'change_requested' THEN 1 ELSE 0 END) AS change_requested,
+        SUM(CASE WHEN approval_status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
         SUM(CASE WHEN approval_status = 'pending' THEN 1 ELSE 0 END) AS pending,
         COUNT(*) AS total
       FROM posts WHERE editorial_plan_id = ? AND month_number = ?
@@ -161,6 +185,11 @@ router.post('/admin/posts/:postId/set-approval', authMiddleware, (req, res) => {
       ? ", approved_at = datetime('now')" : '';
     db.prepare(`UPDATE monthly_approvals SET status = ?, last_action_at = datetime('now')${setApprovedAt} WHERE id = ?`)
       .run(newApprovalStatus, approval.id);
+
+    // Se il mese è appena stato chiuso (pending === 0), manda il riepilogo come
+    // per il flusso cliente ma con wording "approvato dal tuo gestore".
+    const updatedApproval = db.prepare('SELECT * FROM monthly_approvals WHERE id = ?').get(approval.id);
+    sendAdminSummaryIfComplete(db, updatedApproval, approval.editorial_plan_id, approval.month_number, counts, newApprovalStatus);
   }
   audit.logFromReq(req, {
     client_id: post.client_id,
@@ -195,6 +224,24 @@ router.post('/admin/plans/:planId/months/:month/approve-all', authMiddleware, (r
                 SET status = 'approved', approved_at = datetime('now'), last_action_at = datetime('now')
                 WHERE id = ?`).run(existing.id);
   }
+
+  // Manda il riepilogo email (admin + CC cliente se ha contact_email).
+  // Se non c'era monthly_approvals, ne costruisco uno "virtuale" per la mail
+  // — serve solo per avere month_number e approved_at nel template.
+  const approvalForEmail = existing
+    ? db.prepare('SELECT * FROM monthly_approvals WHERE id = ?').get(existing.id)
+    : { id: null, editorial_plan_id: planId, month_number: month, status: 'approved', approved_at: new Date().toISOString() };
+  const counts = db.prepare(`
+    SELECT
+      SUM(CASE WHEN approval_status = 'approved' THEN 1 ELSE 0 END) AS approved,
+      SUM(CASE WHEN approval_status = 'change_requested' THEN 1 ELSE 0 END) AS change_requested,
+      SUM(CASE WHEN approval_status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
+      SUM(CASE WHEN approval_status = 'pending' THEN 1 ELSE 0 END) AS pending,
+      COUNT(*) AS total
+    FROM posts WHERE editorial_plan_id = ? AND month_number = ?
+  `).get(planId, month);
+  sendAdminSummaryIfComplete(db, approvalForEmail, planId, month, counts, 'approved');
+
   audit.logFromReq(req, {
     client_id: plan.client_id,
     action: 'plan_month.approved_by_admin',
