@@ -2,6 +2,7 @@ const express = require('express');
 const { getDb } = require('../lib/db');
 const { pageAuthMiddleware, verifyToken } = require('../lib/auth');
 const { SETTORI, getQuestionnaireConfig } = require('../lib/questionnaire-config');
+const audit = require('../lib/audit');
 
 const router = express.Router();
 
@@ -258,6 +259,38 @@ router.get('/posts/:id', (req, res) => {
 // Logs page
 router.get('/logs', (req, res) => {
   res.render('logs', { title: 'Log', user: req.user });
+});
+
+// Audit log page
+router.get('/audit', (req, res) => {
+  const db = getDb();
+  const filters = {
+    client_id:  req.query.client_id || '',
+    actor_type: req.query.actor_type || '',
+    actor_id:   req.query.actor_id || '',
+    action:     req.query.action || '',
+    date_from:  req.query.date_from || '',
+    date_to:    req.query.date_to || '',
+    limit:      parseInt(req.query.limit, 10) || 200,
+    offset:     parseInt(req.query.offset, 10) || 0
+  };
+  // Normalizza date_to per includere tutta la giornata selezionata
+  const qFilters = { ...filters };
+  if (qFilters.date_to && qFilters.date_to.length === 10) qFilters.date_to = qFilters.date_to + ' 23:59:59';
+  const result = audit.query(qFilters);
+  const clients = db.prepare(`SELECT id, display_name FROM clients ORDER BY display_name`).all();
+  const actors = audit.distinctActors();
+  const actions = audit.distinctActions();
+  res.render('audit', {
+    title: 'Audit',
+    user: req.user,
+    rows: result.rows,
+    total: result.total,
+    filters,
+    clients,
+    actors,
+    actions
+  });
 });
 
 // Settings page

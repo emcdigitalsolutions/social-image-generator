@@ -1,0 +1,201 @@
+<%- include('layout', { title, user, activeNav: 'audit' }) %>
+
+<style>
+  .audit-filters {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap:10px; margin-bottom:18px;
+  }
+  .audit-filters label { font-size:11px; color:var(--gray-500); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:4px; }
+  .audit-filters select, .audit-filters input {
+    width:100%; padding:8px 10px; border:1px solid var(--gray-200); border-radius:6px;
+    font-size:13px; background:white;
+  }
+  .audit-actions { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+  .audit-total { font-size:13px; color:var(--gray-500); align-self:center; margin-left:auto; }
+  .audit-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .audit-table thead th {
+    background:var(--gray-50); text-align:left; padding:10px 12px;
+    border-bottom:2px solid var(--gray-200); font-weight:600; font-size:12px;
+    color:var(--gray-600); text-transform:uppercase; letter-spacing:0.3px;
+    position:sticky; top:0; z-index:5;
+  }
+  .audit-table tbody td {
+    padding:10px 12px; border-bottom:1px solid var(--gray-100); vertical-align:top;
+  }
+  .audit-table tbody tr:hover { background:var(--gray-50); }
+  .audit-time { white-space:nowrap; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; font-size:12px; color:var(--gray-600); }
+  .audit-actor {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.3px;
+  }
+  .audit-actor.user    { background:#dbeafe; color:#1e3a8a; }
+  .audit-actor.client  { background:#fef3c7; color:#92400e; }
+  .audit-actor.system  { background:var(--gray-100); color:var(--gray-600); }
+  .audit-action {
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; font-size:12px;
+    padding:2px 8px; border-radius:4px; background:var(--gray-100); color:var(--gray-700);
+    display:inline-block;
+  }
+  .audit-action.approved { background:#dcfce7; color:#166534; }
+  .audit-action.rejected { background:#fee2e2; color:#991b1b; }
+  .audit-action.failed   { background:#fee2e2; color:#991b1b; }
+  .audit-action.changes  { background:#fef3c7; color:#92400e; }
+  .audit-details {
+    font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; font-size:11px;
+    color:var(--gray-600); max-width:400px; white-space:pre-wrap; word-break:break-word;
+  }
+  .audit-details details summary { cursor:pointer; color:var(--gray-500); }
+  .audit-empty { text-align:center; padding:40px; color:var(--gray-400); }
+  .audit-pager { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:16px; }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>Audit</h1>
+    <p style="font-size:13px;color:var(--gray-500);margin-top:4px">
+      Cronologia operazioni: approvazioni cliente, modifiche piani, pubblicazioni, gestione clienti.
+    </p>
+  </div>
+</div>
+
+<form method="GET" action="/dashboard/audit" class="card" style="margin-bottom:20px">
+  <div class="audit-filters">
+    <div>
+      <label for="f-client">Cliente</label>
+      <select name="client_id" id="f-client">
+        <option value="">Tutti</option>
+        <% clients.forEach(c => { %>
+          <option value="<%= c.id %>" <%= filters.client_id === c.id ? 'selected' : '' %>><%= c.display_name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div>
+      <label for="f-actor-type">Tipo autore</label>
+      <select name="actor_type" id="f-actor-type">
+        <option value="">Tutti</option>
+        <option value="user"   <%= filters.actor_type === 'user'   ? 'selected' : '' %>>Operatore</option>
+        <option value="client" <%= filters.actor_type === 'client' ? 'selected' : '' %>>Cliente</option>
+        <option value="system" <%= filters.actor_type === 'system' ? 'selected' : '' %>>Sistema</option>
+      </select>
+    </div>
+    <div>
+      <label for="f-actor">Autore</label>
+      <select name="actor_id" id="f-actor">
+        <option value="">Tutti</option>
+        <% actors.forEach(a => { %>
+          <option value="<%= a.actor_id %>" <%= filters.actor_id === a.actor_id ? 'selected' : '' %>>
+            <%= a.actor_label || a.actor_id %> (<%= a.actor_type %>)
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    <div>
+      <label for="f-action">Azione</label>
+      <select name="action" id="f-action">
+        <option value="">Tutte</option>
+        <% actions.forEach(a => { %>
+          <option value="<%= a.action %>" <%= filters.action === a.action ? 'selected' : '' %>>
+            <%= a.action %> (<%= a.n %>)
+          </option>
+        <% }) %>
+      </select>
+    </div>
+    <div>
+      <label for="f-from">Dal</label>
+      <input type="date" name="date_from" id="f-from" value="<%= filters.date_from %>">
+    </div>
+    <div>
+      <label for="f-to">Al</label>
+      <input type="date" name="date_to" id="f-to" value="<%= filters.date_to %>">
+    </div>
+  </div>
+  <div class="audit-actions">
+    <button type="submit" class="btn btn-primary btn-sm">Applica filtri</button>
+    <a href="/dashboard/audit" class="btn btn-secondary btn-sm">Reset</a>
+    <span class="audit-total"><strong><%= total %></strong> eventi (mostrati <%= rows.length %>)</span>
+  </div>
+</form>
+
+<% if (!rows.length) { %>
+  <div class="audit-empty">
+    <h3 style="margin:0 0 6px">Nessun evento</h3>
+    <p style="margin:0">Nessuna operazione corrisponde ai filtri.</p>
+  </div>
+<% } else { %>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table class="audit-table">
+      <thead>
+        <tr>
+          <th>Quando</th>
+          <th>Autore</th>
+          <th>Cliente</th>
+          <th>Azione</th>
+          <th>Dettagli</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.forEach(r => {
+          const actionClass =
+            /approved/.test(r.action) ? 'approved' :
+            /rejected|failed|exception/.test(r.action) ? 'rejected' :
+            /change_requested/.test(r.action) ? 'changes' : '';
+          const detailsStr = r.details ? JSON.stringify(r.details, null, 2) : '';
+        %>
+          <tr>
+            <td class="audit-time"><%= r.created_at %></td>
+            <td>
+              <span class="audit-actor <%= r.actor_type %>"><%= r.actor_type %></span>
+              <div style="margin-top:3px;font-size:12px"><%= r.actor_label || r.actor_id || '—' %></div>
+            </td>
+            <td>
+              <% if (r.client_id) { %>
+                <a href="/dashboard/clients/<%= r.client_id %>" style="color:var(--blue);text-decoration:none">
+                  <%= r.client_name || r.client_id %>
+                </a>
+              <% } else { %>
+                <span style="color:var(--gray-400)">—</span>
+              <% } %>
+            </td>
+            <td><span class="audit-action <%= actionClass %>"><%= r.action %></span></td>
+            <td>
+              <% if (detailsStr) { %>
+                <details>
+                  <summary>Mostra dettagli</summary>
+                  <div class="audit-details"><%= detailsStr %></div>
+                </details>
+              <% } else { %>
+                <span style="color:var(--gray-300)">—</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (total > rows.length) { %>
+    <div class="audit-pager">
+      <% const prevOffset = Math.max(0, filters.offset - filters.limit); %>
+      <% const nextOffset = filters.offset + filters.limit; %>
+      <% function buildQs(offset) {
+          const p = new URLSearchParams();
+          Object.entries(filters).forEach(([k, v]) => { if (v && k !== 'offset') p.set(k, v); });
+          p.set('offset', offset);
+          return '?' + p.toString();
+      } %>
+      <% if (filters.offset > 0) { %>
+        <a href="/dashboard/audit<%= buildQs(prevOffset) %>" class="btn btn-sm btn-secondary">&larr; Precedente</a>
+      <% } %>
+      <span style="font-size:12px;color:var(--gray-500)">
+        <%= filters.offset + 1 %>&ndash;<%= Math.min(filters.offset + rows.length, total) %> di <%= total %>
+      </span>
+      <% if (nextOffset < total) { %>
+        <a href="/dashboard/audit<%= buildQs(nextOffset) %>" class="btn btn-sm btn-secondary">Successivo &rarr;</a>
+      <% } %>
+    </div>
+  <% } %>
+<% } %>
+
+<%- include('layout-end') %>

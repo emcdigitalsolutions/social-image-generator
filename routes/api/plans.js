@@ -5,6 +5,7 @@ const { authMiddleware } = require('../../lib/auth');
 const { generateEditorialPlan, generateCategoryPosts } = require('../../lib/ai-provider');
 const postMedia = require('../../lib/post-media');
 const { renderPlanPdf } = require('../../lib/pdf');
+const audit = require('../../lib/audit');
 
 const VALID_MEDIA_TYPES = new Set(['single_image', 'carousel', 'reel', 'story']);
 
@@ -131,6 +132,13 @@ router.post('/generate', async (req, res) => {
 
     const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(id);
     if (plan.plan_data) plan.plan_data = JSON.parse(plan.plan_data);
+    audit.logFromReq(req, {
+      client_id,
+      action: 'plan.generated',
+      entity_type: 'editorial_plan',
+      entity_id: id,
+      details: { title, months: planMonths, provider: client.ai_provider || 'gemini' }
+    });
     res.status(201).json(plan);
   } catch (err) {
     console.error('[plans] Generation error:', err.message);
@@ -213,6 +221,13 @@ router.delete('/:id', (req, res) => {
     catch (err) { console.warn('[plans] cleanup failed for post', p.id, err.message); }
   }
 
+  audit.logFromReq(req, {
+    client_id: plan.client_id,
+    action: 'plan.deleted',
+    entity_type: 'editorial_plan',
+    entity_id: req.params.id,
+    details: { title: plan.title, status: plan.status, draft_posts_removed: draftPosts.length }
+  });
   res.json({ deleted: true, draft_posts_removed: draftPosts.length });
 });
 
@@ -230,6 +245,13 @@ router.post('/:id/activate', (req, res) => {
 
   const updated = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
   if (updated.plan_data) updated.plan_data = JSON.parse(updated.plan_data);
+  audit.logFromReq(req, {
+    client_id: plan.client_id,
+    action: 'plan.activated',
+    entity_type: 'editorial_plan',
+    entity_id: req.params.id,
+    details: { title: plan.title }
+  });
   res.json(updated);
 });
 
@@ -244,6 +266,13 @@ router.post('/:id/deactivate', (req, res) => {
 
   const updated = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(req.params.id);
   if (updated.plan_data) updated.plan_data = JSON.parse(updated.plan_data);
+  audit.logFromReq(req, {
+    client_id: plan.client_id,
+    action: 'plan.deactivated',
+    entity_type: 'editorial_plan',
+    entity_id: req.params.id,
+    details: { title: plan.title }
+  });
   res.json(updated);
 });
 

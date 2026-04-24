@@ -23,6 +23,7 @@ const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { notifyApprovalSummary } = require('../../lib/notifier');
+const audit = require('../../lib/audit');
 
 const router = express.Router();
 
@@ -73,6 +74,13 @@ router.post('/admin/plans/:planId/months/:month', authMiddleware, (req, res) => 
   `).run(planId, month);
 
   const approval = db.prepare('SELECT * FROM monthly_approvals WHERE id = ?').get(id);
+  audit.logFromReq(req, {
+    client_id: plan.client_id,
+    action: 'approval.link_created',
+    entity_type: 'monthly_approval',
+    entity_id: id,
+    details: { plan_id: planId, month_number: month, expires_at: expiresAt }
+  });
   res.status(201).json({ approval, created: true });
 });
 
@@ -98,8 +106,18 @@ router.get('/admin/plans/:planId', authMiddleware, (req, res) => {
 
 router.delete('/admin/:approvalId', authMiddleware, (req, res) => {
   const db = getDb();
+  const approvalToDelete = db.prepare('SELECT ma.*, p.client_id FROM monthly_approvals ma JOIN editorial_plans p ON p.id = ma.editorial_plan_id WHERE ma.id = ?').get(req.params.approvalId);
   const result = db.prepare('DELETE FROM monthly_approvals WHERE id = ?').run(req.params.approvalId);
   if (!result.changes) return res.status(404).json({ error: 'Approval not found' });
+  if (approvalToDelete) {
+    audit.logFromReq(req, {
+      client_id: approvalToDelete.client_id,
+      action: 'approval.link_revoked',
+      entity_type: 'monthly_approval',
+      entity_id: req.params.approvalId,
+      details: { plan_id: approvalToDelete.editorial_plan_id, month_number: approvalToDelete.month_number }
+    });
+  }
   res.json({ deleted: true });
 });
 
@@ -144,6 +162,13 @@ router.post('/admin/posts/:postId/set-approval', authMiddleware, (req, res) => {
     db.prepare(`UPDATE monthly_approvals SET status = ?, last_action_at = datetime('now')${setApprovedAt} WHERE id = ?`)
       .run(newApprovalStatus, approval.id);
   }
+  audit.logFromReq(req, {
+    client_id: post.client_id,
+    action: 'post.approval_changed_by_admin',
+    entity_type: 'post',
+    entity_id: post.id,
+    details: { new_status: status, comment: comment || null, plan_id: post.editorial_plan_id, month_number: post.month_number }
+  });
   res.json({ ok: true, approval_status: status });
 });
 
@@ -170,6 +195,13 @@ router.post('/admin/plans/:planId/months/:month/approve-all', authMiddleware, (r
                 SET status = 'approved', approved_at = datetime('now'), last_action_at = datetime('now')
                 WHERE id = ?`).run(existing.id);
   }
+  audit.logFromReq(req, {
+    client_id: plan.client_id,
+    action: 'plan_month.approved_by_admin',
+    entity_type: 'editorial_plan',
+    entity_id: planId,
+    details: { month_number: month, posts_approved: approved.changes }
+  });
   res.json({ ok: true, approved: approved.changes, approval_updated: !!existing });
 });
 
@@ -257,6 +289,8 @@ function recordPostAction(db, approval, post, newStatus, commentText) {
 // Invia UNA email di riepilogo all'admin quando il cliente ha completato la
 // revisione (pending === 0). Sostituisce il comportamento precedente che
 // mandava una mail per ogni singola azione del cliente.
+// Inoltre logga l'evento aggregato nell'audit se lo stato del mese è appena
+// diventato 'approved' (informazione chiave: "il cliente ha approvato tutto").
 function notifySummaryIfComplete(req, counts, newApprovalStatus) {
   if (!counts || counts.pending !== 0) return;
   const db = getDb();
@@ -271,6 +305,23 @@ function notifySummaryIfComplete(req, counts, newApprovalStatus) {
   `).all(req.approval.editorial_plan_id, req.approval.month_number);
   notifyApprovalSummary(req.approval, req.plan, req.client, posts, counts, newApprovalStatus)
     .catch(err => console.error('[approval summary notifier]', err.message));
+
+  // Audit aggregato: tracciamo il cambio di stato del mese (approved / changes_requested)
+  // con le statistiche complete — è la riga che l'admin cercherà per dimostrare
+  // "il cliente ha approvato il piano".
+  if (newApprovalStatus === 'approved' || newApprovalStatus === 'changes_requested') {
+    audit.logAsClient(req.client, {
+      action: newApprovalStatus === 'approved' ? 'plan_month.approved_by_client' : 'plan_month.changes_requested_by_client',
+      entity_type: 'monthly_approval',
+      entity_id: req.approval.id,
+      details: {
+        plan_id: req.approval.editorial_plan_id,
+        plan_title: req.plan && req.plan.title,
+        month_number: req.approval.month_number,
+        counts
+      }
+    }, req.ip);
+  }
 }
 
 router.post('/public/:token/posts/:postId/approve', loadPublicContext, (req, res) => {
@@ -279,6 +330,12 @@ router.post('/public/:token/posts/:postId/approve', loadPublicContext, (req, res
     .get(req.params.postId, req.approval.editorial_plan_id, req.approval.month_number);
   if (!post) return res.status(404).json({ error: 'Post not found in this approval' });
   const { counts, newApprovalStatus } = recordPostAction(db, req.approval, post, 'approved', null);
+  audit.logAsClient(req.client, {
+    action: 'post.approved_by_client',
+    entity_type: 'post',
+    entity_id: post.id,
+    details: { plan_id: post.editorial_plan_id, month_number: post.month_number, category: post.category, sub_topic: post.sub_topic }
+  }, req.ip);
   notifySummaryIfComplete(req, counts, newApprovalStatus);
   res.json({ ok: true });
 });
@@ -291,6 +348,12 @@ router.post('/public/:token/posts/:postId/request', loadPublicContext, (req, res
   const text = req.body && req.body.comment ? req.body.comment : '';
   if (!text || !text.trim()) return res.status(400).json({ error: 'Per chiedere una modifica scrivi un commento' });
   const { counts, newApprovalStatus } = recordPostAction(db, req.approval, post, 'change_requested', text);
+  audit.logAsClient(req.client, {
+    action: 'post.change_requested_by_client',
+    entity_type: 'post',
+    entity_id: post.id,
+    details: { plan_id: post.editorial_plan_id, month_number: post.month_number, category: post.category, comment: text.slice(0, 500) }
+  }, req.ip);
   notifySummaryIfComplete(req, counts, newApprovalStatus);
   res.json({ ok: true });
 });
@@ -302,6 +365,12 @@ router.post('/public/:token/posts/:postId/reject', loadPublicContext, (req, res)
   if (!post) return res.status(404).json({ error: 'Post not found in this approval' });
   const text = req.body && req.body.comment ? req.body.comment : '';
   const { counts, newApprovalStatus } = recordPostAction(db, req.approval, post, 'rejected', text);
+  audit.logAsClient(req.client, {
+    action: 'post.rejected_by_client',
+    entity_type: 'post',
+    entity_id: post.id,
+    details: { plan_id: post.editorial_plan_id, month_number: post.month_number, category: post.category, comment: (text || '').slice(0, 500) }
+  }, req.ip);
   notifySummaryIfComplete(req, counts, newApprovalStatus);
   res.json({ ok: true });
 });
@@ -327,6 +396,12 @@ router.post('/public/:token/approve-all', loadPublicContext, (req, res) => {
       COUNT(*) AS total
     FROM posts WHERE editorial_plan_id = ? AND month_number = ?
   `).get(req.approval.editorial_plan_id, req.approval.month_number);
+  audit.logAsClient(req.client, {
+    action: 'plan_month.approve_all_by_client',
+    entity_type: 'monthly_approval',
+    entity_id: req.approval.id,
+    details: { plan_id: req.approval.editorial_plan_id, month_number: req.approval.month_number, posts_approved: result.changes }
+  }, req.ip);
   notifySummaryIfComplete(req, counts, 'approved');
 
   res.json({ ok: true, approved: result.changes });

@@ -9,6 +9,7 @@ const { authMiddleware } = require('../../lib/auth');
 const { callAI, generateSystemInstruction, generateThemeCSS } = require('../../lib/ai-provider');
 const { getSectorKeys } = require('../../lib/questionnaire-config');
 const postMedia = require('../../lib/post-media');
+const audit = require('../../lib/audit');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -72,6 +73,13 @@ router.post('/', (req, res) => {
     }
 
     const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(id);
+    audit.logFromReq(req, {
+      client_id: id,
+      action: 'client.created',
+      entity_type: 'client',
+      entity_id: id,
+      details: { display_name, sector, location }
+    });
     res.status(201).json(client);
   } catch (err) {
     if (err.message.includes('UNIQUE')) {
@@ -117,10 +125,32 @@ router.put('/:id', (req, res) => {
   updates.push("updated_at = datetime('now')");
   values.push(req.params.id);
 
+  const before = db.prepare('SELECT status FROM clients WHERE id = ?').get(req.params.id);
   const result = db.prepare(`UPDATE clients SET ${updates.join(', ')} WHERE id = ?`).run(...values);
   if (!result.changes) return res.status(404).json({ error: 'Client not found' });
 
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
+
+  // Tracciamo separatamente il cambio di stato (archived/active/paused) perché
+  // è l'informazione più rilevante nel contesto audit.
+  if (before && req.body.status !== undefined && before.status !== client.status) {
+    audit.logFromReq(req, {
+      client_id: req.params.id,
+      action: 'client.status_changed',
+      entity_type: 'client',
+      entity_id: req.params.id,
+      details: { from: before.status, to: client.status }
+    });
+  } else {
+    audit.logFromReq(req, {
+      client_id: req.params.id,
+      action: 'client.updated',
+      entity_type: 'client',
+      entity_id: req.params.id,
+      details: { fields: Object.keys(req.body || {}) }
+    });
+  }
+
   res.json(client);
 });
 

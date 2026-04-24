@@ -11,6 +11,7 @@ const { notifyPublishFailed, notifyPublishPartial } = require('../../lib/notifie
 const { snapshotPostInsights, getLatestInsights } = require('../../lib/insights');
 const { renderImage } = require('../../lib/renderer');
 const postMedia = require('../../lib/post-media');
+const audit = require('../../lib/audit');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -274,6 +275,20 @@ router.post('/:id/publish', async (req, res) => {
       notifyPublishPartial(post, client, result)
         .catch(e => console.error('[notifier] publish partial notify error:', e.message));
     }
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: status === 'published' ? 'post.published_manual' : 'post.publish_failed',
+      entity_type: 'post',
+      entity_id: post.id,
+      details: {
+        channels,
+        fb_post_id: result.fb_post_id || null,
+        ig_media_id: result.ig_media_id || null,
+        errors: result.errors && result.errors.length ? result.errors : null,
+        category: post.category, sub_topic: post.sub_topic
+      }
+    });
 
     const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(post.id);
     res.json({ post: updated, publish_result: result });
