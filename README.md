@@ -74,7 +74,7 @@ templates/                    — HTML templates Puppeteer (quote, service, caro
 ```
 clients (id, display_name, sector, location, brand_name, website, tagline,
          logo_filename, theme_filename, system_instruction,
-         fb_page_id, fb_system_user_token, ig_user_id, ig_access_token,
+         fb_page_id, fb_system_user_token, ig_user_id,
          ai_provider, anthropic_api_key, gemini_api_key,
          subscription_plan, subscription_price, editorial_months)
 

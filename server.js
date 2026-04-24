@@ -42,7 +42,12 @@ app.use(express.json({ limit: '10mb' }));
 // sui CSS/JS senza invalidare ad ogni request. Esposto come res.locals.assetVersion
 // e come variable nell'EJS.
 const ASSET_VERSION = String(Date.now());
-app.use((req, res, next) => { res.locals.assetVersion = ASSET_VERSION; next(); });
+const viewHelpers = require('./lib/view-helpers');
+app.use((req, res, next) => {
+  res.locals.assetVersion = ASSET_VERSION;
+  res.locals.fmtRome = viewHelpers.fmtRome;
+  next();
+});
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 

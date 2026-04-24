@@ -163,7 +163,7 @@
             <td><%= p.title || 'Piano senza titolo' %></td>
             <td><%= monthCount %> mesi</td>
             <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
-            <td><%= p.created_at %></td>
+            <td><%= fmtRome(p.created_at) %></td>
             <td style="display:flex;gap:4px;align-items:center" onclick="event.stopPropagation()">
               <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deletePlan('<%= p.id %>', '<%= p.status %>')">Elimina</button>
             </td>
@@ -192,10 +192,6 @@
         <div class="form-group">
           <label>Instagram User ID</label>
           <div style="display:flex;gap:4px"><input type="text" name="ig_user_id" value="<%= client.ig_user_id || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
-        </div>
-        <div class="form-group">
-          <label>IG Access Token</label>
-          <div style="display:flex;gap:4px"><input type="password" name="ig_access_token" value="<%= client.ig_access_token || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Salva Credenziali</button>

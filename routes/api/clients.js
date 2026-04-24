@@ -102,7 +102,7 @@ router.put('/:id', (req, res) => {
   const db = getDb();
   const fields = ['display_name', 'sector', 'location', 'website', 'tagline', 'brand_name',
     'contact_email',
-    'fb_page_id', 'fb_system_user_token', 'ig_user_id', 'ig_access_token',
+    'fb_page_id', 'fb_system_user_token', 'ig_user_id',
     'system_instruction', 'anthropic_api_key', 'gemini_api_key', 'ai_provider',
     'status', 'logo_filename', 'theme_filename',
     'subscription_plan', 'subscription_price', 'subscription_notes',

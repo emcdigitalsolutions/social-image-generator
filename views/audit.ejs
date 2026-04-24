@@ -144,7 +144,7 @@
           const detailsStr = r.details ? JSON.stringify(r.details, null, 2) : '';
         %>
           <tr>
-            <td class="audit-time"><%= r.created_at %></td>
+            <td class="audit-time"><%= fmtRome(r.created_at) %></td>
             <td>
               <span class="audit-actor <%= r.actor_type %>"><%= r.actor_type %></span>
               <div style="margin-top:3px;font-size:12px"><%= r.actor_label || r.actor_id || '—' %></div>
