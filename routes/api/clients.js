@@ -656,4 +656,36 @@ router.post('/:id/generate-system-instruction', async (req, res) => {
   }
 });
 
+// ───────── Account-level insights (per cliente) ─────────
+
+// Snapshot on-demand: utile per testare subito senza aspettare il cron 04:00.
+// Il cron giornaliero resta la fonte principale per la serie storica.
+router.post('/:id/insights/snapshot', async (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  if (!client.fb_system_user_token || !client.fb_page_id) {
+    return res.status(400).json({ error: 'Cliente senza fb_system_user_token/fb_page_id configurati' });
+  }
+
+  try {
+    const { getPageToken } = require('../../lib/meta-publish');
+    const { snapshotAccountInsights } = require('../../lib/insights');
+    const pageToken = await getPageToken(client.fb_system_user_token, client.fb_page_id);
+    const results = await snapshotAccountInsights(pageToken, client);
+    res.json({ results });
+  } catch (err) {
+    console.error('[insights snapshot]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// History account_insights (per grafici time-series)
+router.get('/:id/insights/history', (req, res) => {
+  const { getAccountInsightsHistory } = require('../../lib/insights');
+  const days = Math.min(parseInt(req.query.days, 10) || 30, 365);
+  const rows = getAccountInsightsHistory(req.params.id, days);
+  res.json({ days, rows });
+});
+
 module.exports = router;
