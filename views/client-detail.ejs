@@ -14,7 +14,6 @@
   <button class="tab" data-tab="impostazioni">Impostazioni</button>
   <button class="tab" data-tab="questionario">Questionario</button>
   <button class="tab" data-tab="piano">Piano Editoriale</button>
-  <button class="tab" data-tab="posts">Post</button>
 </div>
 
 <!-- Tab: Profilo -->
@@ -162,9 +161,6 @@
             <td><span class="badge badge-<%= p.status %>"><%= p.status %></span></td>
             <td><%= p.created_at %></td>
             <td style="display:flex;gap:4px;align-items:center" onclick="event.stopPropagation()">
-              <% if (p.status === 'active') { %>
-                <button class="btn btn-sm" style="background:var(--gray-400);color:#fff" onclick="deactivatePlan('<%= p.id %>')" title="Disattiva auto-publish">&#9208; Disattiva</button>
-              <% } %>
               <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deletePlan('<%= p.id %>', '<%= p.status %>')">Elimina</button>
             </td>
           </tr>
@@ -172,14 +168,6 @@
         </tbody>
       </table>
     <% } %>
-  </div>
-</div>
-
-<!-- Tab: Posts -->
-<div class="tab-content" id="tab-posts">
-  <div class="card">
-    <div class="card-header"><h3>Tutti i Post</h3></div>
-    <div id="posts-container"><div class="empty-state"><p>I post appariranno qui dopo aver generato un piano editoriale.</p></div></div>
   </div>
 </div>
 
@@ -880,17 +868,6 @@
     }
   }
 
-  // Deactivate plan
-  async function deactivatePlan(id) {
-    try {
-      const res = await apiFetch('/dashboard/api/plans/' + id + '/deactivate', { method: 'POST', body: {} });
-      if (res.error) { await showAlert(res.error); return; }
-      toast('Piano disattivato');
-      window.location.reload();
-    } catch (err) {
-      await showAlert('Errore: ' + err.message);
-    }
-  }
 
   // Scan website
   async function scanWebsite() {
@@ -1017,35 +994,6 @@
     }
   }
 
-  // Load posts
-  (async function loadPosts() {
-    const plans = await apiFetch('/dashboard/api/plans/by-client/' + CLIENT_ID);
-    if (!plans.length) return;
-    let allPosts = [];
-    for (const plan of plans) {
-      const monthCount = plan.plan_data && plan.plan_data.months ? plan.plan_data.months.length : 12;
-      for (let m = 1; m <= monthCount; m++) {
-        const posts = await apiFetch('/dashboard/api/posts/by-plan/' + plan.id + '/month/' + m);
-        allPosts = allPosts.concat(posts);
-      }
-    }
-    if (allPosts.length) {
-      const container = document.getElementById('posts-container');
-      container.innerHTML = '<div class="posts-grid">' + allPosts.map(p => `
-        <a href="/dashboard/posts/${p.id}" class="post-card" style="text-decoration:none;color:inherit">
-          <div class="post-card-image">${p.image_url ? '<img src="' + p.image_url + '">' : 'Nessuna immagine'}</div>
-          <div class="post-card-body">
-            <h4>${p.category || 'Post'}</h4>
-            <p>${p.caption ? p.caption.substring(0, 80) + '...' : p.sub_topic || 'Nessuna caption'}</p>
-            <div class="post-card-footer">
-              <span class="badge badge-${p.status}">${p.status}</span>
-              <span style="font-size:12px;color:var(--gray-400)">M${p.month_number} W${p.week_number}</span>
-            </div>
-          </div>
-        </a>
-      `).join('') + '</div>';
-    }
-  })();
 </script>
 
 <%- include('layout-end') %>
