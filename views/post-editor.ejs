@@ -973,6 +973,21 @@
         dzEl.classList.remove('is-uploading');
         progressEl.style.display = 'none';
 
+        // Auto-switch del tipo post a "Reel" se è stato caricato un video e il tipo
+        // attuale è ancora una variante statica (singola/carousel). Reel è il formato
+        // social più comune per video verticali; se serve "Video" (feed classico) o
+        // "Storia" l'utente può ancora cambiarlo dai chip.
+        const uploadedVideo = (data.media || []).find(m => m.kind === 'video');
+        if (uploadedVideo && MEDIA_TYPE !== 'reel' && MEDIA_TYPE !== 'video' && MEDIA_TYPE !== 'story') {
+          const typeRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media-type', {
+            method: 'PUT', body: { media_type: 'reel' }
+          });
+          if (!typeRes.error) {
+            setType('reel');
+            toast('Video rilevato: tipo post impostato su "Reel". Cambialo dai chip se preferisci un altro formato.');
+          }
+        }
+
         // Check warnings proporzioni Instagram: se il backend ha flaggato un media,
         // avvisa l'utente e proponi il crop tool subito (preset 1:1 quadrato = sempre OK).
         const withWarnings = (data.media || []).filter(m => m._warnings && m._warnings.length);
