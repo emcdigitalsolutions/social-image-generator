@@ -136,14 +136,19 @@ router.post('/test-google-script', async (req, res) => {
     const { URL } = require('url');
     const u = new URL(url);
     const smtpConfig = settings.getSmtpConfig();
+    const testCc = (req.body && typeof req.body.cc === 'string') ? req.body.cc.trim() : '';
     // site='emcdigitalsolutions' così lo script GAS routa il destinatario su EMC
     // (lo stesso target dei form contatti del sito emcdigitalsolutions).
+    // Prefisso "[SIG] " attiva nel GAS il ramo notifiche (HTML come-è, senza wrapper form contatti).
     const payload = JSON.stringify({
       site: 'emcdigitalsolutions',
-      name: '[SIG TEST] Configurazione Google Apps Script',
+      name: '[SIG] Test configurazione Google Apps Script' + (testCc ? ' (con CC)' : ''),
       email: smtpConfig.user || 'noreply@emcdigitalsolutions.it',
       phone: '',
-      message: 'Questa è una email di test dalla dashboard SIG. Se la ricevi, Google Apps Script è configurato correttamente per inviare le notifiche admin (publish failed/partial, approvazioni cliente).'
+      message: '<p>Questa è una email di test dalla dashboard SIG.</p>'
+        + '<p>Se la ricevi, Google Apps Script è configurato correttamente per inviare le notifiche admin (publish failed/partial, approvazioni cliente).</p>'
+        + (testCc ? '<p><strong>CC test attivo:</strong> ' + testCc.replace(/[<>&]/g, '') + ' dovrebbe aver ricevuto una copia di questa email.</p>' : ''),
+      cc: testCc
     });
     const result = await new Promise((resolve, reject) => {
       const req2 = https.request({

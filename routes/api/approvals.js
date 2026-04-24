@@ -216,7 +216,7 @@ function loadPublicContext(req, res, next) {
   const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(approval.editorial_plan_id);
   if (!plan) return res.status(404).json({ error: 'Piano editoriale non trovato' });
 
-  const client = db.prepare('SELECT id, display_name, brand_name, logo_filename FROM clients WHERE id = ?').get(plan.client_id);
+  const client = db.prepare('SELECT id, display_name, brand_name, logo_filename, contact_email FROM clients WHERE id = ?').get(plan.client_id);
 
   req.approval = approval;
   req.plan = plan;

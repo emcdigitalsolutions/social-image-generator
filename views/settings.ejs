@@ -89,6 +89,11 @@
       <label>Google Apps Script URL</label>
       <input type="url" id="setGoogleScriptUrl" placeholder="https://script.google.com/macros/s/…/exec">
     </div>
+    <div class="form-group">
+      <label>CC di test (opzionale)</label>
+      <input type="email" id="setGoogleScriptTestCc" placeholder="indirizzo@esempio.it — solo per il bottone 'Test Google Script'">
+      <small style="color:var(--gray-500); font-size:12px">Se valorizzato, la mail di test viene inviata anche in CC a questo indirizzo. Utile per verificare che il GAS propaghi correttamente il campo <code>cc</code>. Non viene salvato.</small>
+    </div>
 
     <div style="display:flex; gap:8px; flex-wrap:wrap">
       <button type="submit" class="btn btn-primary">Salva</button>
@@ -211,9 +216,11 @@ async function testSmtp() {
 async function testGoogleScript() {
   try {
     setBanner('smtpAlert','info', 'Invio via Google Script in corso...');
+    const cc = (document.getElementById('setGoogleScriptTestCc').value || '').trim();
     const res = await fetch('/dashboard/api/settings/test-google-script', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + getToken() }
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ cc })
     });
     const ct = res.headers.get('content-type') || '';
     const text = await res.text();
