@@ -480,7 +480,15 @@
     <div class="card">
       <div class="card-header"><h3>Pubblicazione</h3></div>
       <% if (post.status === 'published') { %>
-        <p style="color:var(--green);font-size:14px;margin-bottom:8px">Pubblicato il <%= post.published_at %></p>
+        <%# published_at è UTC (SQLite datetime('now')). Converti in Europe/Rome per la UI. %>
+        <%
+          let _pubDisplay = post.published_at;
+          if (post.published_at) {
+            const _d = new Date(post.published_at.replace(' ', 'T') + 'Z');
+            if (!isNaN(_d)) _pubDisplay = _d.toLocaleString('it-IT', { timeZone: 'Europe/Rome', hour12: false });
+          }
+        %>
+        <p style="color:var(--green);font-size:14px;margin-bottom:8px">Pubblicato il <%= _pubDisplay %></p>
         <% if (post.fb_post_id) { %><p style="font-size:12px;color:var(--gray-500)">FB: <%= post.fb_post_id %></p><% } %>
         <% if (post.ig_media_id) { %><p style="font-size:12px;color:var(--gray-500)">IG: <%= post.ig_media_id %></p><% } %>
       <% } %>
