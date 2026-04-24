@@ -23,6 +23,7 @@ const { seedUsers } = require('./lib/auth');
 const scheduler = require('./lib/scheduler');
 const cron = require('node-cron');
 const { runBackup } = require('./lib/backup');
+const { sendMonthlyReminders } = require('./lib/reminders');
 
 const app = express();
 const PORT = process.env.PORT || 3100;
@@ -183,6 +184,14 @@ seedUsers();
 scheduler.start();
 runBackup();
 cron.schedule('0 3 * * *', runBackup);
+
+// Promemoria mensile: il 25 di ogni mese alle 08:00 (Europe/Rome) — invia all'admin
+// un digest dello stato dei piani per ciascun cliente attivo, ed eventuali solleciti
+// ai clienti che hanno un piano in attesa di approvazione (richiede contact_email).
+cron.schedule('0 8 25 * *', () => {
+  console.log('[reminders] Avvio invio promemoria mensile');
+  Promise.resolve(sendMonthlyReminders()).catch(e => console.error('[reminders]', e.message));
+}, { timezone: 'Europe/Rome' });
 
 app.listen(PORT, () => {
   console.log(`Social Image Generator running on port ${PORT}`);

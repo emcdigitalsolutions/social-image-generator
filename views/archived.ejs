@@ -1,0 +1,33 @@
+<%- include('layout', { title, user, activeNav: 'archived' }) %>
+
+<div class="page-header">
+  <div>
+    <h1>Clienti archiviati</h1>
+    <p style="font-size:13px;color:var(--gray-500);margin-top:4px">
+      <%= clients.length %> <%= clients.length === 1 ? 'cliente archiviato' : 'clienti archiviati' %>.
+      Per riattivare un cliente, apri la sua scheda e cambia lo stato a "Attivo".
+    </p>
+  </div>
+  <a href="/dashboard" class="btn btn-secondary">← Torna ai clienti attivi</a>
+</div>
+
+<div class="clients-grid">
+  <% if (clients.length === 0) { %>
+    <div class="empty-state">
+      <h3>Nessun cliente archiviato</h3>
+      <p>Quando un cliente termina l'abbonamento puoi archiviarlo dalla sua scheda. Resterà qui e potrà essere riattivato in qualsiasi momento.</p>
+    </div>
+  <% } %>
+  <% clients.forEach(c => { %>
+    <a href="/dashboard/clients/<%= c.id %>" class="client-card" style="opacity:0.8">
+      <div class="client-logo" style="background:var(--gray-200);color:var(--gray-500)"><%= (c.display_name || c.id).charAt(0).toUpperCase() %></div>
+      <div class="client-info">
+        <h3><%= c.display_name %></h3>
+        <p><%= c.sector ? c.sector.replace(/_/g, ' ') : 'Settore non definito' %> &middot; <%= c.location || '' %></p>
+        <span class="badge badge-archived">archiviato</span>
+      </div>
+    </a>
+  <% }) %>
+</div>
+
+<%- include('layout-end') %>

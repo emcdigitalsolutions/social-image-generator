@@ -109,6 +109,35 @@
     .page-header.plan-header { flex-direction:row; flex-wrap:wrap; }
     .page-header.plan-header .plan-actions { width:100%; justify-content:flex-start; }
   }
+
+  /* Sezioni collassabili: click sull'header per chiudere/riaprire.
+     Default: aperte. Stato persistito in localStorage per piano. */
+  .card-collapsible > .card-header { cursor:pointer; user-select:none; }
+  .card-collapsible > .card-header::after {
+    content:''; width:10px; height:10px; margin-left:10px;
+    border-right:2px solid var(--gray-500);
+    border-bottom:2px solid var(--gray-500);
+    transform:rotate(45deg); transition:transform .2s ease;
+    align-self:center; flex:none;
+  }
+  .card-collapsible.card-collapsed > .card-header::after {
+    transform:rotate(-45deg);
+  }
+  .card-collapsible.card-collapsed > :not(.card-header) { display:none !important; }
+  /* Stessa idea per sezioni non-card (es. Mesi) */
+  .section-collapsible .section-header {
+    display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none;
+    margin:0 0 6px;
+  }
+  .section-collapsible .section-header h3 { margin:0; }
+  .section-collapsible .section-header::after {
+    content:''; width:10px; height:10px;
+    border-right:2px solid var(--gray-500);
+    border-bottom:2px solid var(--gray-500);
+    transform:rotate(45deg); transition:transform .2s ease; flex:none;
+  }
+  .section-collapsible.section-collapsed .section-header::after { transform:rotate(-45deg); }
+  .section-collapsible.section-collapsed .section-body { display:none; }
 </style>
 
 <div class="breadcrumb">
@@ -141,10 +170,10 @@
 <% } %>
 
 <% if (plan.plan_data && plan.plan_data.categories) { %>
-<div class="card" style="margin-bottom:24px">
+<div class="card card-collapsible" data-section="categorie" style="margin-bottom:24px">
   <div class="card-header">
     <h3>Categorie</h3>
-    <button class="btn btn-sm btn-secondary" onclick="addCategory()">+ Aggiungi categoria</button>
+    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();addCategory()">+ Aggiungi categoria</button>
   </div>
   <p style="font-size:12px;color:var(--gray-500);margin:0 0 10px">Modifica codice/nome/frequenza/descrizione direttamente. <em>Rigenera</em> chiama l'AI per ricreare i post draft di quella categoria mantenendo intatto il resto del piano.</p>
   <table class="cat-table">
@@ -162,8 +191,10 @@
 <% } %>
 
 <% if (plan.plan_data && plan.plan_data.months) { %>
-<h3 style="margin-bottom:6px">Mesi</h3>
-<p style="font-size:12px;color:var(--gray-500);margin:0 0 12px">Click su un mese per aprire la vista calendario/lista. La barra colorata mostra a colpo d'occhio lo stato dei post.</p>
+<div class="section-collapsible" data-section="mesi" style="margin-bottom:24px">
+  <div class="section-header"><h3>Mesi</h3></div>
+  <div class="section-body">
+    <p style="font-size:12px;color:var(--gray-500);margin:0 0 12px">Click su un mese per aprire la vista calendario/lista. La barra colorata mostra a colpo d'occhio lo stato dei post.</p>
 <div class="month-grid">
   <% const totalMonths = plan.plan_data.months.length; %>
   <% for (let m = 1; m <= totalMonths; m++) {
@@ -197,10 +228,12 @@
     </a>
   <% } %>
 </div>
+  </div>
+</div>
 <% } %>
 
 <% if (plan.plan_data && plan.plan_data.months) { %>
-<div class="card approvals-card">
+<div class="card approvals-card card-collapsible" data-section="approvazioni">
   <div class="card-header">
     <h3>Approvazioni cliente</h3>
     <span style="font-size:12px;color:var(--gray-500)">Genera un link per ogni mese e mandalo al cliente per farglielo approvare</span>
@@ -660,6 +693,31 @@
       await showAlert('Errore: ' + err.message);
     }
   }
+
+  // Sezioni collassabili: click sull'header chiude/riapre. Stato salvato per
+  // piano in localStorage così ciascun utente mantiene le sue preferenze.
+  (function initCollapsibles() {
+    const storageKey = 'plan-collapse-' + PLAN_ID;
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(storageKey) || '{}') || {}; } catch (_) { saved = {}; }
+
+    const sections = document.querySelectorAll('.card-collapsible, .section-collapsible');
+    sections.forEach(sec => {
+      const key = sec.dataset.section;
+      if (!key) return;
+      const collapsedClass = sec.classList.contains('card-collapsible') ? 'card-collapsed' : 'section-collapsed';
+      if (saved[key]) sec.classList.add(collapsedClass);
+      const header = sec.querySelector(':scope > .card-header, :scope > .section-header');
+      if (!header) return;
+      header.addEventListener('click', (e) => {
+        // Non collassare se l'utente ha cliccato un controllo interno (bottoni/link)
+        if (e.target.closest('button, a, input, textarea, select')) return;
+        sec.classList.toggle(collapsedClass);
+        saved[key] = sec.classList.contains(collapsedClass);
+        try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch (_) {}
+      });
+    });
+  })();
 </script>
 
 <%- include('layout-end') %>

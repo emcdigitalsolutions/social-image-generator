@@ -301,6 +301,25 @@
   <% } %>
 </div>
 
+<% if (typeof prevPostId !== 'undefined' && (prevPostId || nextPostId || monthUrl)) { %>
+<div style="display:flex;gap:6px;align-items:center;margin:0 0 12px;flex-wrap:wrap">
+  <% if (monthUrl) { %>
+    <a href="<%= monthUrl %>" class="btn btn-sm btn-secondary" title="Torna alla vista del mese">&#8592; Tutti i post del mese</a>
+  <% } %>
+  <div style="flex:1"></div>
+  <% if (prevPostId) { %>
+    <a href="/dashboard/posts/<%= prevPostId %>" class="btn btn-sm btn-secondary" title="Post precedente">&#8592; Precedente</a>
+  <% } else { %>
+    <button class="btn btn-sm btn-secondary" disabled>&#8592; Precedente</button>
+  <% } %>
+  <% if (nextPostId) { %>
+    <a href="/dashboard/posts/<%= nextPostId %>" class="btn btn-sm btn-secondary" title="Post successivo">Successivo &#8594;</a>
+  <% } else { %>
+    <button class="btn btn-sm btn-secondary" disabled>Successivo &#8594;</button>
+  <% } %>
+</div>
+<% } %>
+
 <div class="page-header">
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <h1 style="margin:0"><%= post.category || 'Editor Post' %></h1>

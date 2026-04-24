@@ -65,10 +65,15 @@ router.post('/q/:token/submit', express.json(), (req, res) => {
 // Protected pages below
 router.use(pageAuthMiddleware);
 
-// Dashboard home
+// Dashboard home: solo clienti NON archiviati
 router.get('/', (req, res) => {
   const db = getDb();
-  const clients = db.prepare("SELECT * FROM clients ORDER BY status = 'active' DESC, updated_at DESC").all();
+  const clients = db.prepare(`
+    SELECT * FROM clients
+    WHERE status != 'archived'
+    ORDER BY status = 'active' DESC, updated_at DESC
+  `).all();
+  const archivedCount = db.prepare(`SELECT COUNT(*) AS n FROM clients WHERE status = 'archived'`).get().n;
 
   // Post stats per client
   const statsRows = db.prepare(`
@@ -88,7 +93,16 @@ router.get('/', (req, res) => {
   for (const row of statsRows) statsMap[row.client_id] = row;
   clients.forEach(c => { c.stats = statsMap[c.id] || defaultStats; });
 
-  res.render('dashboard', { title: 'Dashboard', clients, user: req.user });
+  res.render('dashboard', { title: 'Dashboard', clients, archivedCount, user: req.user });
+});
+
+// Clienti archiviati: vista separata accessibile dalla sidebar
+router.get('/archived', (req, res) => {
+  const db = getDb();
+  const clients = db.prepare(`
+    SELECT * FROM clients WHERE status = 'archived' ORDER BY updated_at DESC
+  `).all();
+  res.render('archived', { title: 'Clienti archiviati', clients, user: req.user });
 });
 
 // Client detail
@@ -223,7 +237,22 @@ router.get('/posts/:id', (req, res) => {
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
   const media = db.prepare('SELECT * FROM post_media WHERE post_id = ? ORDER BY position ASC').all(post.id);
 
-  res.render('post-editor', { title: 'Editor Post', client, post, media, user: req.user });
+  // Navigazione prev/next tra i post dello stesso mese/piano, nello stesso ordine
+  // della vista mensile (week_number, position, scheduled_date, created_at).
+  let prevPostId = null, nextPostId = null, monthUrl = null;
+  if (post.editorial_plan_id && post.month_number) {
+    const siblings = db.prepare(`
+      SELECT id FROM posts
+      WHERE editorial_plan_id = ? AND month_number = ?
+      ORDER BY week_number ASC, position ASC, scheduled_date ASC, created_at ASC
+    `).all(post.editorial_plan_id, post.month_number);
+    const idx = siblings.findIndex(s => s.id === post.id);
+    if (idx > 0) prevPostId = siblings[idx - 1].id;
+    if (idx >= 0 && idx < siblings.length - 1) nextPostId = siblings[idx + 1].id;
+    monthUrl = `/dashboard/clients/${post.client_id}/plan/${post.editorial_plan_id}/month/${post.month_number}`;
+  }
+
+  res.render('post-editor', { title: 'Editor Post', client, post, media, user: req.user, prevPostId, nextPostId, monthUrl });
 });
 
 // Logs page
