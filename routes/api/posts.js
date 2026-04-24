@@ -249,6 +249,9 @@ router.post('/:id/publish', async (req, res) => {
     const result = await publishPost(client, { ...post, media_type: mediaType }, media, { channels });
 
     const status = (result.fb_post_id || result.ig_media_id) ? 'published' : 'failed';
+    const publishErrorMsg = status === 'failed' && !result.errors.length
+      ? 'Publish fallito: nessun canale ha ricevuto l\'ID Meta'
+      : (result.errors.length ? result.errors.join('; ') : null);
     db.prepare(`
       UPDATE posts SET
         status = ?,
@@ -262,13 +265,13 @@ router.post('/:id/publish', async (req, res) => {
       status,
       result.fb_post_id,
       result.ig_media_id,
-      result.errors.length ? result.errors.join('; ') : null,
+      publishErrorMsg,
       post.id
     );
 
     // Email admin su errori (fire-and-forget, non blocca la risposta UI)
-    if (status === 'failed' && result.errors.length) {
-      notifyPublishFailed(post, client, result.errors.join('; '))
+    if (status === 'failed') {
+      notifyPublishFailed(post, client, publishErrorMsg)
         .catch(e => console.error('[notifier] publish failed notify error:', e.message));
     } else if (status === 'published' && result.errors.length) {
       // Partial success: un canale OK, l'altro fallito (solo se utente NON ha deselezionato il canale)
