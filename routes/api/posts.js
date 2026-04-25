@@ -240,23 +240,33 @@ router.post('/:id/publish', async (req, res) => {
     }
   }
 
-  // channels: array opzionale tipo ['fb'], ['ig'], ['fb','ig']. Default: entrambi.
-  const channels = Array.isArray(req.body.channels) && req.body.channels.length
-    ? req.body.channels.filter(c => c === 'fb' || c === 'ig')
-    : ['fb', 'ig'];
+  // channels: array opzionale tipo ['fb'], ['ig'], ['linkedin'], combinazioni.
+  // Default: tutti i canali per cui il cliente ha credenziali configurate.
+  let channels;
+  if (Array.isArray(req.body.channels) && req.body.channels.length) {
+    channels = req.body.channels.filter(c => ['fb', 'ig', 'linkedin'].includes(c));
+  } else {
+    channels = [];
+    if (client.fb_page_id && client.fb_system_user_token) channels.push('fb');
+    if (client.ig_user_id && client.fb_system_user_token) channels.push('ig');
+    if (client.linkedin_org_id && client.linkedin_access_token) channels.push('linkedin');
+    if (!channels.length) channels = ['fb', 'ig']; // fallback retrocompatibile
+  }
 
   try {
     const result = await publishPost(client, { ...post, media_type: mediaType }, media, { channels });
 
-    const status = (result.fb_post_id || result.ig_media_id) ? 'published' : 'failed';
+    const anyOk = result.fb_post_id || result.ig_media_id || result.linkedin_post_id;
+    const status = anyOk ? 'published' : 'failed';
     const publishErrorMsg = status === 'failed' && !result.errors.length
-      ? 'Publish fallito: nessun canale ha ricevuto l\'ID Meta'
+      ? 'Publish fallito: nessun canale ha pubblicato'
       : (result.errors.length ? result.errors.join('; ') : null);
     db.prepare(`
       UPDATE posts SET
         status = ?,
         fb_post_id = ?,
         ig_media_id = ?,
+        linkedin_post_id = ?,
         published_at = datetime('now'),
         publish_error = ?,
         updated_at = datetime('now')
@@ -265,6 +275,7 @@ router.post('/:id/publish', async (req, res) => {
       status,
       result.fb_post_id,
       result.ig_media_id,
+      result.linkedin_post_id,
       publishErrorMsg,
       post.id
     );

@@ -247,6 +247,18 @@
           <label>Instagram User ID</label>
           <div style="display:flex;gap:4px"><input type="text" name="ig_user_id" value="<%= client.ig_user_id || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
+        <div class="form-group">
+          <label>LinkedIn Organization ID <span style="font-weight:400;color:var(--gray-400);font-size:11px">(es. 12345678)</span></label>
+          <div style="display:flex;gap:4px"><input type="text" name="linkedin_org_id" value="<%= client.linkedin_org_id || '' %>" placeholder="ID numerico Page LinkedIn" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
+        </div>
+        <div class="form-group">
+          <label>LinkedIn Access Token <span style="font-weight:400;color:var(--gray-400);font-size:11px">(scope w_organization_social)</span></label>
+          <div style="display:flex;gap:4px"><input type="password" name="linkedin_access_token" value="<%= client.linkedin_access_token || '' %>" placeholder="OAuth 2.0 user token" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
+        </div>
+        <div class="form-group">
+          <label>LinkedIn Token scade il <span style="font-weight:400;color:var(--gray-400);font-size:11px">(opzionale, per warning)</span></label>
+          <input type="date" name="linkedin_token_expires_at" value="<%= client.linkedin_token_expires_at ? client.linkedin_token_expires_at.slice(0,10) : '' %>" style="width:100%">
+        </div>
       </div>
       <button type="submit" class="btn btn-primary">Salva Credenziali</button>
     </form>
