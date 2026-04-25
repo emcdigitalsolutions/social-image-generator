@@ -200,13 +200,13 @@
       Genera un PDF brandizzato con KPI, grafici di crescita e top post. Puoi scaricarlo subito o inviarlo automaticamente via email al cliente.
     </p>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="report-days" style="padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px;font-family:inherit;background:white">
+      <select id="report-days" onchange="updateReportPdfHref()" style="padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px;font-family:inherit;background:white">
         <option value="7">Ultimi 7 giorni</option>
         <option value="30" selected>Ultimi 30 giorni</option>
         <option value="90">Ultimi 90 giorni</option>
         <option value="365">Ultimo anno</option>
       </select>
-      <a href="#" class="btn btn-secondary btn-sm" onclick="downloadReportPdf();return false">⬇ Scarica PDF</a>
+      <a id="report-pdf-link" href="/dashboard/api/clients/<%= client.id %>/insights/report.pdf?days=30" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">⬇ Scarica PDF</a>
       <button class="btn btn-primary btn-sm" onclick="emailReportToClient()">✉ Invia via email al cliente</button>
     </div>
     <p style="font-size:11px;color:var(--gray-400);margin-top:8px" id="report-email-info">
@@ -1129,11 +1129,14 @@
     } catch (err) { await showAlert('Errore: ' + (err.message || err)); }
   }
 
-  function downloadReportPdf() {
-    const days = document.getElementById('report-days').value;
-    // Apre in nuova tab; il backend ritorna PDF binario con Content-Disposition: attachment
-    const url = '/dashboard/api/clients/' + encodeURIComponent(CLIENT_ID) + '/insights/report.pdf?days=' + encodeURIComponent(days);
-    window.open(url, '_blank');
+  // Mantiene href del link "Scarica PDF" sincronizzato col selettore periodo.
+  // Usiamo un vero <a> invece di window.open() perché su mobile i popup
+  // programmatici spesso vengono bloccati dal browser.
+  function updateReportPdfHref() {
+    const link = document.getElementById('report-pdf-link');
+    const sel = document.getElementById('report-days');
+    if (!link || !sel) return;
+    link.href = '/dashboard/api/clients/' + encodeURIComponent(CLIENT_ID) + '/insights/report.pdf?days=' + encodeURIComponent(sel.value);
   }
 
   async function emailReportToClient() {
