@@ -472,9 +472,13 @@ router.put('/:id/media/reorder', (req, res) => {
   res.json({ media: updated });
 });
 
-// Crop / edit: sovrascrive il file del media con il blob croppato ricevuto dal client
-// (es. da Cropper.js). Mantiene lo stesso id/filename per semplicità.
-router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), (req, res) => {
+// Crop / edit: sovrascrive il file del media con il blob croppato ricevuto dal client.
+// IMPORTANTE: Cropper.js può ritornare un BLOB con tipo diverso dall'originale
+// (es. JPEG anche se il file originale era PNG). Express.static serve il file
+// con Content-Type basato sull'extension → mismatch tra Content-Type dichiarato
+// e payload reale → Meta rifiuta al publish (errore "Only photo/video accepted").
+// Soluzione: detectiamo il MIME effettivo del blob e rinominiamo se necessario.
+router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), async (req, res) => {
   const db = getDb();
   const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Post not found' });
@@ -487,10 +491,32 @@ router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), (req, res) =
   try {
     const path = require('path');
     const fs = require('fs');
-    const dest = path.join(postMedia.postDir(post.client_id, post.id), m.filename);
-    // Sovrascrivi il file originale con il blob croppato
+
+    // Detect MIME effettivo dal contenuto del blob ricevuto (sniffing magic bytes)
+    let detectedExt = path.extname(m.filename); // fallback: estensione attuale
+    try {
+      const fileType = require('file-type');
+      const detected = await fileType.fileTypeFromFile(req.file.path);
+      if (detected) {
+        if (detected.mime === 'image/jpeg') detectedExt = '.jpg';
+        else if (detected.mime === 'image/png') detectedExt = '.png';
+        else if (detected.mime === 'image/webp') detectedExt = '.webp';
+      }
+    } catch (e) { console.warn('[crop] file-type detect failed:', e.message); }
+
+    // Calcola nuovo filename: cambia solo l'extension se il MIME è cambiato.
+    // Mantiene lo stesso prefisso/uuid per non perdere la traccia.
+    const oldExt = path.extname(m.filename);
+    const baseName = path.basename(m.filename, oldExt);
+    const newFilename = baseName + detectedExt;
+    const dir = postMedia.postDir(post.client_id, post.id);
+    const dest = path.join(dir, newFilename);
+    const oldPath = path.join(dir, m.filename);
+
+    // Cancella sia il vecchio file (se nome diverso) sia eventuale dest esistente
+    if (oldPath !== dest && fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
     if (fs.existsSync(dest)) fs.unlinkSync(dest);
-    // Usa renameSync safe con EXDEV fallback via copyFile+unlink
+
     try {
       fs.renameSync(req.file.path, dest);
     } catch (err) {
@@ -500,18 +526,22 @@ router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), (req, res) =
     }
 
     const stat = fs.statSync(dest);
-    // Rileggi dimensioni aggiornate (width/height/ratio cambiano dopo il crop!)
     let w = null, h = null;
     try {
       const imageSize = require('image-size');
       const dim = imageSize(dest);
       if (dim && dim.width && dim.height) { w = dim.width; h = dim.height; }
     } catch (e) { console.warn('[crop] image-size failed:', e.message); }
-    db.prepare(`UPDATE post_media SET bytes = ?, width = ?, height = ?, created_at = datetime('now') WHERE id = ?`).run(stat.size, w, h, m.id);
 
-    // cache-bust: il client aggiungerà ?v=<updated_at>
+    // Aggiorna record con eventuali nuovi filename/url se l'extension è cambiata
+    const newUrl = postMedia.publicUrl(post.client_id, post.id, newFilename);
+    db.prepare(`UPDATE post_media
+                SET filename = ?, url = ?, bytes = ?, width = ?, height = ?, created_at = datetime('now')
+                WHERE id = ?`)
+      .run(newFilename, newUrl, stat.size, w, h, m.id);
+
     const updated = postMedia.getMedia(m.id);
-    res.json({ media: updated });
+    res.json({ media: updated, mime_changed: oldExt !== detectedExt });
   } catch (err) {
     console.error('[crop] error:', err.message);
     res.status(500).json({ error: 'Crop fallito', details: err.message });
