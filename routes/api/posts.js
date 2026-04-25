@@ -475,6 +475,11 @@ router.put('/:id/media/reorder', (req, res) => {
 // Normalize: re-encode il file con sharp strippando ICC profile / EXIF.
 // Utile quando Meta rifiuta un file apparentemente OK (errore 9004 "Only
 // photo/video accepted") perché ha metadata che non riesce a parsare.
+//
+// Query opzionali:
+//   ?target_width=N → upscale (o keep) a almeno N pixel di larghezza.
+//                     Meta raccomanda 1080+ per single-image, file più piccoli
+//                     possono essere rifiutati silenziosamente.
 router.post('/:id/media/:mediaId/normalize', async (req, res) => {
   const db = getDb();
   const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
@@ -489,10 +494,36 @@ router.post('/:id/media/:mediaId/normalize', async (req, res) => {
     const filePath = path.join(postMedia.postDir(post.client_id, post.id), m.filename);
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File non trovato sul disco' });
 
-    const result = await postMedia.normalizeImageForMeta(filePath);
+    const targetWidth = parseInt(req.query.target_width, 10);
+
+    let result;
+    if (targetWidth > 0) {
+      // Upscale + normalize in un colpo solo
+      const sharp = require('sharp');
+      const meta = await sharp(filePath).metadata();
+      let pipeline = sharp(filePath).toColorspace('srgb');
+      if (meta.format === 'png' && meta.hasAlpha) pipeline = pipeline.flatten({ background: '#ffffff' });
+      if (meta.width < targetWidth) {
+        pipeline = pipeline.resize(targetWidth, null, { kernel: 'lanczos3', withoutEnlargement: false });
+      }
+      pipeline = (meta.format === 'jpeg')
+        ? pipeline.jpeg({ quality: 92, mozjpeg: false, progressive: false })
+        : pipeline.png({ compressionLevel: 9, palette: false });
+      const buf = await pipeline.toBuffer();
+      fs.writeFileSync(filePath, buf);
+      const newMeta = await sharp(filePath).metadata();
+      result = { changed: true, format: meta.format, hadAlpha: !!meta.hasAlpha, hadIcc: !!meta.icc, original_width: meta.width, new_width: newMeta.width, new_height: newMeta.height };
+    } else {
+      result = await postMedia.normalizeImageForMeta(filePath);
+    }
+
     if (result.changed) {
       const stat = fs.statSync(filePath);
-      db.prepare(`UPDATE post_media SET bytes = ?, created_at = datetime('now') WHERE id = ?`).run(stat.size, m.id);
+      // Aggiorna anche width/height se sono cambiate (upscale)
+      const sharp = require('sharp');
+      const meta = await sharp(filePath).metadata();
+      db.prepare(`UPDATE post_media SET bytes = ?, width = ?, height = ?, created_at = datetime('now') WHERE id = ?`)
+        .run(stat.size, meta.width, meta.height, m.id);
     }
     res.json({ media: postMedia.getMedia(m.id), result });
   } catch (err) {
