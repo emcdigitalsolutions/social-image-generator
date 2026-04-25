@@ -253,7 +253,13 @@
     } catch (err) { showAlert('Errore: ' + (err.message || err)); }
   }
 
-  loadData();
+  // dashboard.js (che definisce apiFetch) è incluso da layout-end DOPO questo
+  // script inline. Aspettiamo `load` per essere sicuri che sia disponibile.
+  if (typeof apiFetch === 'function') {
+    loadData();
+  } else {
+    window.addEventListener('load', loadData);
+  }
 </script>
 
 <%- include('layout-end') %>
