@@ -149,6 +149,7 @@ app.use('/dashboard/api/schedules', require('./routes/api/schedules'));
 app.use('/dashboard/api/logs', require('./routes/api/logs'));
 app.use('/dashboard/api/settings', require('./routes/api/settings'));
 app.use('/dashboard/api/approvals', require('./routes/api/approvals'));
+app.use('/dashboard/api/insights-share', require('./routes/api/insights-share'));
 
 // Page routes
 app.use('/dashboard', require('./routes/dashboard'));

@@ -34,6 +34,27 @@ router.get('/approve/:token', (req, res) => {
   });
 });
 
+// Public insights dashboard (no auth, token-based)
+// Il cliente apre il link tipo /dashboard/insights/<token> e vede la dashboard
+// con KPI account-level + top post degli ultimi N giorni.
+router.get('/insights/:token', (req, res) => {
+  const db = getDb();
+  const link = db.prepare('SELECT * FROM insights_share_links WHERE token = ? AND status = ?').get(req.params.token, 'active');
+  if (!link) {
+    return res.status(404).render('approval-error', { title: 'Link non valido', message: 'Il link &egrave; stato revocato o non &egrave; valido. Contatta il tuo gestore social per riceverne uno nuovo.' });
+  }
+  if (link.expires_at && new Date(link.expires_at) < new Date()) {
+    return res.status(410).render('approval-error', { title: 'Link scaduto', message: 'Questo link &egrave; scaduto. Contatta il tuo gestore social per riceverne uno nuovo.' });
+  }
+  const client = db.prepare('SELECT id, display_name, sector, location, logo_filename FROM clients WHERE id = ?').get(link.client_id);
+  res.render('insights-public', {
+    title: `Performance — ${client.display_name}`,
+    token: req.params.token,
+    client,
+    link
+  });
+});
+
 // Public questionnaire (no auth)
 router.get('/q/:token', (req, res) => {
   const db = getDb();

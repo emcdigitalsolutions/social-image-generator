@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %></title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #fff; --border: #e5e7eb; --border-soft: #f1f3f5;
+    --text: #111827; --text-soft: #6b7280; --text-muted: #9ca3af;
+    --blue: #2563eb; --blue-soft: #eff6ff;
+    --green: #10b981; --green-soft: #ecfdf5;
+    --red: #dc2626;
+    --amber: #d97706; --amber-soft: #fef3c7;
+    --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+    --fb: #1877f2; --ig: #e4405f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+    line-height: 1.5; font-size: 15px;
+  }
+  .topbar {
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 1px 8px rgba(15, 30, 74, 0.04);
+  }
+  .topbar-brand { display:flex; align-items:center; gap:14px; }
+  .topbar-brand .tb-mark { width:40px; height:40px; flex:none; border-radius: 8px; background: var(--blue-soft); display:flex; align-items:center; justify-content:center; }
+  .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing:-0.3px; }
+  .topbar .meta { font-size: 13px; color: var(--text-soft); margin-top:2px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .intro {
+    background: var(--blue-soft); border-left: 3px solid var(--blue); border-radius: 6px;
+    padding: 14px 18px; margin-bottom: 24px; font-size: 14px; color: #1e3a8a;
+  }
+  .intro strong { display: block; margin-bottom: 4px; font-size: 15px; }
+  .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .kpi .label { font-size: 12px; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .kpi .value { font-size: 28px; font-weight: 700; margin-top: 6px; letter-spacing: -0.5px; color: var(--text); }
+  .kpi .delta { font-size: 13px; margin-top: 4px; font-weight: 600; }
+  .kpi .delta.up   { color: var(--green); }
+  .kpi .delta.down { color: var(--red); }
+  .kpi .delta.flat { color: var(--text-muted); }
+  .kpi .platform-tag { display:inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+  .kpi.fb .platform-tag { background: var(--fb); color: white; }
+  .kpi.ig .platform-tag { background: var(--ig); color: white; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .card h2 { margin: 0 0 14px; font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+  .chart-wrap { position: relative; height: 280px; }
+  .post-list { display: grid; gap: 12px; }
+  .post-item {
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  }
+  .post-item .rank {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: white;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
+  }
+  .post-item .info .title { font-weight: 600; font-size: 14px; }
+  .post-item .info .meta { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+  .post-item .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--gray-100); color: var(--text-soft); font-weight: 600; }
+  .post-item .badge.reel { background: #ede9fe; color: #5b21b6; }
+  .post-item .badge.carousel { background: #fef3c7; color: #92400e; }
+  .post-item .stats { font-size: 13px; text-align: right; color: var(--text-soft); }
+  .post-item .stats .big { font-size: 18px; font-weight: 700; color: var(--text); display: block; }
+  .empty { text-align: center; padding: 30px; color: var(--text-muted); font-size: 14px; }
+  .powered-by {
+    text-align:center; font-size:11px; color:var(--text-muted); padding:18px 12px 24px;
+    border-top: 1px solid var(--border-soft); margin-top:32px;
+  }
+  .powered-by a { color: var(--blue); text-decoration:none; font-weight:500; }
+  .powered-by a:hover { text-decoration:underline; }
+  .loading { text-align: center; padding: 40px; color: var(--text-soft); }
+  .err { background: #fef2f2; color: var(--red); border-left: 3px solid var(--red); padding: 12px 18px; border-radius: 6px; }
+  @media (max-width: 600px) {
+    .topbar { padding: 12px 16px; }
+    .container { padding: 16px; }
+    .post-item { grid-template-columns: auto 1fr; }
+    .post-item .stats { grid-column: 2; text-align: left; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="tb-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="<%= '#2563eb' %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      </div>
+      <div>
+        <h1><%= client.display_name %></h1>
+        <div class="meta">Performance social</div>
+      </div>
+    </div>
+    <div style="font-size:13px; color: var(--text-soft);"><span id="period-label">…</span></div>
+  </div>
+
+  <div class="container">
+    <div id="root">
+      <div class="loading">Caricamento dati in corso…</div>
+    </div>
+  </div>
+
+  <div class="powered-by">
+    Dashboard fornita da <a href="https://www.emcdigitalsolutions.it" target="_blank" rel="noopener">EMC Digital Solutions</a>
+  </div>
+
+<script>
+  const TOKEN = <%- JSON.stringify(token) %>;
+
+  function fmtNum(n) {
+    if (n == null) return '—';
+    if (typeof n !== 'number') return String(n);
+    return n.toLocaleString('it-IT');
+  }
+  function fmtDelta(d) {
+    if (d == null) return { text: '—', cls: 'flat' };
+    if (d > 0)  return { text: '+' + fmtNum(d), cls: 'up' };
+    if (d < 0)  return { text: fmtNum(d), cls: 'down' };
+    return { text: '0', cls: 'flat' };
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
+  }
+
+  function kpiCard(platform, summary) {
+    if (!summary) return '';
+    const fans = platform === 'fb' ? summary.followers_now : summary.followers_now;
+    const delta = fmtDelta(summary.followers_delta);
+    const tag = platform === 'fb' ? 'Facebook' : 'Instagram';
+    return `
+      <div class="kpi ${platform}">
+        <span class="platform-tag">${tag}</span>
+        <div class="label">Follower</div>
+        <div class="value">${fmtNum(fans)}</div>
+        <div class="delta ${delta.cls}">${delta.text} nel periodo</div>
+      </div>
+      <div class="kpi ${platform}">
+        <span class="platform-tag">${tag}</span>
+        <div class="label">Persone raggiunte</div>
+        <div class="value">${fmtNum(summary.reach_total)}</div>
+        <div class="delta flat">${summary.days_with_data || 0} giorni di dati</div>
+      </div>
+    `;
+  }
+
+  function topPostHTML(p, idx) {
+    const totalEng = (p.ig_engagement || 0) + (p.fb_engagement || 0);
+    const totalReach = (p.ig_reach || 0) + (p.fb_reach || 0);
+    const typeBadge = p.media_type ? `<span class="badge ${p.media_type}">${p.media_type}</span>` : '';
+    const subj = (p.sub_topic || 'Post').substring(0, 80);
+    return `
+      <div class="post-item">
+        <div class="rank">${idx + 1}</div>
+        <div class="info">
+          <div class="title">${escapeHtml(subj)} ${typeBadge}</div>
+          <div class="meta">${p.published_at ? 'Pubblicato il ' + fmtDate(p.published_at) : ''} ${p.category ? '· ' + p.category : ''}</div>
+        </div>
+        <div class="stats">
+          <span class="big">${fmtNum(totalEng)}</span>
+          interazioni · ${fmtNum(totalReach)} reach
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  function buildTimeSeries(history, platform, field) {
+    // Riempi un array {date, value} per quella platform/field
+    return history.filter(h => h.platform === platform).map(h => ({ x: h.date, y: h[field] }));
+  }
+
+  function renderDashboard(data) {
+    const root = document.getElementById('root');
+    document.getElementById('period-label').textContent =
+      'Ultimi ' + data.period.days + ' giorni' + (data.period.label ? ' · ' + data.period.label : '');
+
+    const kpis = (data.summary.fb ? kpiCard('fb', data.summary.fb) : '')
+               + (data.summary.ig ? kpiCard('ig', data.summary.ig) : '');
+
+    const noData = !data.summary.fb && !data.summary.ig;
+
+    root.innerHTML = `
+      <div class="intro">
+        <strong>Performance ultimi ${data.period.days} giorni</strong>
+        I dati si aggiornano automaticamente ogni giorno. Eventuali oscillazioni sono normali e dipendono da quanto i contenuti vengono mostrati.
+      </div>
+
+      ${noData ? '<div class="card"><div class="empty">I dati saranno disponibili dal giorno successivo all\'attivazione del servizio. Torna a trovarci!</div></div>' : ''}
+
+      <div class="grid-kpi">${kpis}</div>
+
+      ${data.history && data.history.length ? `
+        <div class="card">
+          <h2>📈 Crescita follower</h2>
+          <div class="chart-wrap"><canvas id="chart-followers"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>👀 Persone raggiunte (giornaliero)</h2>
+          <div class="chart-wrap"><canvas id="chart-reach"></canvas></div>
+        </div>
+      ` : ''}
+
+      ${data.top_posts && data.top_posts.length ? `
+        <div class="card">
+          <h2>⭐ Post più performanti</h2>
+          <div class="post-list">
+            ${data.top_posts.map((p, i) => topPostHTML(p, i)).join('')}
+          </div>
+        </div>
+      ` : `<div class="card"><h2>⭐ Post più performanti</h2><div class="empty">Nessun post pubblicato in questo periodo.</div></div>`}
+    `;
+
+    // Charts
+    if (data.history && data.history.length) {
+      renderFollowersChart(data.history);
+      renderReachChart(data.history);
+    }
+  }
+
+  function renderFollowersChart(history) {
+    const ctx = document.getElementById('chart-followers');
+    if (!ctx) return;
+    const fbData = buildTimeSeries(history, 'fb', 'fans');
+    const igData = buildTimeSeries(history, 'ig', 'followers');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [
+          { label: 'Facebook',  data: fbData, borderColor: '#1877f2', backgroundColor: 'rgba(24,119,242,0.1)', fill: false, tension: 0.3, spanGaps: true },
+          { label: 'Instagram', data: igData, borderColor: '#e4405f', backgroundColor: 'rgba(228,64,95,0.1)',  fill: false, tension: 0.3, spanGaps: true }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          x: { type: 'category', grid: { display: false } },
+          y: { beginAtZero: false, ticks: { callback: v => fmtNum(v) } }
+        }
+      }
+    });
+  }
+
+  function renderReachChart(history) {
+    const ctx = document.getElementById('chart-reach');
+    if (!ctx) return;
+    const fbData = buildTimeSeries(history, 'fb', 'reach');
+    const igData = buildTimeSeries(history, 'ig', 'reach');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        datasets: [
+          { label: 'Facebook',  data: fbData, backgroundColor: 'rgba(24,119,242,0.6)' },
+          { label: 'Instagram', data: igData, backgroundColor: 'rgba(228,64,95,0.6)' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          x: { type: 'category', grid: { display: false } },
+          y: { beginAtZero: true, ticks: { callback: v => fmtNum(v) } }
+        }
+      }
+    });
+  }
+
+  fetch('/dashboard/api/insights-share/public/' + encodeURIComponent(TOKEN) + '/data')
+    .then(r => r.json().then(j => ({ ok: r.ok, status: r.status, body: j })))
+    .then(({ ok, status, body }) => {
+      if (!ok) {
+        document.getElementById('root').innerHTML = '<div class="err">' + escapeHtml(body.error || ('Errore ' + status)) + '</div>';
+        return;
+      }
+      renderDashboard(body);
+    })
+    .catch(err => {
+      document.getElementById('root').innerHTML = '<div class="err">Errore di connessione: ' + escapeHtml(err.message) + '</div>';
+    });
+</script>
+</body>
+</html>

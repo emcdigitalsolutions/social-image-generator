@@ -14,6 +14,7 @@
   <button class="tab" data-tab="impostazioni">Impostazioni</button>
   <button class="tab" data-tab="questionario">Questionario</button>
   <button class="tab" data-tab="piano">Piano Editoriale</button>
+  <button class="tab" data-tab="performance">Performance</button>
 </div>
 
 <!-- Tab: Profilo -->
@@ -172,6 +173,38 @@
         </tbody>
       </table>
     <% } %>
+  </div>
+</div>
+
+<!-- Tab: Performance -->
+<div class="tab-content" id="tab-performance">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <h3>Dashboard Insights cliente</h3>
+      <button class="btn btn-primary btn-sm" onclick="createInsightsShare()">
+        <span style="margin-right:3px">🔗</span>Genera link condivisibile
+      </button>
+    </div>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px">
+      Crea un link da inviare al cliente. Aprendolo, vedrà una dashboard con la crescita follower (FB+IG), il reach giornaliero e i suoi post più performanti.
+      I dati si aggiornano ogni giorno automaticamente.
+    </p>
+    <div id="insights-share-list">
+      <p style="font-size:13px;color:var(--gray-400)">Caricamento link…</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Snapshot dati Meta</h3>
+      <button class="btn btn-secondary btn-sm" onclick="triggerInsightsSnapshot()">
+        <span style="margin-right:3px">⟳</span>Aggiorna ora
+      </button>
+    </div>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:6px">
+      Il sistema raccoglie automaticamente le metriche ogni giorno alle 04:00. Usa "Aggiorna ora" per forzare un fetch immediato (utile dopo un cambio credenziali).
+    </p>
+    <div id="snapshot-result" style="font-size:12px;color:var(--gray-500);margin-top:10px"></div>
   </div>
 </div>
 
@@ -993,6 +1026,105 @@
       btn.textContent = 'Genera con AI';
     }
   }
+
+  // ─────────────── Performance / Insights ───────────────
+
+  async function loadInsightsShareLinks() {
+    const container = document.getElementById('insights-share-list');
+    if (!container) return;
+    try {
+      const res = await apiFetch('/dashboard/api/insights-share/admin/clients/' + CLIENT_ID, { method: 'GET' });
+      const links = (res && res.links) || [];
+      const active = links.filter(l => l.status === 'active');
+      if (!active.length) {
+        container.innerHTML = '<p style="font-size:13px;color:var(--gray-400)">Nessun link attivo. Clicca "Genera link condivisibile" per crearne uno.</p>';
+        return;
+      }
+      container.innerHTML = active.map(l => {
+        const url = window.location.origin + '/dashboard/insights/' + l.token;
+        const expires = l.expires_at ? new Date(l.expires_at).toLocaleDateString('it-IT') : 'Nessuna';
+        const lastView = l.last_viewed_at ? new Date(l.last_viewed_at.replace(' ','T')+'Z').toLocaleString('it-IT') : 'Mai aperto';
+        return `
+          <div style="border:1px solid var(--gray-200);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+              <input type="text" readonly value="${url}" style="flex:1;font-family:monospace;font-size:12px;padding:6px 10px;border:1px solid var(--gray-200);border-radius:6px;background:var(--gray-50)">
+              <button class="btn btn-sm btn-secondary" onclick="navigator.clipboard.writeText(this.previousElementSibling.value);toast('Link copiato')">Copia</button>
+              <button class="btn btn-sm btn-secondary" onclick="window.open('${url}','_blank')">Apri</button>
+              <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="revokeInsightsShare('${l.id}')">Revoca</button>
+            </div>
+            <div style="font-size:11px;color:var(--gray-500)">
+              Periodo dati: ultimi ${l.period_days}gg · Scade: ${expires} · Ultimo accesso: ${lastView} · Visite: ${l.view_count || 0}
+              ${l.label ? ' · "'+escapeHtmlSafe(l.label)+'"' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (err) {
+      container.innerHTML = '<p style="font-size:13px;color:var(--red)">Errore: ' + (err.message || err) + '</p>';
+    }
+  }
+
+  function escapeHtmlSafe(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  async function createInsightsShare() {
+    const periodDays = prompt('Periodo dati da mostrare (giorni)', '30');
+    if (periodDays === null) return;
+    const expiresDays = prompt('Scadenza link (giorni, 0 = nessuna)', '90');
+    if (expiresDays === null) return;
+    const label = prompt('Etichetta opzionale (es. "Report 2026")', '');
+    try {
+      const res = await apiFetch('/dashboard/api/insights-share/admin/clients/' + CLIENT_ID, {
+        method: 'POST',
+        body: {
+          period_days: parseInt(periodDays, 10) || 30,
+          expires_days: parseInt(expiresDays, 10) || 0,
+          label: label || null
+        }
+      });
+      if (res && res.link) {
+        toast('Link creato');
+        loadInsightsShareLinks();
+      } else {
+        await showAlert('Errore: ' + (res && res.error ? res.error : 'risposta inattesa'));
+      }
+    } catch (err) { await showAlert('Errore: ' + (err.message || err)); }
+  }
+
+  async function revokeInsightsShare(linkId) {
+    if (!await showConfirm('Sicuro di voler revocare il link? Il cliente non potrà più accedere alla dashboard.')) return;
+    try {
+      await apiFetch('/dashboard/api/insights-share/admin/' + linkId, { method: 'DELETE' });
+      toast('Link revocato');
+      loadInsightsShareLinks();
+    } catch (err) { await showAlert('Errore: ' + (err.message || err)); }
+  }
+
+  async function triggerInsightsSnapshot() {
+    const out = document.getElementById('snapshot-result');
+    out.innerHTML = '<span style="color:var(--gray-400)">Snapshot in corso…</span>';
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/insights/snapshot', { method: 'POST' });
+      if (res && res.results) {
+        const lines = res.results.map(r => {
+          const fields = Object.entries(r).filter(([k,v]) => !['platform','raw'].includes(k) && v != null && k !== 'error');
+          const parts = fields.map(([k,v]) => `${k}=${v}`).join(', ');
+          return `<strong>${r.platform.toUpperCase()}</strong>: ${parts || '—'}${r.error ? ' <span style="color:var(--red)">('+r.error+')</span>' : ''}`;
+        });
+        out.innerHTML = lines.join('<br>') + '<br><span style="color:var(--gray-400)">Aggiornato ora</span>';
+      } else if (res && res.error) {
+        out.innerHTML = '<span style="color:var(--red)">Errore: ' + res.error + '</span>';
+      }
+    } catch (err) { out.innerHTML = '<span style="color:var(--red)">Errore: ' + (err.message || err) + '</span>'; }
+  }
+
+  // Carica i link all'apertura del tab Performance (lazy se viene cliccato)
+  document.querySelectorAll('.tab[data-tab="performance"]').forEach(b => {
+    b.addEventListener('click', () => loadInsightsShareLinks());
+  });
+  // Se la pagina apre direttamente il tab performance via hash
+  if (window.location.hash === '#performance') loadInsightsShareLinks();
 
 </script>
 
