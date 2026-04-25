@@ -1206,15 +1206,15 @@
         const rows = Object.entries(r)
           .filter(([k,v]) => FIELD_LABELS[k] && v != null)
           .map(([k,v]) => `
-            <tr>
-              <td style="padding:4px 8px 4px 0;color:var(--gray-500);font-size:12px">${FIELD_LABELS[k]}</td>
-              <td style="padding:4px 0;font-weight:700;color:var(--gray-700);text-align:right;font-size:13px">${fmt(v)}</td>
-            </tr>`).join('');
+            <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--gray-100);font-size:13px">
+              <span style="flex:1 1 auto;color:var(--gray-500);min-width:0">${FIELD_LABELS[k]}</span>
+              <span style="flex:0 0 auto;font-weight:700;color:var(--gray-700);font-size:15px">${fmt(v)}</span>
+            </div>`).join('');
         const errLine = r.error ? `<div style="margin-top:6px;padding:6px 8px;background:#fef2f2;color:var(--red);font-size:11px;border-radius:4px">⚠ ${escapeHtmlSafe(r.error)}</div>` : '';
         return `
           <div style="border:1px solid var(--gray-200);border-radius:8px;padding:10px 14px;margin-bottom:8px;background:white">
-            <div style="display:inline-block;font-size:10px;font-weight:700;color:white;background:${info.color};padding:2px 8px;border-radius:3px;margin-bottom:6px;letter-spacing:0.5px">${info.label.toUpperCase()}</div>
-            <table style="width:100%">${rows || '<tr><td style="color:var(--gray-400);font-size:12px;font-style:italic">Nessun dato</td></tr>'}</table>
+            <div style="display:inline-block;font-size:10px;font-weight:700;color:white;background:${info.color};padding:2px 8px;border-radius:3px;margin-bottom:8px;letter-spacing:0.5px">${info.label.toUpperCase()}</div>
+            ${rows || '<div style="color:var(--gray-400);font-size:12px;font-style:italic;padding:6px 0">Nessun dato</div>'}
             ${errLine}
           </div>`;
       }).join('');
