@@ -194,6 +194,27 @@
     </div>
   </div>
 
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header"><h3>Report PDF mensile</h3></div>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:14px">
+      Genera un PDF brandizzato con KPI, grafici di crescita e top post. Puoi scaricarlo subito o inviarlo automaticamente via email al cliente.
+    </p>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="report-days" style="padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px;font-family:inherit;background:white">
+        <option value="7">Ultimi 7 giorni</option>
+        <option value="30" selected>Ultimi 30 giorni</option>
+        <option value="90">Ultimi 90 giorni</option>
+        <option value="365">Ultimo anno</option>
+      </select>
+      <a href="#" class="btn btn-secondary btn-sm" onclick="downloadReportPdf();return false">⬇ Scarica PDF</a>
+      <button class="btn btn-primary btn-sm" onclick="emailReportToClient()">✉ Invia via email al cliente</button>
+    </div>
+    <p style="font-size:11px;color:var(--gray-400);margin-top:8px" id="report-email-info">
+      Email cliente: <span id="contact-email-display">—</span>. Per cambiarla vai in tab Profilo.
+    </p>
+    <div id="report-result" style="font-size:12px;color:var(--gray-500);margin-top:10px"></div>
+  </div>
+
   <div class="card">
     <div class="card-header">
       <h3>Snapshot dati Meta</h3>
@@ -1100,6 +1121,53 @@
       loadInsightsShareLinks();
     } catch (err) { await showAlert('Errore: ' + (err.message || err)); }
   }
+
+  function downloadReportPdf() {
+    const days = document.getElementById('report-days').value;
+    // Apre in nuova tab; il backend ritorna PDF binario con Content-Disposition: attachment
+    const url = '/dashboard/api/clients/' + encodeURIComponent(CLIENT_ID) + '/insights/report.pdf?days=' + encodeURIComponent(days);
+    window.open(url, '_blank');
+  }
+
+  async function emailReportToClient() {
+    const days = document.getElementById('report-days').value;
+    const out = document.getElementById('report-result');
+    const ce = document.getElementById('contact-email-display').textContent.trim();
+    if (!ce || ce === '—' || ce === 'non impostata') {
+      if (!await showConfirm('Il cliente non ha contact_email configurata. Inserire un indirizzo manualmente?')) return;
+      const customTo = prompt('Email destinatario:');
+      if (!customTo) return;
+      out.innerHTML = '<span style="color:var(--gray-400)">Generazione PDF + invio email…</span>';
+      try {
+        const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/insights/email-report?days=' + days, {
+          method: 'POST', body: { to: customTo }
+        });
+        if (res && res.ok) {
+          out.innerHTML = '<span style="color:var(--green)">✓ Email inviata a ' + escapeHtmlSafe(res.sent_to) + ' (' + Math.round(res.bytes/1024) + ' KB)</span>';
+        } else {
+          out.innerHTML = '<span style="color:var(--red)">Errore: ' + (res && res.error ? res.error : 'sconosciuto') + '</span>';
+        }
+      } catch (err) { out.innerHTML = '<span style="color:var(--red)">Errore: ' + (err.message || err) + '</span>'; }
+      return;
+    }
+    if (!await showConfirm('Inviare il report a ' + ce + '?')) return;
+    out.innerHTML = '<span style="color:var(--gray-400)">Generazione PDF + invio email…</span>';
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/insights/email-report?days=' + days, { method: 'POST' });
+      if (res && res.ok) {
+        out.innerHTML = '<span style="color:var(--green)">✓ Email inviata a ' + escapeHtmlSafe(res.sent_to) + ' (' + Math.round(res.bytes/1024) + ' KB)</span>';
+      } else {
+        out.innerHTML = '<span style="color:var(--red)">Errore: ' + (res && res.error ? res.error : 'sconosciuto') + '</span>';
+      }
+    } catch (err) { out.innerHTML = '<span style="color:var(--red)">Errore: ' + (err.message || err) + '</span>'; }
+  }
+
+  // Popola contact_email mostrato nel tab Performance (lettura dal form Profilo)
+  document.addEventListener('DOMContentLoaded', () => {
+    const inp = document.querySelector('input[name="contact_email"]');
+    const span = document.getElementById('contact-email-display');
+    if (inp && span) span.textContent = inp.value || 'non impostata';
+  });
 
   async function triggerInsightsSnapshot() {
     const out = document.getElementById('snapshot-result');

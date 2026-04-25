@@ -688,6 +688,71 @@ router.get('/:id/insights/history', (req, res) => {
   res.json({ days, rows });
 });
 
+// ───────── Insights report PDF (download / email) ─────────
+//
+// GET /:id/insights/report.pdf?days=30  → ritorna PDF binario
+// POST /:id/insights/email-report?days=30  → genera PDF + invia via email al
+//   contact_email del cliente. Optional body { to: "altra@email.it" }.
+router.get('/:id/insights/report.pdf', async (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  const days = Math.min(parseInt(req.query.days, 10) || 30, 365);
+
+  try {
+    const insights = require('../../lib/insights');
+    const { renderInsightsReportPdf } = require('../../lib/pdf');
+    const summary = insights.getAccountSummary(client.id, days);
+    const history = insights.getAccountInsightsHistory(client.id, days);
+    const topPosts = insights.getTopPosts(client.id, days, 5);
+    const periodLabel = `Ultimi ${days} giorni`;
+    const buffer = await renderInsightsReportPdf(client, periodLabel, summary, history, topPosts);
+    const filename = `report-${client.id}-${new Date().toISOString().slice(0,10)}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (err) {
+    console.error('[report-pdf] error:', err);
+    res.status(500).json({ error: 'Generazione PDF fallita', details: err.message });
+  }
+});
+
+router.post('/:id/insights/email-report', async (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  const days = Math.min(parseInt(req.query.days, 10) || 30, 365);
+  const customTo = (req.body && req.body.to) || null;
+  const recipient = customTo || client.contact_email;
+  if (!recipient) return res.status(400).json({ error: 'Cliente senza contact_email — passa { to: "..." } nel body o configura il campo' });
+
+  try {
+    const insights = require('../../lib/insights');
+    const { renderInsightsReportPdf } = require('../../lib/pdf');
+    const { sendInsightsReport } = require('../../lib/notifier');
+    const summary = insights.getAccountSummary(client.id, days);
+    const history = insights.getAccountInsightsHistory(client.id, days);
+    const topPosts = insights.getTopPosts(client.id, days, 5);
+    const periodLabel = `Ultimi ${days} giorni`;
+    const buffer = await renderInsightsReportPdf(client, periodLabel, summary, history, topPosts);
+
+    const filename = `report-performance-${client.id}-${new Date().toISOString().slice(0,10)}.pdf`;
+    await sendInsightsReport({ client, recipient, periodLabel, summary, pdfBuffer: buffer, filename });
+
+    audit.logFromReq(req, {
+      client_id: client.id,
+      action: 'insights.report_emailed',
+      entity_type: 'client',
+      entity_id: client.id,
+      details: { recipient, days, period: periodLabel, bytes: buffer.length }
+    });
+    res.json({ ok: true, sent_to: recipient, period: periodLabel, bytes: buffer.length });
+  } catch (err) {
+    console.error('[email-report] error:', err);
+    res.status(500).json({ error: 'Invio email fallito', details: err.message });
+  }
+});
+
 // ───────── Media repair: detect MIME effettivo + rinomina con extension corretta ─────────
 //
 // Bug storico: l'endpoint /crop sovrascriveva il file .png con un blob JPEG
