@@ -532,6 +532,7 @@
           + '</div>'
           + '<div class="ap-actions">'
           +   '<button class="btn btn-sm btn-secondary" onclick="copyApprovalLink(\'' + link.replace(/'/g, "\\'") + '\')">Copia</button>'
+          +   '<button class="btn btn-sm btn-secondary" onclick="resendApprovalEmail(\'' + a.id + '\', ' + m + ')" title="Re-invia email al cliente (contact_email)">\u2709 Email</button>'
           +   '<button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deleteApproval(\'' + a.id + '\')" title="Elimina questo link (revoca l\u2019accesso)">\u00d7</button>'
           + '</div>'
           + '</div>';
@@ -558,8 +559,45 @@
         method: 'POST', body: { expires_days: 30 }
       });
       if (res.error) { await showAlert(res.error); return; }
-      toast('Link creato per Mese ' + month);
+      // Feedback granulare: ha inviato l'email al cliente o no?
+      if (res.email && res.email.sent_to) {
+        toast('✓ Link creato + email inviata a ' + res.email.sent_to);
+      } else if (res.email && res.email.skipped === undefined && res.email.error) {
+        toast('Link creato. Email NON inviata: ' + res.email.error);
+      } else if (res.email && res.email.reason === 'no-contact-email') {
+        toast('Link creato. Aggiungi contact_email al cliente per email automatica.');
+      } else {
+        toast('Link creato per Mese ' + month);
+      }
       await loadApprovals();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  async function resendApprovalEmail(approvalId, month) {
+    let body = {};
+    if (!await showConfirm('Re-inviare l\'email di approvazione al cliente?')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/approvals/admin/' + approvalId + '/resend-email', {
+        method: 'POST', body
+      });
+      if (res.error) {
+        // Se manca contact_email, chiedi destinatario al volo
+        if (/contact_email/.test(res.error)) {
+          const customTo = prompt('Email destinatario:');
+          if (!customTo) return;
+          const r2 = await apiFetch('/dashboard/api/approvals/admin/' + approvalId + '/resend-email', {
+            method: 'POST', body: { to: customTo }
+          });
+          if (r2.error) { await showAlert(r2.error); return; }
+          toast('✓ Email inviata a ' + (r2.sent_to || customTo));
+        } else {
+          await showAlert(res.error);
+        }
+        return;
+      }
+      toast('✓ Email inviata a ' + (res.sent_to || 'cliente'));
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     }

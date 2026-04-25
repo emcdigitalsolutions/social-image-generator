@@ -22,7 +22,7 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
-const { notifyApprovalSummary } = require('../../lib/notifier');
+const { notifyApprovalSummary, sendApprovalLinkToClient } = require('../../lib/notifier');
 const audit = require('../../lib/audit');
 
 const router = express.Router();
@@ -43,7 +43,7 @@ function isExpired(approval) {
 
 // ─────────────── ADMIN endpoints ───────────────
 
-router.post('/admin/plans/:planId/months/:month', authMiddleware, (req, res) => {
+router.post('/admin/plans/:planId/months/:month', authMiddleware, async (req, res) => {
   const db = getDb();
   const planId = req.params.planId;
   const month = parseInt(req.params.month);
@@ -74,14 +74,75 @@ router.post('/admin/plans/:planId/months/:month', authMiddleware, (req, res) => 
   `).run(planId, month);
 
   const approval = db.prepare('SELECT * FROM monthly_approvals WHERE id = ?').get(id);
+
+  // Email automatica al cliente (fire-and-forget). Skip silenzioso se manca
+  // contact_email — l'admin vedrà nell'audit log se l'email è stata inviata.
+  let emailResult = null;
+  const client = db.prepare('SELECT id, display_name, contact_email FROM clients WHERE id = ?').get(plan.client_id);
+  if (client && client.contact_email) {
+    try {
+      const baseUrl = require('../../lib/settings').getBaseUrl();
+      const approvalUrl = baseUrl.replace(/\/$/, '') + '/dashboard/approve/' + token;
+      const totalPosts = db.prepare(`SELECT COUNT(*) AS n FROM posts WHERE editorial_plan_id = ? AND month_number = ?`).get(planId, month).n;
+      emailResult = await sendApprovalLinkToClient({
+        client, approvalUrl, planTitle: plan.title, monthNumber: month, expiresAt, totalPosts
+      });
+    } catch (err) {
+      console.error('[approvals] sendApprovalLinkToClient error:', err.message);
+      emailResult = { error: err.message };
+    }
+  }
+
   audit.logFromReq(req, {
     client_id: plan.client_id,
     action: 'approval.link_created',
     entity_type: 'monthly_approval',
     entity_id: id,
-    details: { plan_id: planId, month_number: month, expires_at: expiresAt }
+    details: {
+      plan_id: planId, month_number: month, expires_at: expiresAt,
+      email_sent_to: emailResult && emailResult.sent_to,
+      email_skipped: emailResult && emailResult.skipped ? emailResult.reason : null,
+      email_error: emailResult && emailResult.error
+    }
   });
-  res.status(201).json({ approval, created: true });
+  res.status(201).json({ approval, created: true, email: emailResult });
+});
+
+// Re-invia l'email approvazione al cliente (es. il primo invio non era arrivato
+// o il cliente l'ha persa).
+router.post('/admin/:approvalId/resend-email', authMiddleware, async (req, res) => {
+  const db = getDb();
+  const approval = db.prepare('SELECT * FROM monthly_approvals WHERE id = ?').get(req.params.approvalId);
+  if (!approval) return res.status(404).json({ error: 'Approval not found' });
+  const plan = db.prepare('SELECT * FROM editorial_plans WHERE id = ?').get(approval.editorial_plan_id);
+  if (!plan) return res.status(404).json({ error: 'Plan not found' });
+  const client = db.prepare('SELECT id, display_name, contact_email FROM clients WHERE id = ?').get(plan.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const customTo = (req.body && req.body.to) || null;
+  const recipient = customTo || client.contact_email;
+  if (!recipient) return res.status(400).json({ error: 'Cliente senza contact_email — passa { to: "..." } nel body' });
+
+  try {
+    const baseUrl = require('../../lib/settings').getBaseUrl();
+    const approvalUrl = baseUrl.replace(/\/$/, '') + '/dashboard/approve/' + approval.token;
+    const totalPosts = db.prepare(`SELECT COUNT(*) AS n FROM posts WHERE editorial_plan_id = ? AND month_number = ?`).get(approval.editorial_plan_id, approval.month_number).n;
+    const clientForEmail = customTo ? { ...client, contact_email: customTo } : client;
+    const r = await sendApprovalLinkToClient({
+      client: clientForEmail, approvalUrl, planTitle: plan.title, monthNumber: approval.month_number, expiresAt: approval.expires_at, totalPosts
+    });
+    audit.logFromReq(req, {
+      client_id: plan.client_id,
+      action: 'approval.email_resent',
+      entity_type: 'monthly_approval',
+      entity_id: approval.id,
+      details: { recipient, month_number: approval.month_number }
+    });
+    res.json({ ok: true, ...r });
+  } catch (err) {
+    console.error('[approvals] resend email error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get('/admin/plans/:planId', authMiddleware, (req, res) => {
