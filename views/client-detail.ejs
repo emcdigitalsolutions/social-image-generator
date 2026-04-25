@@ -1053,6 +1053,13 @@
   async function loadInsightsShareLinks() {
     const container = document.getElementById('insights-share-list');
     if (!container) return;
+    // dashboard.js (apiFetch) è caricato da layout-end DOPO questo script inline.
+    // Se siamo veloci nel cliccare il tab Performance, può non essere ancora pronto.
+    if (typeof apiFetch !== 'function') {
+      container.innerHTML = '<p style="font-size:13px;color:var(--gray-400)">Caricamento…</p>';
+      window.addEventListener('load', loadInsightsShareLinks, { once: true });
+      return;
+    }
     try {
       const res = await apiFetch('/dashboard/api/insights-share/admin/clients/' + CLIENT_ID, { method: 'GET' });
       const links = (res && res.links) || [];
@@ -1174,16 +1181,46 @@
     out.innerHTML = '<span style="color:var(--gray-400)">Snapshot in corso…</span>';
     try {
       const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/insights/snapshot', { method: 'POST' });
-      if (res && res.results) {
-        const lines = res.results.map(r => {
-          const fields = Object.entries(r).filter(([k,v]) => !['platform','raw'].includes(k) && v != null && k !== 'error');
-          const parts = fields.map(([k,v]) => `${k}=${v}`).join(', ');
-          return `<strong>${r.platform.toUpperCase()}</strong>: ${parts || '—'}${r.error ? ' <span style="color:var(--red)">('+r.error+')</span>' : ''}`;
-        });
-        out.innerHTML = lines.join('<br>') + '<br><span style="color:var(--gray-400)">Aggiornato ora</span>';
-      } else if (res && res.error) {
-        out.innerHTML = '<span style="color:var(--red)">Errore: ' + res.error + '</span>';
+      if (!res || !res.results) {
+        if (res && res.error) out.innerHTML = '<span style="color:var(--red)">Errore: ' + res.error + '</span>';
+        return;
       }
+      // Mappa nomi tecnici → label human-friendly italiane
+      const FIELD_LABELS = {
+        fans: 'Fan/Follower pagina',
+        followers: 'Follower',
+        media_count: 'Post pubblicati totali',
+        reach: 'Persone raggiunte (oggi)',
+        impressions: 'Visualizzazioni (oggi)',
+        profile_views: 'Visite al profilo (oggi)',
+        engaged_users: 'Utenti coinvolti (oggi)'
+      };
+      const PLATFORM_INFO = {
+        fb: { label: 'Facebook', color: '#1877f2' },
+        ig: { label: 'Instagram', color: '#e4405f' }
+      };
+      const fmt = n => (n == null) ? '—' : Number(n).toLocaleString('it-IT');
+
+      const cards = res.results.map(r => {
+        const info = PLATFORM_INFO[r.platform] || { label: r.platform.toUpperCase(), color: '#6b7280' };
+        const rows = Object.entries(r)
+          .filter(([k,v]) => FIELD_LABELS[k] && v != null)
+          .map(([k,v]) => `
+            <tr>
+              <td style="padding:4px 8px 4px 0;color:var(--gray-500);font-size:12px">${FIELD_LABELS[k]}</td>
+              <td style="padding:4px 0;font-weight:700;color:var(--gray-700);text-align:right;font-size:13px">${fmt(v)}</td>
+            </tr>`).join('');
+        const errLine = r.error ? `<div style="margin-top:6px;padding:6px 8px;background:#fef2f2;color:var(--red);font-size:11px;border-radius:4px">⚠ ${escapeHtmlSafe(r.error)}</div>` : '';
+        return `
+          <div style="border:1px solid var(--gray-200);border-radius:8px;padding:10px 14px;margin-bottom:8px;background:white">
+            <div style="display:inline-block;font-size:10px;font-weight:700;color:white;background:${info.color};padding:2px 8px;border-radius:3px;margin-bottom:6px;letter-spacing:0.5px">${info.label.toUpperCase()}</div>
+            <table style="width:100%">${rows || '<tr><td style="color:var(--gray-400);font-size:12px;font-style:italic">Nessun dato</td></tr>'}</table>
+            ${errLine}
+          </div>`;
+      }).join('');
+
+      const ts = new Date().toLocaleString('it-IT');
+      out.innerHTML = cards + `<div style="font-size:11px;color:var(--gray-400);margin-top:6px">Aggiornato il ${ts}</div>`;
     } catch (err) { out.innerHTML = '<span style="color:var(--red)">Errore: ' + (err.message || err) + '</span>'; }
   }
 
