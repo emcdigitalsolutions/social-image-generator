@@ -492,11 +492,16 @@ router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), async (req, 
     const path = require('path');
     const fs = require('fs');
 
-    // Detect MIME effettivo dal contenuto del blob ricevuto (sniffing magic bytes)
+    // Detect MIME effettivo dal contenuto del blob ricevuto (sniffing magic bytes).
+    // file-type v16: usa fromBuffer (no fileTypeFromFile, quello è v17+ ESM).
     let detectedExt = path.extname(m.filename); // fallback: estensione attuale
     try {
-      const fileType = require('file-type');
-      const detected = await fileType.fileTypeFromFile(req.file.path);
+      const FileType = require('file-type');
+      const fd = fs.openSync(req.file.path, 'r');
+      const head = Buffer.alloc(4100);
+      fs.readSync(fd, head, 0, 4100, 0);
+      fs.closeSync(fd);
+      const detected = await FileType.fromBuffer(head);
       if (detected) {
         if (detected.mime === 'image/jpeg') detectedExt = '.jpg';
         else if (detected.mime === 'image/png') detectedExt = '.png';

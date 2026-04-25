@@ -705,7 +705,8 @@ router.post('/:id/media/repair-mime', async (req, res) => {
 
   const fsLib = require('fs');
   const pathLib = require('path');
-  const fileType = require('file-type');
+  // file-type v16 (sincrono via fromBuffer/fromFile, no fileTypeFromFile)
+  const FileType = require('file-type');
 
   const media = db.prepare(`
     SELECT pm.id, pm.post_id, pm.filename, pm.url, pm.kind, p.client_id
@@ -727,7 +728,12 @@ router.post('/:id/media/repair-mime', async (req, res) => {
     }
     results.scanned++;
     try {
-      const detected = await fileType.fileTypeFromFile(filePath);
+      // v16: leggi i primi byte (magic numbers) e passali a fromBuffer
+      const fd = fsLib.openSync(filePath, 'r');
+      const head = Buffer.alloc(4100);
+      fsLib.readSync(fd, head, 0, 4100, 0);
+      fsLib.closeSync(fd);
+      const detected = await FileType.fromBuffer(head);
       if (!detected) {
         results.skipped++;
         results.details.push({ id: m.id, status: 'unknown_mime', filename: m.filename });
