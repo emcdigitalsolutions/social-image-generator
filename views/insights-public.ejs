@@ -244,16 +244,30 @@
       type: 'line',
       data: {
         datasets: [
-          { label: 'Facebook',  data: fbData, borderColor: '#1877f2', backgroundColor: 'rgba(24,119,242,0.1)', fill: false, tension: 0.3, spanGaps: true },
-          { label: 'Instagram', data: igData, borderColor: '#e4405f', backgroundColor: 'rgba(228,64,95,0.1)',  fill: false, tension: 0.3, spanGaps: true }
+          { label: 'Facebook',  data: fbData, borderColor: '#1877f2', backgroundColor: '#1877f2', fill: false, tension: 0, spanGaps: true, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5, yAxisID: 'y' },
+          { label: 'Instagram', data: igData, borderColor: '#e4405f', backgroundColor: '#e4405f', fill: false, tension: 0, spanGaps: true, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5, yAxisID: 'y1' }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmtNum(c.parsed.y) + ' follower' } } },
         scales: {
           x: { type: 'category', grid: { display: false } },
-          y: { beginAtZero: false, ticks: { callback: v => fmtNum(v) } }
+          y: {
+            position: 'left',
+            beginAtZero: false,
+            grid: { color: 'rgba(24,119,242,0.08)' },
+            ticks: { color: '#1877f2', callback: v => fmtNum(v) },
+            title: { display: true, text: 'Facebook', color: '#1877f2', font: { size: 11, weight: 600 } }
+          },
+          y1: {
+            position: 'right',
+            beginAtZero: false,
+            grid: { display: false },
+            ticks: { color: '#e4405f', callback: v => fmtNum(v) },
+            title: { display: true, text: 'Instagram', color: '#e4405f', font: { size: 11, weight: 600 } }
+          }
         }
       }
     });
