@@ -80,6 +80,35 @@
   #view-list .post-card .badge { font-size:10px; padding:1px 6px; }
   #view-list .post-card .cat-code { display:inline-block; background:var(--gray-100); color:var(--gray-600); font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; margin-right:4px; vertical-align:middle; }
 
+  /* ── Vista TABELLA: editor caption inline rapido ── */
+  #view-table table { width:100%; border-collapse:separate; border-spacing:0; background:white; border:1px solid var(--gray-200); border-radius:8px; overflow:hidden; font-size:13px; }
+  #view-table th { background:var(--gray-50); text-align:left; padding:10px 12px; font-size:11px; font-weight:600; color:var(--gray-600); text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid var(--gray-200); position:sticky; top:0; z-index:3; }
+  #view-table td { padding:10px 12px; border-bottom:1px solid var(--gray-100); vertical-align:top; }
+  #view-table tr:last-child td { border-bottom:0; }
+  #view-table tr.dirty td { background:#fef9c3; }
+  #view-table tr.saved td { background:#ecfdf5; transition:background 1.5s; }
+  #view-table tr.has-changes td { background:#fffbeb; }
+  #view-table .col-week { width:60px; color:var(--gray-500); font-weight:600; text-align:center; }
+  #view-table .col-cat { width:140px; }
+  #view-table .col-cat .cat-pill { display:inline-block; background:var(--gray-100); color:var(--gray-700); padding:2px 6px; border-radius:3px; font-size:10px; font-weight:700; margin-bottom:2px; }
+  #view-table .col-cat .cat-name { font-size:11px; color:var(--gray-500); }
+  #view-table .col-cat .sub { font-size:11px; color:var(--gray-700); margin-top:2px; line-height:1.3; }
+  #view-table .col-status { width:90px; }
+  #view-table .col-status .badge { font-size:10px; }
+  #view-table .col-caption { min-width:380px; }
+  #view-table .col-caption textarea { width:100%; min-height:90px; padding:8px 10px; font-family:inherit; font-size:12.5px; line-height:1.45; border:1px solid var(--gray-200); border-radius:5px; resize:vertical; box-sizing:border-box; background:white; transition:border-color 0.15s; }
+  #view-table .col-caption textarea:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 2px rgba(37,99,235,0.1); }
+  #view-table .col-caption .empty-cap { color:var(--gray-400); font-style:italic; font-size:12px; padding:6px 0; }
+  #view-table .col-actions { width:140px; text-align:right; white-space:nowrap; }
+  #view-table .col-actions .btn { font-size:11px; padding:4px 8px; }
+  #view-table .col-actions .save-status { font-size:10px; color:var(--gray-400); margin-top:4px; }
+  #view-table .col-actions .save-status.error { color:var(--red); }
+  #view-table .col-actions .save-status.saved { color:var(--green); }
+  #view-table .week-sep { background:var(--gray-50); }
+  #view-table .week-sep td { padding:6px 12px; font-size:11px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; }
+  #view-table-toolbar { margin-bottom:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  #view-table-toolbar .help { font-size:11px; color:var(--gray-500); flex:1; }
+
   /* Ghost pulito da usare come drag image (rimpiazza screenshot default brutto) */
   .drag-ghost {
     position:absolute; top:-9999px; left:-9999px;
@@ -170,8 +199,9 @@
   </div>
   <div style="flex:1"></div>
   <div class="view-toggle" role="tablist">
-    <button id="vt-cal"  class="active" onclick="setView('cal')">Calendario</button>
-    <button id="vt-list"            onclick="setView('list')">Lista</button>
+    <button id="vt-cal"   class="active" onclick="setView('cal')">Calendario</button>
+    <button id="vt-list"             onclick="setView('list')">Lista</button>
+    <button id="vt-table"            onclick="setView('table')" title="Editor caption tabellare per modifiche rapide">Tabella</button>
   </div>
 </div>
 
@@ -195,6 +225,7 @@
 
   <div id="view-cal"></div>
   <div id="view-list" style="display:none"></div>
+  <div id="view-table" style="display:none"></div>
 
   <div id="unscheduled" class="unscheduled-bar" style="display:none">
     <strong id="unscheduled-count">0</strong> post senza data programmata. <a href="#" onclick="setView('list');return false">Vedi nella lista</a> e imposta una <em>scheduled_date</em>.
@@ -408,6 +439,141 @@
     attachDragHandlers();
   }
 
+  // ── Vista TABELLA: editor caption inline rapido ──
+  // Mostra TUTTI i post del mese in una tabella: textarea modificabili
+  // direttamente, save al blur (o con Ctrl+S), bottone "rigenera caption"
+  // per chiamare l'AI senza aprire l'editor del post.
+  function renderTable() {
+    const root = document.getElementById('view-table');
+    if (!root) return;
+    if (!POSTS.length) { root.innerHTML = '<div class="empty-state"><h3>Nessun post in questo mese</h3></div>'; return; }
+    const visible = POSTS.filter(matchesFilter);
+    // Raggruppa per settimana per leggibilità
+    const weeks = {};
+    visible.forEach(p => { const w = p.week_number || 1; (weeks[w] = weeks[w] || []).push(p); });
+    Object.keys(weeks).forEach(k => weeks[k].sort(byWeekPosOrder));
+
+    let html = '<div id="view-table-toolbar">'
+      + '<span class="help">Modifica le caption inline. Salva con <kbd>Tab</kbd>/click fuori, oppure <kbd>Ctrl+S</kbd>. ✨ "Rigenera" chiama l\'AI senza aprire l\'editor.</span>'
+      + '</div>'
+      + '<table>'
+      + '<thead><tr>'
+      + '<th class="col-week">Sett.</th>'
+      + '<th class="col-cat">Categoria</th>'
+      + '<th class="col-status">Stato</th>'
+      + '<th class="col-caption">Caption</th>'
+      + '<th class="col-actions">Azioni</th>'
+      + '</tr></thead><tbody>';
+
+    Object.keys(weeks).sort((a,b) => a-b).forEach(wn => {
+      html += '<tr class="week-sep"><td colspan="5">Settimana ' + wn + '</td></tr>';
+      weeks[wn].forEach(p => {
+        const catCode = p.category || '';
+        const catName = categoryName(p.category);
+        const sub = p.sub_topic || '';
+        const captionVal = p.caption || '';
+        const placeholder = captionVal ? '' : 'Nessuna caption ancora generata. Scrivi qui o clicca ✨ Rigenera.';
+        const sched = (p.scheduled_date || '') + (p.scheduled_time ? ' · ' + p.scheduled_time.slice(0,5) : '');
+        html += '<tr data-post-id="' + p.id + '" data-orig-caption="' + escapeHtml(captionVal) + '">'
+          + '<td class="col-week">' + (p.week_number || '—') + '</td>'
+          + '<td class="col-cat">'
+            + (catCode ? '<span class="cat-pill">' + escapeHtml(catCode) + '</span> <span class="cat-name">' + escapeHtml(catName) + '</span>' : '<span class="cat-name">—</span>')
+            + (sub ? '<div class="sub" title="' + escapeHtml(sub) + '">' + escapeHtml(sub.substring(0, 100)) + '</div>' : '')
+            + (sched ? '<div class="cat-name" style="margin-top:3px">📅 ' + escapeHtml(sched) + '</div>' : '')
+          + '</td>'
+          + '<td class="col-status">'
+            + '<span class="badge badge-' + p.status + '">' + p.status + '</span>'
+            + (p.approval_status && p.approval_status !== 'pending'
+                ? '<div style="margin-top:4px"><span class="ap-badge ap-' + p.approval_status + '">' + ({approved:'✓', change_requested:'✏', rejected:'✗'}[p.approval_status] || '') + '</span></div>'
+                : '')
+          + '</td>'
+          + '<td class="col-caption">'
+            + '<textarea data-post-id="' + p.id + '" placeholder="' + escapeHtml(placeholder) + '">' + escapeHtml(captionVal) + '</textarea>'
+          + '</td>'
+          + '<td class="col-actions">'
+            + '<button class="btn btn-sm btn-secondary" onclick="regenerateCaptionInline(\'' + p.id + '\')" title="Rigenera con AI">✨ Rigenera</button>'
+            + '<div style="margin-top:6px"><a href="/dashboard/posts/' + p.id + '" style="font-size:11px;color:var(--blue)">Apri post →</a></div>'
+            + '<div class="save-status" data-status-for="' + p.id + '"></div>'
+          + '</td>'
+          + '</tr>';
+      });
+    });
+    html += '</tbody></table>';
+    root.innerHTML = html;
+    attachTableHandlers();
+  }
+
+  function attachTableHandlers() {
+    document.querySelectorAll('#view-table textarea[data-post-id]').forEach(ta => {
+      const tr = ta.closest('tr');
+      const orig = tr.dataset.origCaption || '';
+      ta.addEventListener('input', () => {
+        const dirty = ta.value !== orig;
+        tr.classList.toggle('dirty', dirty);
+      });
+      ta.addEventListener('blur', () => {
+        if (ta.value !== orig) saveCaptionInline(ta.dataset.postId, ta.value);
+      });
+      ta.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+          if (ta.value !== orig) saveCaptionInline(ta.dataset.postId, ta.value);
+        }
+      });
+    });
+  }
+
+  async function saveCaptionInline(postId, newCaption) {
+    const tr = document.querySelector('#view-table tr[data-post-id="' + postId + '"]');
+    const status = tr ? tr.querySelector('.save-status') : null;
+    if (status) { status.textContent = 'Salvo…'; status.className = 'save-status'; }
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + postId, {
+        method: 'PUT',
+        body: { caption: newCaption }
+      });
+      if (res && res.error) throw new Error(res.error);
+      // Aggiorna stato in memoria
+      const p = POSTS.find(x => x.id === postId);
+      if (p) p.caption = newCaption;
+      if (tr) {
+        tr.dataset.origCaption = newCaption;
+        tr.classList.remove('dirty');
+        tr.classList.add('saved');
+        setTimeout(() => tr.classList.remove('saved'), 1500);
+      }
+      if (status) { status.textContent = '✓ Salvato'; status.className = 'save-status saved'; setTimeout(() => { status.textContent = ''; }, 2000); }
+    } catch (err) {
+      if (status) { status.textContent = 'Errore: ' + (err.message || err); status.className = 'save-status error'; }
+    }
+  }
+
+  async function regenerateCaptionInline(postId) {
+    const tr = document.querySelector('#view-table tr[data-post-id="' + postId + '"]');
+    const status = tr ? tr.querySelector('.save-status') : null;
+    const btn = tr ? tr.querySelector('button') : null;
+    if (status) { status.textContent = 'Genero con AI…'; status.className = 'save-status'; }
+    if (btn) btn.disabled = true;
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + postId + '/generate-caption', { method: 'POST' });
+      if (res && res.error) throw new Error(res.error);
+      const newCaption = (res && res.caption) || (res && res.post && res.post.caption) || '';
+      const ta = tr ? tr.querySelector('textarea') : null;
+      if (ta) {
+        ta.value = newCaption;
+        tr.dataset.origCaption = newCaption;
+        tr.classList.remove('dirty');
+      }
+      const p = POSTS.find(x => x.id === postId);
+      if (p) p.caption = newCaption;
+      if (status) { status.textContent = '✓ Generata'; status.className = 'save-status saved'; setTimeout(() => { status.textContent = ''; }, 2000); }
+    } catch (err) {
+      if (status) { status.textContent = 'Errore: ' + (err.message || err); status.className = 'save-status error'; }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   // ── Drag & drop: spostamento tra settimane + riordino DENTRO la settimana ──
   // L'ordine visivo di una settimana è l'ordine dei POSTS filtrati per week_number.
   // Al drop ricalcoliamo position 0..N per le settimane coinvolte e mandiamo un
@@ -592,15 +758,19 @@
   let currentView = 'cal';
   function setView(v) {
     currentView = v;
-    document.getElementById('view-cal').style.display  = v === 'cal'  ? 'block' : 'none';
-    document.getElementById('view-list').style.display = v === 'list' ? 'block' : 'none';
+    document.getElementById('view-cal').style.display   = v === 'cal'   ? 'block' : 'none';
+    document.getElementById('view-list').style.display  = v === 'list'  ? 'block' : 'none';
+    document.getElementById('view-table').style.display = v === 'table' ? 'block' : 'none';
     document.getElementById('vt-cal').classList.toggle('active', v === 'cal');
     document.getElementById('vt-list').classList.toggle('active', v === 'list');
+    document.getElementById('vt-table').classList.toggle('active', v === 'table');
     document.getElementById('unscheduled').style.display = v === 'cal' ? document.getElementById('unscheduled').style.display : 'none';
     renderViews();
   }
   function renderViews() {
-    if (currentView === 'cal') renderCalendar(); else renderList();
+    if (currentView === 'cal') renderCalendar();
+    else if (currentView === 'list') renderList();
+    else if (currentView === 'table') renderTable();
   }
 
   // Init
