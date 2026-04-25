@@ -85,7 +85,7 @@
           return;
         }
         localStorage.setItem('dashboard_token', data.token);
-        document.cookie = 'dashboard_token=' + data.token + '; path=/; max-age=86400; SameSite=Strict';
+        document.cookie = 'dashboard_token=' + data.token + '; path=/; max-age=86400; SameSite=Lax';
         window.location.href = '/dashboard';
       } catch (err) {
         errEl.textContent = 'Errore di connessione';
