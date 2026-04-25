@@ -688,4 +688,94 @@ router.get('/:id/insights/history', (req, res) => {
   res.json({ days, rows });
 });
 
+// ───────── Media repair: detect MIME effettivo + rinomina con extension corretta ─────────
+//
+// Bug storico: l'endpoint /crop sovrascriveva il file .png con un blob JPEG
+// (Cropper.js può ritornare JPEG). I file salvati hanno extension .png MA
+// contenuto JPEG → Meta rifiuta al publish (errore 9004 "Only photo or video").
+// Fixato in c8904d5 per i nuovi crop. Questo endpoint ripara retroattivamente
+// i file già rotti: scansiona tutti i media immagine del cliente, detecta il
+// MIME reale con file-type, rinomina i file mismatched + aggiorna il record DB.
+//
+// ?dry_run=1 → mostra cosa farebbe senza toccare i file
+router.post('/:id/media/repair-mime', async (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT id, display_name FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const fsLib = require('fs');
+  const pathLib = require('path');
+  const fileType = require('file-type');
+
+  const media = db.prepare(`
+    SELECT pm.id, pm.post_id, pm.filename, pm.url, pm.kind, p.client_id
+    FROM post_media pm
+    JOIN posts p ON p.id = pm.post_id
+    WHERE p.client_id = ? AND pm.kind = 'image'
+  `).all(client.id);
+
+  const dryRun = req.query.dry_run === '1';
+  const results = { total: media.length, scanned: 0, fixed: 0, ok: 0, skipped: 0, errors: 0, details: [] };
+
+  for (const m of media) {
+    const dir = postMedia.postDir(m.client_id, m.post_id);
+    const filePath = pathLib.join(dir, m.filename);
+    if (!fsLib.existsSync(filePath)) {
+      results.skipped++;
+      results.details.push({ id: m.id, status: 'missing', filename: m.filename });
+      continue;
+    }
+    results.scanned++;
+    try {
+      const detected = await fileType.fileTypeFromFile(filePath);
+      if (!detected) {
+        results.skipped++;
+        results.details.push({ id: m.id, status: 'unknown_mime', filename: m.filename });
+        continue;
+      }
+      const mimeToExt = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
+      const correctExt = mimeToExt[detected.mime];
+      if (!correctExt) {
+        results.skipped++;
+        results.details.push({ id: m.id, status: 'unsupported_mime', mime: detected.mime, filename: m.filename });
+        continue;
+      }
+      const oldExt = pathLib.extname(m.filename).toLowerCase();
+      const normalizedOldExt = oldExt === '.jpeg' ? '.jpg' : oldExt;
+      if (normalizedOldExt === correctExt) {
+        results.ok++;
+        continue;
+      }
+      // Mismatch! Rinomina file + aggiorna DB
+      const baseName = pathLib.basename(m.filename, oldExt);
+      const newFilename = baseName + correctExt;
+      const newPath = pathLib.join(dir, newFilename);
+      const newUrl = postMedia.publicUrl(m.client_id, m.post_id, newFilename);
+
+      if (dryRun) {
+        results.details.push({ id: m.id, status: 'would_fix', from: m.filename, to: newFilename, mime: detected.mime });
+        results.fixed++;
+        continue;
+      }
+      fsLib.renameSync(filePath, newPath);
+      db.prepare(`UPDATE post_media SET filename = ?, url = ?, created_at = datetime('now') WHERE id = ?`)
+        .run(newFilename, newUrl, m.id);
+      results.fixed++;
+      results.details.push({ id: m.id, status: 'fixed', from: m.filename, to: newFilename, mime: detected.mime });
+    } catch (err) {
+      results.errors++;
+      results.details.push({ id: m.id, status: 'error', filename: m.filename, error: err.message });
+    }
+  }
+
+  audit.logFromReq(req, {
+    client_id: client.id,
+    action: 'media.repair_mime',
+    entity_type: 'client',
+    entity_id: client.id,
+    details: { total: results.total, scanned: results.scanned, fixed: results.fixed, errors: results.errors, dry_run: dryRun }
+  });
+  res.json({ dry_run: dryRun, ...results });
+});
+
 module.exports = router;
