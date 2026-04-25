@@ -688,6 +688,29 @@ router.get('/:id/insights/history', (req, res) => {
   res.json({ days, rows });
 });
 
+// Trigger manuale del cron mensile: invia il report mese-precedente a TUTTI
+// i clienti con contact_email. Utile per test o se il cron del 1° non è
+// scattato (es. server era down).
+router.post('/_admin/insights/monthly-reports/trigger', async (req, res) => {
+  try {
+    const { sendMonthlyReports } = require('../../lib/scheduler');
+    // Fire-and-forget: la chiamata può durare minuti per molti clienti.
+    // Rispondiamo subito e logghiamo i risultati.
+    sendMonthlyReports().catch(err => console.error('[manual-monthly-trigger]', err));
+    audit.logFromReq(req, {
+      client_id: null,
+      action: 'admin.monthly_reports_triggered',
+      entity_type: 'system',
+      entity_id: null,
+      details: {}
+    });
+    res.json({ ok: true, message: 'Cron mensile triggerato in background. Vedi audit log per esito per cliente.' });
+  } catch (err) {
+    console.error('[monthly-reports trigger]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ───────── Insights report PDF (download / email) ─────────
 //
 // GET /:id/insights/report.pdf?days=30  → ritorna PDF binario
