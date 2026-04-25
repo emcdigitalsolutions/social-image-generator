@@ -51,6 +51,22 @@ app.use((req, res, next) => {
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Access log per /images: utile per debuggare quando Meta non riesce a scaricare.
+// Logga IP, UA, status, response time, content-length.
+app.use('/images', (req, res, next) => {
+  const start = Date.now();
+  const ip = req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
+  const ua = (req.headers['user-agent'] || '').substring(0, 80);
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const isMeta = /facebook|instagram|meta/i.test(ua);
+    if (isMeta || res.statusCode >= 400) {
+      console.log(`[images] ${res.statusCode} ${req.method} ${req.path} ip=${ip} ms=${ms} bytes=${res.getHeader('content-length') || '?'} ua="${ua}"`);
+    }
+  });
+  next();
+});
+
 // Static files — serve generated images.
 // NB: NO immutable qui. I file di post_media vengono sovrascritti dal crop-tool,
 // con immutable Meta/CDN li mettono in cache alla prima versione e non rileggono
