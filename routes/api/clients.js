@@ -819,6 +819,32 @@ router.post('/:id/media/repair-mime', async (req, res) => {
   res.json({ dry_run: dryRun, ...results });
 });
 
+// Insights overview admin (autenticato): panoramica per la pagina /dashboard/insights
+router.get('/_admin/insights/overview', (req, res) => {
+  const insights = require('../../lib/insights');
+  const days = Math.min(parseInt(req.query.days, 10) || 30, 365);
+  res.json({ days, overview: insights.getInsightsOverview(days) });
+});
+
+// Insights dettaglio admin per un cliente specifico (autenticato): dati live
+// per la pagina /dashboard/insights/client/:id. Stesso payload della view
+// pubblica `insights-share/public/:token/data` ma senza token.
+router.get('/_admin/insights/client/:id', (req, res) => {
+  const insights = require('../../lib/insights');
+  const db = getDb();
+  const client = db.prepare('SELECT id, display_name, sector, location, logo_filename FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Cliente non trovato' });
+  const days = Math.min(parseInt(req.query.days, 10) || 30, 365);
+  res.json({
+    client: { id: client.id, display_name: client.display_name, sector: client.sector, location: client.location, has_logo: !!client.logo_filename },
+    period: { days, label: 'Vista admin' },
+    summary: insights.getAccountSummary(client.id, days),
+    history: insights.getAccountInsightsHistory(client.id, days),
+    top_posts: insights.getTopPosts(client.id, days, 10),
+    generated_at: new Date().toISOString()
+  });
+});
+
 // Migrazione bulk: sostituisci una stringa nell'URL di TUTTI i post_media.
 // Usato quando si cambia il dominio host delle immagini (es. img.emc → media.emc
 // per bypassare un block Meta sul dominio precedente).

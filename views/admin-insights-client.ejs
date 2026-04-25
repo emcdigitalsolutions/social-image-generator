@@ -1,0 +1,259 @@
+<%- include('layout') %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --fb: #1877f2; --ig: #e4405f;
+  }
+  .ai-toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+  }
+  .ai-toolbar .period-select {
+    padding: 6px 12px; border: 1px solid var(--gray-300); border-radius: 6px;
+    font-size: 13px; font-family: inherit; background: white;
+  }
+  .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi {
+    background: white; border: 1px solid var(--gray-200); border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .kpi .label { font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  .kpi .value { font-size: 26px; font-weight: 700; margin-top: 6px; letter-spacing: -0.5px; }
+  .kpi .delta { font-size: 12px; margin-top: 4px; font-weight: 600; }
+  .kpi .delta.up { color: var(--green); }
+  .kpi .delta.down { color: var(--red); }
+  .kpi .delta.flat { color: var(--gray-400); }
+  .kpi .platform-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px;
+    font-weight: 700; margin-bottom: 8px; color: white; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .kpi.fb .platform-tag { background: var(--fb); }
+  .kpi.ig .platform-tag { background: var(--ig); }
+  .ai-card {
+    background: white; border: 1px solid var(--gray-200); border-radius: 10px;
+    padding: 20px; margin-bottom: 20px;
+  }
+  .ai-card h2 { margin: 0 0 14px; font-size: 15px; font-weight: 700; }
+  .chart-wrap { position: relative; height: 280px; }
+  .post-list { display: grid; gap: 10px; }
+  .post-item {
+    border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px 14px;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  }
+  .post-item .rank {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: white;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;
+  }
+  .post-item .info .title { font-weight: 600; font-size: 13px; }
+  .post-item .info .meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+  .post-item .badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: var(--gray-100); color: var(--gray-600); font-weight: 600; }
+  .post-item .badge.reel { background: #ede9fe; color: #5b21b6; }
+  .post-item .badge.carousel { background: #fef3c7; color: #92400e; }
+  .post-item .stats { font-size: 12px; text-align: right; color: var(--gray-500); }
+  .post-item .stats .big { font-size: 16px; font-weight: 700; color: var(--gray-700); display: block; }
+  .empty { text-align: center; padding: 30px; color: var(--gray-400); }
+  .loading { text-align: center; padding: 40px; color: var(--gray-500); }
+  .err { background: #fef2f2; color: var(--red); border-left: 3px solid var(--red); padding: 12px 18px; border-radius: 6px; }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1><%= client.display_name %></h1>
+    <p style="font-size:13px;color:var(--gray-500);margin-top:4px">
+      <a href="/dashboard/insights" style="color:var(--blue);text-decoration:none">← Tutti i clienti</a>
+      <% if (client.location) { %> · <%= client.location %><% } %>
+    </p>
+  </div>
+  <div>
+    <a href="/dashboard/clients/<%= client.id %>" class="btn btn-secondary btn-sm">Apri profilo cliente</a>
+  </div>
+</div>
+
+<div class="ai-toolbar">
+  <div>
+    <label style="font-size:13px;color:var(--gray-500);margin-right:8px">Periodo</label>
+    <select class="period-select" onchange="window.location='/dashboard/insights/client/<%= client.id %>?days='+this.value">
+      <option value="7"  <%= days === 7  ? 'selected' : '' %>>Ultimi 7 giorni</option>
+      <option value="30" <%= days === 30 ? 'selected' : '' %>>Ultimi 30 giorni</option>
+      <option value="90" <%= days === 90 ? 'selected' : '' %>>Ultimi 90 giorni</option>
+      <option value="365" <%= days === 365 ? 'selected' : '' %>>Ultimo anno</option>
+    </select>
+  </div>
+  <button class="btn btn-secondary btn-sm" onclick="snapshotNow()">
+    <span style="margin-right:3px">⟳</span>Aggiorna ora
+  </button>
+</div>
+
+<div id="root">
+  <div class="loading">Caricamento dati in corso…</div>
+</div>
+
+<script>
+  const CLIENT_ID = <%- JSON.stringify(client.id) %>;
+  const DAYS = <%= days %>;
+
+  function fmtNum(n) {
+    if (n == null) return '—';
+    if (typeof n !== 'number') return String(n);
+    return n.toLocaleString('it-IT');
+  }
+  function fmtDelta(d) {
+    if (d == null) return { text: '—', cls: 'flat' };
+    if (d > 0)  return { text: '+' + fmtNum(d), cls: 'up' };
+    if (d < 0)  return { text: fmtNum(d), cls: 'down' };
+    return { text: '0', cls: 'flat' };
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  function kpiCard(platform, summary) {
+    if (!summary) return '';
+    const delta = fmtDelta(summary.followers_delta);
+    const tag = platform === 'fb' ? 'Facebook' : 'Instagram';
+    return `
+      <div class="kpi ${platform}">
+        <span class="platform-tag">${tag}</span>
+        <div class="label">Follower</div>
+        <div class="value">${fmtNum(summary.followers_now)}</div>
+        <div class="delta ${delta.cls}">${delta.text} nel periodo</div>
+      </div>
+      <div class="kpi ${platform}">
+        <span class="platform-tag">${tag}</span>
+        <div class="label">Reach totale</div>
+        <div class="value">${fmtNum(summary.reach_total)}</div>
+        <div class="delta flat">${summary.days_with_data || 0} giorni di dati</div>
+      </div>
+      <div class="kpi ${platform}">
+        <span class="platform-tag">${tag}</span>
+        <div class="label">Profile views</div>
+        <div class="value">${fmtNum(summary.profile_views_total || 0)}</div>
+        <div class="delta flat">somma periodo</div>
+      </div>
+    `;
+  }
+
+  function topPostHTML(p, idx) {
+    const totalEng = (p.ig_engagement || 0) + (p.fb_engagement || 0);
+    const totalReach = (p.ig_reach || 0) + (p.fb_reach || 0);
+    const typeBadge = p.media_type ? `<span class="badge ${p.media_type}">${p.media_type}</span>` : '';
+    const subj = (p.sub_topic || 'Post').substring(0, 100);
+    return `
+      <div class="post-item">
+        <div class="rank">${idx + 1}</div>
+        <div class="info">
+          <div class="title">${escapeHtml(subj)} ${typeBadge}</div>
+          <div class="meta">${p.published_at ? 'Pubblicato il ' + fmtDate(p.published_at) : ''} ${p.category ? '· ' + p.category : ''} ${p.fb_post_id ? '· FB ✓' : ''} ${p.ig_media_id ? '· IG ✓' : ''}</div>
+        </div>
+        <div class="stats">
+          <span class="big">${fmtNum(totalEng)}</span>
+          interazioni · ${fmtNum(totalReach)} reach
+        </div>
+      </div>
+    `;
+  }
+
+  function buildSeries(history, platform, field) {
+    return history.filter(h => h.platform === platform).map(h => ({ x: h.date, y: h[field] }));
+  }
+
+  function render(data) {
+    const root = document.getElementById('root');
+    const noData = !data.summary.fb && !data.summary.ig;
+
+    const kpis = (data.summary.fb ? kpiCard('fb', data.summary.fb) : '')
+               + (data.summary.ig ? kpiCard('ig', data.summary.ig) : '');
+
+    root.innerHTML = `
+      ${noData ? '<div class="ai-card"><div class="empty">Nessun dato ancora raccolto. Il cron del mattino popolerà la dashboard.</div></div>' : ''}
+      <div class="grid-kpi">${kpis}</div>
+      ${data.history && data.history.length ? `
+        <div class="ai-card">
+          <h2>📈 Crescita follower</h2>
+          <div class="chart-wrap"><canvas id="chart-followers"></canvas></div>
+        </div>
+        <div class="ai-card">
+          <h2>👀 Reach giornaliero</h2>
+          <div class="chart-wrap"><canvas id="chart-reach"></canvas></div>
+        </div>
+      ` : ''}
+      ${data.top_posts && data.top_posts.length ? `
+        <div class="ai-card">
+          <h2>⭐ Top ${data.top_posts.length} post per engagement</h2>
+          <div class="post-list">${data.top_posts.map((p,i) => topPostHTML(p,i)).join('')}</div>
+        </div>
+      ` : `<div class="ai-card"><h2>⭐ Top post</h2><div class="empty">Nessun post pubblicato nel periodo.</div></div>`}
+    `;
+
+    if (data.history && data.history.length) {
+      renderFollowers(data.history);
+      renderReach(data.history);
+    }
+  }
+
+  function renderFollowers(history) {
+    const ctx = document.getElementById('chart-followers');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'line',
+      data: { datasets: [
+        { label: 'Facebook',  data: buildSeries(history, 'fb', 'fans'),       borderColor: '#1877f2', backgroundColor: 'rgba(24,119,242,0.1)', fill: false, tension: 0.3, spanGaps: true },
+        { label: 'Instagram', data: buildSeries(history, 'ig', 'followers'),  borderColor: '#e4405f', backgroundColor: 'rgba(228,64,95,0.1)',  fill: false, tension: 0.3, spanGaps: true }
+      ]},
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+        scales: { x: { type: 'category', grid: { display: false } }, y: { ticks: { callback: v => fmtNum(v) } } }
+      }
+    });
+  }
+
+  function renderReach(history) {
+    const ctx = document.getElementById('chart-reach');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: { datasets: [
+        { label: 'Facebook',  data: buildSeries(history, 'fb', 'reach'), backgroundColor: 'rgba(24,119,242,0.6)' },
+        { label: 'Instagram', data: buildSeries(history, 'ig', 'reach'), backgroundColor: 'rgba(228,64,95,0.6)' }
+      ]},
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } },
+        scales: { x: { type: 'category', grid: { display: false } }, y: { beginAtZero: true, ticks: { callback: v => fmtNum(v) } } }
+      }
+    });
+  }
+
+  async function loadData() {
+    try {
+      const res = await apiFetch('/dashboard/api/clients/_admin/insights/client/' + CLIENT_ID + '?days=' + DAYS, { method: 'GET' });
+      if (res.error) {
+        document.getElementById('root').innerHTML = '<div class="err">' + escapeHtml(res.error) + '</div>';
+        return;
+      }
+      render(res);
+    } catch (err) {
+      document.getElementById('root').innerHTML = '<div class="err">Errore: ' + escapeHtml(err.message || err) + '</div>';
+    }
+  }
+
+  async function snapshotNow() {
+    try {
+      const r = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/insights/snapshot', { method: 'POST' });
+      if (r && r.results) {
+        toast('Snapshot completato. Ricarico…');
+        setTimeout(loadData, 600);
+      } else if (r && r.error) {
+        showAlert('Errore: ' + r.error);
+      }
+    } catch (err) { showAlert('Errore: ' + (err.message || err)); }
+  }
+
+  loadData();
+</script>
+
+<%- include('layout-end') %>

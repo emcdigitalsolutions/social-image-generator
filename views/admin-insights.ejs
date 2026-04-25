@@ -1,0 +1,149 @@
+<%- include('layout') %>
+
+<style>
+  .insights-toolbar {
+    display: flex; gap: 10px; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .insights-toolbar .period-select {
+    padding: 6px 12px; border: 1px solid var(--gray-300); border-radius: 6px;
+    font-size: 13px; font-family: inherit; background: white;
+  }
+  .clients-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;
+  }
+  .client-insight-card {
+    background: white; border: 1px solid var(--gray-200); border-radius: 10px;
+    padding: 16px 18px; cursor: pointer; transition: all 0.15s;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .client-insight-card:hover {
+    border-color: var(--blue); box-shadow: 0 2px 12px rgba(37, 99, 235, 0.08);
+    transform: translateY(-1px);
+  }
+  .client-insight-card .header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .client-insight-card .header h3 {
+    font-size: 15px; font-weight: 700; margin: 0; flex: 1;
+  }
+  .client-insight-card .header .sector {
+    font-size: 11px; color: var(--gray-500); padding: 2px 8px;
+    background: var(--gray-100); border-radius: 4px;
+  }
+  .platform-row {
+    display: flex; gap: 14px; padding: 8px 0; border-top: 1px solid var(--gray-100);
+    font-size: 13px;
+  }
+  .platform-row:first-of-type { border-top: none; }
+  .platform-tag {
+    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px;
+    color: white; text-transform: uppercase; letter-spacing: 0.5px;
+    min-width: 22px; text-align: center;
+  }
+  .platform-tag.fb { background: #1877f2; }
+  .platform-tag.ig { background: #e4405f; }
+  .platform-stat { flex: 1; }
+  .platform-stat .value { font-weight: 700; font-size: 15px; color: var(--gray-700); }
+  .platform-stat .delta { font-size: 11px; margin-left: 4px; }
+  .platform-stat .delta.up { color: var(--green); }
+  .platform-stat .delta.down { color: var(--red); }
+  .platform-stat .label { font-size: 11px; color: var(--gray-500); }
+  .no-data {
+    text-align: center; padding: 12px 0; color: var(--gray-400); font-size: 13px;
+    font-style: italic;
+  }
+  .meta-info {
+    margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--gray-200);
+    display: flex; justify-content: space-between; font-size: 11px; color: var(--gray-500);
+  }
+  .empty-overview {
+    grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--gray-400);
+  }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>Insights</h1>
+    <p style="font-size:13px;color:var(--gray-500);margin-top:4px">
+      Panoramica performance social di tutti i clienti attivi. Clicca su un cliente per il dettaglio.
+    </p>
+  </div>
+</div>
+
+<div class="insights-toolbar">
+  <div>
+    <label style="font-size:13px;color:var(--gray-500);margin-right:8px">Periodo</label>
+    <select class="period-select" onchange="window.location='/dashboard/insights?days='+this.value">
+      <option value="7"  <%= days === 7  ? 'selected' : '' %>>Ultimi 7 giorni</option>
+      <option value="30" <%= days === 30 ? 'selected' : '' %>>Ultimi 30 giorni</option>
+      <option value="90" <%= days === 90 ? 'selected' : '' %>>Ultimi 90 giorni</option>
+      <option value="365" <%= days === 365 ? 'selected' : '' %>>Ultimo anno</option>
+    </select>
+  </div>
+  <div style="font-size:12px;color:var(--gray-500)">
+    Dati aggiornati ogni notte alle 04:00 (Europe/Rome)
+  </div>
+</div>
+
+<div class="clients-grid">
+  <% if (overview.length === 0) { %>
+    <div class="empty-overview">Nessun cliente attivo.</div>
+  <% } %>
+  <% overview.forEach(c => { %>
+    <a href="/dashboard/insights/client/<%= c.id %>?days=<%= days %>" class="client-insight-card">
+      <div class="header">
+        <h3><%= c.display_name %></h3>
+        <% if (c.sector) { %><span class="sector"><%= c.sector %></span><% } %>
+      </div>
+
+      <% if (!c.has_data) { %>
+        <div class="no-data">Nessun dato ancora raccolto.<br>Snapshot atteso entro 24h.</div>
+      <% } else { %>
+        <% if (c.summary.fb) { %>
+          <div class="platform-row">
+            <span class="platform-tag fb">FB</span>
+            <div class="platform-stat">
+              <div class="label">Follower</div>
+              <span class="value"><%= (c.summary.fb.followers_now || 0).toLocaleString('it-IT') %></span>
+              <% if (c.summary.fb.followers_delta != null && c.summary.fb.followers_delta !== 0) { %>
+                <span class="delta <%= c.summary.fb.followers_delta > 0 ? 'up' : 'down' %>">
+                  <%= c.summary.fb.followers_delta > 0 ? '+' : '' %><%= c.summary.fb.followers_delta %>
+                </span>
+              <% } %>
+            </div>
+            <div class="platform-stat">
+              <div class="label">Reach <%= days %>gg</div>
+              <span class="value"><%= (c.summary.fb.reach_total || 0).toLocaleString('it-IT') %></span>
+            </div>
+          </div>
+        <% } %>
+        <% if (c.summary.ig) { %>
+          <div class="platform-row">
+            <span class="platform-tag ig">IG</span>
+            <div class="platform-stat">
+              <div class="label">Follower</div>
+              <span class="value"><%= (c.summary.ig.followers_now || 0).toLocaleString('it-IT') %></span>
+              <% if (c.summary.ig.followers_delta != null && c.summary.ig.followers_delta !== 0) { %>
+                <span class="delta <%= c.summary.ig.followers_delta > 0 ? 'up' : 'down' %>">
+                  <%= c.summary.ig.followers_delta > 0 ? '+' : '' %><%= c.summary.ig.followers_delta %>
+                </span>
+              <% } %>
+            </div>
+            <div class="platform-stat">
+              <div class="label">Reach <%= days %>gg</div>
+              <span class="value"><%= (c.summary.ig.reach_total || 0).toLocaleString('it-IT') %></span>
+            </div>
+          </div>
+        <% } %>
+      <% } %>
+
+      <div class="meta-info">
+        <span><%= c.post_count %> post pubblicati nel periodo</span>
+        <% if (c.location) { %><span><%= c.location %></span><% } %>
+      </div>
+    </a>
+  <% }) %>
+</div>
+
+<%- include('layout-end') %>

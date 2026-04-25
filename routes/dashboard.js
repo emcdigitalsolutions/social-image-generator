@@ -277,6 +277,34 @@ router.get('/posts/:id', (req, res) => {
   res.render('post-editor', { title: 'Editor Post', client, post, media, user: req.user, prevPostId, nextPostId, monthUrl });
 });
 
+// Insights overview admin: panoramica multi-cliente con KPI sintetici
+router.get('/insights', (req, res) => {
+  const insights = require('../lib/insights');
+  const days = Math.min(parseInt(req.query.days, 10) || 30, 365);
+  const overview = insights.getInsightsOverview(days);
+  res.render('admin-insights', {
+    title: 'Insights',
+    user: req.user,
+    activeNav: 'insights',
+    overview,
+    days
+  });
+});
+
+// Insights dettaglio cliente admin (riusa il template della view pubblica)
+router.get('/insights/client/:id', (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT id, display_name, sector, location, logo_filename FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).send('Cliente non trovato');
+  res.render('admin-insights-client', {
+    title: `Insights — ${client.display_name}`,
+    user: req.user,
+    activeNav: 'insights',
+    client,
+    days: Math.min(parseInt(req.query.days, 10) || 30, 365)
+  });
+});
+
 // Logs page
 router.get('/logs', (req, res) => {
   res.render('logs', { title: 'Log', user: req.user });
