@@ -819,4 +819,37 @@ router.post('/:id/media/repair-mime', async (req, res) => {
   res.json({ dry_run: dryRun, ...results });
 });
 
+// Migrazione bulk: sostituisci una stringa nell'URL di TUTTI i post_media.
+// Usato quando si cambia il dominio host delle immagini (es. img.emc → media.emc
+// per bypassare un block Meta sul dominio precedente).
+//
+// Body: { "from": "img.emcdigitalsolutions.it", "to": "media.emcdigitalsolutions.it" }
+// Optional ?dry_run=1
+router.post('/_admin/migrate-media-url', async (req, res) => {
+  const { from, to } = req.body || {};
+  if (!from || !to) return res.status(400).json({ error: 'Body { from, to } richiesto' });
+  if (from === to) return res.status(400).json({ error: 'from e to identici' });
+  const dryRun = req.query.dry_run === '1';
+
+  const db = getDb();
+  const matching = db.prepare(`SELECT COUNT(*) AS n FROM post_media WHERE url LIKE ?`).get(`%${from}%`);
+  if (!matching.n) return res.json({ matched: 0, updated: 0, dry_run: dryRun, note: 'Nessun media da aggiornare' });
+
+  if (dryRun) {
+    const sample = db.prepare(`SELECT id, url FROM post_media WHERE url LIKE ? LIMIT 3`).all(`%${from}%`);
+    return res.json({ matched: matching.n, updated: 0, dry_run: true, sample });
+  }
+
+  const result = db.prepare(`UPDATE post_media SET url = REPLACE(url, ?, ?) WHERE url LIKE ?`)
+    .run(from, to, `%${from}%`);
+  audit.logFromReq(req, {
+    client_id: null,
+    action: 'admin.migrate_media_url',
+    entity_type: 'post_media',
+    entity_id: null,
+    details: { from, to, matched: matching.n, updated: result.changes }
+  });
+  res.json({ matched: matching.n, updated: result.changes, dry_run: false });
+});
+
 module.exports = router;
