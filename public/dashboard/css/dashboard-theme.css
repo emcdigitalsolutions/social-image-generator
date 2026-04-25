@@ -732,7 +732,10 @@ tr:hover td { background: var(--surface-tint); }
     font-size: 22px;
     line-height: 1;
     cursor: pointer;
-    z-index: 2;
+    /* z-index alto: deve stare sopra .sidebar-brand (anch'esso z-index:2 +
+       posto dopo nel DOM → senza override il brand intercettava i click
+       sull'angolo della X). */
+    z-index: 10;
   }
 
   /* Blocca lo scroll del body quando sidebar aperta */
