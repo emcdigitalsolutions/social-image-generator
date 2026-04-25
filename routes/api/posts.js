@@ -472,6 +472,35 @@ router.put('/:id/media/reorder', (req, res) => {
   res.json({ media: updated });
 });
 
+// Normalize: re-encode il file con sharp strippando ICC profile / EXIF.
+// Utile quando Meta rifiuta un file apparentemente OK (errore 9004 "Only
+// photo/video accepted") perché ha metadata che non riesce a parsare.
+router.post('/:id/media/:mediaId/normalize', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const m = postMedia.getMedia(req.params.mediaId);
+  if (!m || m.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+  if (m.kind !== 'image') return res.status(400).json({ error: 'Solo immagini possono essere normalizzate' });
+
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    const filePath = path.join(postMedia.postDir(post.client_id, post.id), m.filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File non trovato sul disco' });
+
+    const result = await postMedia.normalizeImageForMeta(filePath);
+    if (result.changed) {
+      const stat = fs.statSync(filePath);
+      db.prepare(`UPDATE post_media SET bytes = ?, created_at = datetime('now') WHERE id = ?`).run(stat.size, m.id);
+    }
+    res.json({ media: postMedia.getMedia(m.id), result });
+  } catch (err) {
+    console.error('[normalize] error:', err.message);
+    res.status(500).json({ error: 'Normalize fallito', details: err.message });
+  }
+});
+
 // Crop / edit: sovrascrive il file del media con il blob croppato ricevuto dal client.
 // IMPORTANTE: Cropper.js può ritornare un BLOB con tipo diverso dall'originale
 // (es. JPEG anche se il file originale era PNG). Express.static serve il file
@@ -530,8 +559,8 @@ router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), async (req, 
       fs.unlinkSync(req.file.path);
     }
 
-    // Flatten alpha PNG: IG rifiuta PNG con trasparenza
-    await postMedia.flattenPngAlpha(dest);
+    // Normalizza per Meta: flatten alpha PNG + strip metadata (ICC, EXIF)
+    await postMedia.normalizeImageForMeta(dest);
 
     const stat = fs.statSync(dest);
     let w = null, h = null;
@@ -606,8 +635,8 @@ router.post('/:id/media/:mediaId/stylize', stylizeRateLimit, async (req, res) =>
 
   try {
     const { filePath } = await renderImage(template, post.client_id, data);
-    // Puppeteer screenshot PNG ha sempre alpha → flatten per IG compat
-    await postMedia.flattenPngAlpha(filePath);
+    // Normalizza output Puppeteer: flatten alpha + strip metadata
+    await postMedia.normalizeImageForMeta(filePath);
     const styled = postMedia.attachGeneratedFile({
       clientId: post.client_id,
       postId: post.id,
