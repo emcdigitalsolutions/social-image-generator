@@ -472,6 +472,45 @@ router.put('/:id/media/reorder', (req, res) => {
   res.json({ media: updated });
 });
 
+// Bust: rinomina il file con nuovo UUID per generare un URL completamente nuovo.
+// Necessario quando Meta ha cachato il path come "non valido" e ignora i nuovi
+// tentativi anche dopo aver sistemato il file. Il cache buster ?v= non basta:
+// Meta usa il path come chiave cache.
+router.post('/:id/media/:mediaId/bust-url', (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const m = postMedia.getMedia(req.params.mediaId);
+  if (!m || m.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    const { v4: uuidv4 } = require('uuid');
+    const dir = postMedia.postDir(post.client_id, post.id);
+    const oldPath = path.join(dir, m.filename);
+    if (!fs.existsSync(oldPath)) return res.status(404).json({ error: 'File non trovato' });
+
+    const ext = path.extname(m.filename);
+    // Nuovo UUID, mantiene il prefisso (upload/styled/generated/transcoded)
+    const oldBase = path.basename(m.filename, ext);
+    const prefix = oldBase.split('-')[0]; // upload, styled, ecc.
+    const newId = uuidv4();
+    const newFilename = `${prefix}-${newId}${ext}`;
+    const newPath = path.join(dir, newFilename);
+    const newUrl = postMedia.publicUrl(post.client_id, post.id, newFilename);
+
+    fs.renameSync(oldPath, newPath);
+    db.prepare(`UPDATE post_media SET filename = ?, url = ?, created_at = datetime('now') WHERE id = ?`)
+      .run(newFilename, newUrl, m.id);
+
+    res.json({ media: postMedia.getMedia(m.id), old_filename: m.filename, new_filename: newFilename });
+  } catch (err) {
+    console.error('[bust-url] error:', err.message);
+    res.status(500).json({ error: 'Bust URL fallito', details: err.message });
+  }
+});
+
 // Normalize: re-encode il file con sharp strippando ICC profile / EXIF.
 // Utile quando Meta rifiuta un file apparentemente OK (errore 9004 "Only
 // photo/video accepted") perché ha metadata che non riesce a parsare.
