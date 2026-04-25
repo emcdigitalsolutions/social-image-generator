@@ -748,26 +748,61 @@ router.post('/:id/media/repair-mime', async (req, res) => {
       }
       const oldExt = pathLib.extname(m.filename).toLowerCase();
       const normalizedOldExt = oldExt === '.jpeg' ? '.jpg' : oldExt;
-      if (normalizedOldExt === correctExt) {
+      const extMismatch = normalizedOldExt !== correctExt;
+
+      // Check 2: PNG con canale alpha → IG rifiuta. Flatten necessario.
+      let alphaToFlatten = false;
+      if (detected.mime === 'image/png') {
+        try {
+          const sharp = require('sharp');
+          const meta = await sharp(filePath).metadata();
+          if (meta.hasAlpha) alphaToFlatten = true;
+        } catch (e) { /* sharp non disponibile o file corrotto, skip alpha check */ }
+      }
+
+      if (!extMismatch && !alphaToFlatten) {
         results.ok++;
         continue;
       }
-      // Mismatch! Rinomina file + aggiorna DB
-      const baseName = pathLib.basename(m.filename, oldExt);
-      const newFilename = baseName + correctExt;
-      const newPath = pathLib.join(dir, newFilename);
-      const newUrl = postMedia.publicUrl(m.client_id, m.post_id, newFilename);
 
-      if (dryRun) {
-        results.details.push({ id: m.id, status: 'would_fix', from: m.filename, to: newFilename, mime: detected.mime });
-        results.fixed++;
-        continue;
+      const fixDetails = { id: m.id, mime: detected.mime, alpha_flattened: false, ext_renamed: false };
+
+      if (alphaToFlatten) {
+        if (dryRun) {
+          fixDetails.status = 'would_flatten_alpha';
+          fixDetails.filename = m.filename;
+        } else {
+          await postMedia.flattenPngAlpha(filePath);
+          fixDetails.alpha_flattened = true;
+        }
       }
-      fsLib.renameSync(filePath, newPath);
-      db.prepare(`UPDATE post_media SET filename = ?, url = ?, created_at = datetime('now') WHERE id = ?`)
-        .run(newFilename, newUrl, m.id);
+
+      if (extMismatch) {
+        const baseName = pathLib.basename(m.filename, oldExt);
+        const newFilename = baseName + correctExt;
+        const newPath = pathLib.join(dir, newFilename);
+        const newUrl = postMedia.publicUrl(m.client_id, m.post_id, newFilename);
+        fixDetails.from = m.filename;
+        fixDetails.to = newFilename;
+        if (dryRun) {
+          fixDetails.status = fixDetails.status || 'would_fix';
+        } else {
+          fsLib.renameSync(filePath, newPath);
+          db.prepare(`UPDATE post_media SET filename = ?, url = ?, bytes = ?, created_at = datetime('now') WHERE id = ?`)
+            .run(newFilename, newUrl, fsLib.statSync(newPath).size, m.id);
+          fixDetails.ext_renamed = true;
+          fixDetails.status = 'fixed';
+        }
+      } else if (alphaToFlatten && !dryRun) {
+        // Solo flatten, niente rename. Aggiorna comunque bytes nel DB.
+        db.prepare(`UPDATE post_media SET bytes = ?, created_at = datetime('now') WHERE id = ?`)
+          .run(fsLib.statSync(filePath).size, m.id);
+        fixDetails.status = 'flattened';
+        fixDetails.filename = m.filename;
+      }
+
       results.fixed++;
-      results.details.push({ id: m.id, status: 'fixed', from: m.filename, to: newFilename, mime: detected.mime });
+      results.details.push(fixDetails);
     } catch (err) {
       results.errors++;
       results.details.push({ id: m.id, status: 'error', filename: m.filename, error: err.message });

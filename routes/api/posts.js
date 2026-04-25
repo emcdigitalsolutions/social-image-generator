@@ -530,6 +530,9 @@ router.post('/:id/media/:mediaId/crop', mediaUpload.single('file'), async (req, 
       fs.unlinkSync(req.file.path);
     }
 
+    // Flatten alpha PNG: IG rifiuta PNG con trasparenza
+    await postMedia.flattenPngAlpha(dest);
+
     const stat = fs.statSync(dest);
     let w = null, h = null;
     try {
@@ -603,6 +606,8 @@ router.post('/:id/media/:mediaId/stylize', stylizeRateLimit, async (req, res) =>
 
   try {
     const { filePath } = await renderImage(template, post.client_id, data);
+    // Puppeteer screenshot PNG ha sempre alpha → flatten per IG compat
+    await postMedia.flattenPngAlpha(filePath);
     const styled = postMedia.attachGeneratedFile({
       clientId: post.client_id,
       postId: post.id,
