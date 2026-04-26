@@ -145,6 +145,7 @@
           <option value="12">12 mesi</option>
         </select>
         <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn"><span style="margin-right:3px">✨</span>Genera Piano con AI</button>
+        <button class="btn btn-secondary btn-sm" onclick="applyTemplateToClient()" title="Crea piano da un template salvato (più veloce della generazione AI)">&#9881; Da template</button>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-plan-file').click()" title="Carica un piano editoriale preparato offline (JSON)">&uarr; Importa JSON</button>
         <input type="file" id="import-plan-file" accept="application/json,.json" style="display:none" onchange="importPlanFromFile(event)">
       </div>
@@ -859,6 +860,67 @@
   }
 
   // Import plan editoriale da file JSON (prepared offline)
+  // Applica un template piano per settore al cliente
+  async function applyTemplateToClient() {
+    const sector = <%- JSON.stringify(client.sector || '') %>;
+    try {
+      // Carica template (filtrati per settore se presente)
+      const url = '/dashboard/api/plan-templates' + (sector ? '?sector=' + encodeURIComponent(sector) : '');
+      const res = await apiFetch(url, { method: 'GET' });
+      const templates = (res && res.templates) || [];
+      if (!templates.length) {
+        const goCreate = await showConfirm(
+          (sector ? 'Nessun template per il settore "' + sector + '". ' : 'Nessun template salvato ancora. ') +
+          'Vuoi vedere tutti i template disponibili?'
+        );
+        if (goCreate) window.location.href = '/dashboard/plan-templates';
+        return;
+      }
+      // Costruisci dialog di scelta
+      let html = '<select id="tpl-choice" style="width:100%;padding:8px;border:1px solid var(--gray-300);border-radius:6px;margin-top:8px">';
+      templates.forEach(t => {
+        const def = t.is_default ? ' [DEFAULT]' : '';
+        html += '<option value="' + t.id + '">' + escapeHtmlSafe(t.name) + ' · ' + t.months_count + ' mesi' + def + '</option>';
+      });
+      html += '</select>';
+      html += '<div style="margin-top:14px"><label style="font-size:13px;display:block;color:var(--gray-600);margin-bottom:4px">Data inizio piano (opzionale, per schedulare i post):</label>';
+      html += '<input type="date" id="tpl-start" style="width:100%;padding:8px;border:1px solid var(--gray-300);border-radius:6px"></div>';
+      html += '<p style="font-size:12px;color:var(--gray-500);margin-top:10px">I placeholder come {{brand_name}} verranno sostituiti coi dati di questo cliente. Le caption sono vuote — generale poi col bulk-generate AI.</p>';
+
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay active';
+      overlay.style.zIndex = '2000';
+      overlay.innerHTML = `
+        <div class="modal" style="max-width:480px">
+          <h2>Applica template piano</h2>
+          ${html}
+          <div class="modal-actions" style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-secondary" id="tpl-cancel">Annulla</button>
+            <button class="btn btn-primary" id="tpl-confirm">Applica</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      const cleanup = () => overlay.remove();
+      overlay.querySelector('#tpl-cancel').onclick = cleanup;
+      overlay.querySelector('#tpl-confirm').onclick = async () => {
+        const tplId = overlay.querySelector('#tpl-choice').value;
+        const startDate = overlay.querySelector('#tpl-start').value || null;
+        cleanup();
+        try {
+          const r = await apiFetch('/dashboard/api/plan-templates/' + tplId + '/apply', {
+            method: 'POST',
+            body: { client_id: CLIENT_ID, scheduled_start_date: startDate }
+          });
+          if (r.error) throw new Error(r.error);
+          toast('Piano creato dal template (' + r.months_count + ' mesi). Apro il piano…');
+          setTimeout(() => { window.location.href = '/dashboard/clients/' + CLIENT_ID + '/plan/' + r.plan_id; }, 800);
+        } catch (err) { await showAlert('Errore: ' + (err.message || err)); }
+      };
+    } catch (err) { await showAlert('Errore caricamento template: ' + (err.message || err)); }
+  }
+
   async function importPlanFromFile(ev) {
     const file = ev.target.files && ev.target.files[0];
     if (!file) return;

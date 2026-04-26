@@ -305,6 +305,17 @@ router.get('/insights/client/:id', (req, res) => {
   });
 });
 
+// Plan templates admin page
+router.get('/plan-templates', (req, res) => {
+  const { SECTOR_LABELS } = require('../lib/plan-templates');
+  res.render('plan-templates', {
+    title: 'Template Piani',
+    user: req.user,
+    activeNav: 'plan-templates',
+    sectorLabels: SECTOR_LABELS
+  });
+});
+
 // Logs page
 router.get('/logs', (req, res) => {
   res.render('logs', { title: 'Log', user: req.user });

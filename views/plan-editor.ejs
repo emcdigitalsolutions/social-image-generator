@@ -154,6 +154,7 @@
     <button class="btn btn-secondary" onclick="duplicatePlan()" title="Crea una copia del piano con tutti i post (senza media e in stato draft)">&#9112; Duplica</button>
     <button class="btn btn-secondary" onclick="exportJson()" title="Scarica il piano come file JSON (re-importabile, con caption correnti)">&#8595; Esporta JSON</button>
     <button class="btn btn-secondary" onclick="exportPdf()" title="Scarica un PDF stampabile del piano">&#8595; Esporta PDF</button>
+    <button class="btn btn-secondary" onclick="saveAsTemplate()" title="Salva la struttura di questo piano come template riusabile per altri clienti dello stesso settore">&#9881; Salva come template</button>
     <% if (plan.status !== 'active') { %>
       <button class="btn btn-primary" onclick="activatePlan()" title="Attiva il piano: da questo momento i post con status 'ready' e scheduled_date passata verranno pubblicati automaticamente su FB/IG ogni 60s.">▶ Attiva piano</button>
     <% } else { %>
@@ -677,6 +678,24 @@
       window.location.href = '/dashboard/clients/' + CLIENT_ID + '/plan/' + res.plan.id;
     } catch (err) {
       await showAlert('Duplicazione fallita: ' + err.message);
+    }
+  }
+
+  async function saveAsTemplate() {
+    const defaultName = <%- JSON.stringify(plan.title || 'Template piano') %> + ' — modello';
+    const name = prompt('Nome del template:', defaultName);
+    if (name === null) return;
+    const description = prompt('Descrizione opzionale (per ricordarti per cosa l\'hai creato):', '');
+    const isDefault = await showConfirm('Vuoi impostarlo come template DEFAULT per il settore di questo cliente?\n\n(Verrà suggerito automaticamente quando crei nuovi clienti dello stesso settore)');
+    try {
+      const res = await apiFetch('/dashboard/api/plan-templates/from-plan/' + PLAN_ID, {
+        method: 'POST',
+        body: { name: name.trim(), description: (description || '').trim() || null, is_default: isDefault }
+      });
+      if (res.error) throw new Error(res.error);
+      toast('✓ Template salvato — vai in "Template Piani" dalla sidebar per gestirli');
+    } catch (err) {
+      await showAlert('Salvataggio template fallito: ' + err.message);
     }
   }
 

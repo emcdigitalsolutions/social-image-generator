@@ -1,0 +1,188 @@
+<%- include('layout') %>
+
+<style>
+  .tpl-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:10px; flex-wrap:wrap; }
+  .tpl-toolbar .filter { padding:6px 10px; border:1px solid var(--gray-300); border-radius:6px; font-size:13px; background:white; }
+  .tpl-grid { display:grid; gap:12px; }
+  .tpl-card { background:white; border:1px solid var(--gray-200); border-radius:8px; padding:14px 16px; }
+  .tpl-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px; }
+  .tpl-card h3 { font-size:14px; font-weight:700; margin:0; }
+  .tpl-card .sector-pill { display:inline-block; font-size:10px; padding:2px 8px; border-radius:3px; background:var(--blue-soft); color:var(--blue); font-weight:600; letter-spacing:0.4px; }
+  .tpl-card .default-pill { font-size:9px; padding:1px 6px; border-radius:3px; background:#dcfce7; color:#14532d; font-weight:700; margin-left:6px; }
+  .tpl-card .desc { font-size:12px; color:var(--gray-500); margin:6px 0; line-height:1.4; }
+  .tpl-card .meta { font-size:11px; color:var(--gray-400); display:flex; gap:14px; flex-wrap:wrap; }
+  .tpl-card .actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px dashed var(--gray-200); }
+  .empty { text-align:center; padding:40px; color:var(--gray-400); }
+  .modal-overlay-tpl { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay-tpl.open { display:flex; }
+  .modal-tpl { background:white; border-radius:8px; max-width:600px; width:100%; max-height:90vh; overflow-y:auto; padding:20px; }
+  .modal-tpl h2 { font-size:16px; margin:0 0 14px; }
+  .modal-tpl .form-group { margin-bottom:12px; }
+  .modal-tpl label { display:block; font-size:12px; font-weight:600; color:var(--gray-600); margin-bottom:4px; }
+  .modal-tpl input, .modal-tpl select, .modal-tpl textarea { width:100%; padding:7px 10px; border:1px solid var(--gray-300); border-radius:5px; font-family:inherit; font-size:13px; box-sizing:border-box; }
+  .modal-tpl .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+</style>
+
+<div class="page-header">
+  <div>
+    <h1>Template Piani Editoriali</h1>
+    <p style="font-size:13px;color:var(--gray-500);margin-top:4px">
+      Salva un piano "modello" per settore e applicalo a nuovi clienti per ridurre l'onboarding da 2h a 15 min. Placeholder supportati nei testi: <code>{{brand_name}}</code>, <code>{{location}}</code>, <code>{{website}}</code>, <code>{{sector_label}}</code>.
+    </p>
+  </div>
+</div>
+
+<div class="tpl-toolbar">
+  <div>
+    <select id="filter-sector" class="filter" onchange="loadTemplates()">
+      <option value="">Tutti i settori</option>
+      <% for (const [key, label] of Object.entries(sectorLabels)) { %>
+        <option value="<%= key %>"><%= label %></option>
+      <% } %>
+    </select>
+  </div>
+  <div style="font-size:12px;color:var(--gray-500)">
+    💡 Per creare un template, vai su un piano editoriale del cliente che vuoi clonare e clicca "Salva come template" nelle azioni.
+  </div>
+</div>
+
+<div id="templates-list" class="tpl-grid">
+  <p style="color:var(--gray-400);font-size:13px">Caricamento…</p>
+</div>
+
+<!-- Modal modifica metadati -->
+<div id="edit-modal" class="modal-overlay-tpl">
+  <div class="modal-tpl">
+    <h2>Modifica template</h2>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label>Nome</label>
+      <input type="text" id="edit-name">
+    </div>
+    <div class="form-group">
+      <label>Settore</label>
+      <select id="edit-sector">
+        <option value="">— generico —</option>
+        <% for (const [key, label] of Object.entries(sectorLabels)) { %>
+          <option value="<%= key %>"><%= label %></option>
+        <% } %>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Descrizione</label>
+      <textarea id="edit-description" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label><input type="checkbox" id="edit-is-default"> Imposta come default per il settore</label>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SECTOR_LABELS = <%- JSON.stringify(sectorLabels) %>;
+
+  async function loadTemplates() {
+    const list = document.getElementById('templates-list');
+    const sector = document.getElementById('filter-sector').value;
+    try {
+      const url = '/dashboard/api/plan-templates' + (sector ? ('?sector=' + encodeURIComponent(sector)) : '');
+      const res = await apiFetch(url, { method: 'GET' });
+      const templates = (res && res.templates) || [];
+      if (!templates.length) {
+        list.innerHTML = '<div class="empty">Nessun template ' + (sector ? 'per il settore selezionato' : 'salvato ancora') + '.<br><small>Crea il primo template salvando un piano editoriale di un cliente esistente.</small></div>';
+        return;
+      }
+      list.innerHTML = templates.map(t => `
+        <div class="tpl-card">
+          <div class="tpl-card-head">
+            <div>
+              <h3>${escapeHtmlSafe(t.name)} ${t.is_default ? '<span class="default-pill">DEFAULT</span>' : ''}</h3>
+              <div style="margin-top:4px">
+                ${t.sector ? '<span class="sector-pill">' + escapeHtmlSafe(SECTOR_LABELS[t.sector] || t.sector) + '</span>' : '<span class="sector-pill" style="background:var(--gray-100);color:var(--gray-500)">generico</span>'}
+              </div>
+            </div>
+          </div>
+          ${t.description ? '<div class="desc">' + escapeHtmlSafe(t.description) + '</div>' : ''}
+          <div class="meta">
+            <span>📅 ${t.months_count} mesi</span>
+            <span>🕐 Creato ${(t.created_at || '').slice(0,10)}</span>
+            ${t.source_plan_id ? '<span>↪ da piano</span>' : ''}
+          </div>
+          <div class="actions">
+            <button class="btn btn-sm btn-secondary" onclick="openEditModal('${t.id}')">✎ Modifica</button>
+            <button class="btn btn-sm btn-secondary" onclick="downloadJson('${t.id}')">⬇ JSON</button>
+            <button class="btn btn-sm" style="color:var(--red);border-color:var(--red)" onclick="deleteTemplate('${t.id}')">× Elimina</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      list.innerHTML = '<div class="empty" style="color:var(--red)">Errore: ' + (err.message || err) + '</div>';
+    }
+  }
+
+  function escapeHtmlSafe(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  let currentEditId = null;
+  async function openEditModal(id) {
+    try {
+      const res = await apiFetch('/dashboard/api/plan-templates/' + id, { method: 'GET' });
+      if (!res || !res.template) return showAlert('Template non trovato');
+      currentEditId = id;
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-name').value = res.template.name || '';
+      document.getElementById('edit-sector').value = res.template.sector || '';
+      document.getElementById('edit-description').value = res.template.description || '';
+      document.getElementById('edit-is-default').checked = !!res.template.is_default;
+      document.getElementById('edit-modal').classList.add('open');
+    } catch (err) { showAlert('Errore: ' + (err.message || err)); }
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+    currentEditId = null;
+  }
+
+  async function saveEdit() {
+    if (!currentEditId) return;
+    const body = {
+      name: document.getElementById('edit-name').value.trim(),
+      sector: document.getElementById('edit-sector').value || null,
+      description: document.getElementById('edit-description').value.trim(),
+      is_default: document.getElementById('edit-is-default').checked
+    };
+    if (!body.name) return showAlert('Nome obbligatorio');
+    try {
+      const res = await apiFetch('/dashboard/api/plan-templates/' + currentEditId, { method: 'PUT', body });
+      if (res && res.error) return showAlert(res.error);
+      toast('Template aggiornato');
+      closeEditModal();
+      loadTemplates();
+    } catch (err) { showAlert('Errore: ' + (err.message || err)); }
+  }
+
+  async function deleteTemplate(id) {
+    if (!await showConfirm('Eliminare definitivamente questo template? Operazione irreversibile.')) return;
+    try {
+      await apiFetch('/dashboard/api/plan-templates/' + id, { method: 'DELETE' });
+      toast('Template eliminato');
+      loadTemplates();
+    } catch (err) { showAlert('Errore: ' + (err.message || err)); }
+  }
+
+  function downloadJson(id) {
+    // Apre nuova tab con il JSON del template (cookie auth gestita da middleware)
+    window.open('/dashboard/api/plan-templates/' + id, '_blank');
+  }
+
+  // Load iniziale
+  if (typeof apiFetch === 'function') loadTemplates();
+  else window.addEventListener('load', loadTemplates);
+</script>
+
+<%- include('layout-end') %>
