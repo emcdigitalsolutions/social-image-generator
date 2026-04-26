@@ -56,6 +56,10 @@
           <label title="Se impostata, il reminder mensile notifica direttamente il cliente quando ha un piano da approvare">Email di contatto cliente</label>
           <input type="email" name="contact_email" value="<%= client.contact_email || '' %>" placeholder="cliente@esempio.it">
         </div>
+        <div class="form-group">
+          <label title="Usato come {{phone}} nei template piano. Es: 0922 911100 oppure +39 328 968 5670">Telefono / WhatsApp</label>
+          <input type="text" name="phone" value="<%= client.phone || '' %>" placeholder="+39 328 968 5670">
+        </div>
       </div>
       <div class="form-group">
         <label>Stato</label>

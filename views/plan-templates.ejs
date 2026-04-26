@@ -27,8 +27,23 @@
   <div>
     <h1>Template Piani Editoriali</h1>
     <p style="font-size:13px;color:var(--gray-500);margin-top:4px">
-      Salva un piano "modello" per settore e applicalo a nuovi clienti per ridurre l'onboarding da 2h a 15 min. Placeholder supportati nei testi: <code>{{brand_name}}</code>, <code>{{location}}</code>, <code>{{website}}</code>, <code>{{sector_label}}</code>.
+      Salva un piano "modello" per settore e applicalo a nuovi clienti per ridurre l'onboarding da 2h a 15 min.
     </p>
+    <details style="font-size:12px;color:var(--gray-500);margin-top:6px">
+      <summary style="cursor:pointer;color:var(--blue)">Placeholder supportati nei testi del template</summary>
+      <ul style="margin:8px 0 0 20px;padding:0">
+        <li><code>{{brand_name}}</code> · nome brand del cliente</li>
+        <li><code>{{display_name}}</code> · nome visualizzato</li>
+        <li><code>{{location}}</code> · città / provincia</li>
+        <li><code>{{website}}</code> · URL sito</li>
+        <li><code>{{tagline}}</code> · tagline brand</li>
+        <li><code>{{phone}}</code> · numero di telefono</li>
+        <li><code>{{whatsapp_link}}</code> · link WhatsApp formato <code>https://wa.me/...</code> (auto-normalizzato)</li>
+        <li><code>{{contact_email}}</code> · email cliente</li>
+        <li><code>{{sector_label}}</code> · etichetta settore (es. "Onoranze Funebri")</li>
+      </ul>
+      <p style="margin-top:6px">I placeholder vengono sostituiti automaticamente al momento dell'applicazione del template a un cliente. Se un campo è vuoto, il placeholder rimane invariato (non lascia stringhe rotte tipo "Visita ").</p>
+    </details>
   </div>
 </div>
 
