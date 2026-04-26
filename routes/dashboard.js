@@ -92,10 +92,10 @@ router.get('/', (req, res) => {
   const db = getDb();
   const clients = db.prepare(`
     SELECT * FROM clients
-    WHERE status != 'archived'
+    WHERE status != 'archived' AND deleted_at IS NULL
     ORDER BY status = 'active' DESC, updated_at DESC
   `).all();
-  const archivedCount = db.prepare(`SELECT COUNT(*) AS n FROM clients WHERE status = 'archived'`).get().n;
+  const archivedCount = db.prepare(`SELECT COUNT(*) AS n FROM clients WHERE status = 'archived' AND deleted_at IS NULL`).get().n;
 
   // Post stats per client
   const statsRows = db.prepare(`
@@ -122,7 +122,7 @@ router.get('/', (req, res) => {
 router.get('/archived', (req, res) => {
   const db = getDb();
   const clients = db.prepare(`
-    SELECT * FROM clients WHERE status = 'archived' ORDER BY updated_at DESC
+    SELECT * FROM clients WHERE status = 'archived' AND deleted_at IS NULL ORDER BY updated_at DESC
   `).all();
   res.render('archived', { title: 'Clienti archiviati', clients, user: req.user });
 });

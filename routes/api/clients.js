@@ -42,7 +42,7 @@ const themeUpload = multer({
 // List all clients
 router.get('/', (req, res) => {
   const db = getDb();
-  const clients = db.prepare('SELECT id, display_name, sector, location, status, logo_filename, created_at FROM clients ORDER BY created_at DESC').all();
+  const clients = db.prepare('SELECT id, display_name, sector, location, status, logo_filename, created_at FROM clients WHERE deleted_at IS NULL ORDER BY created_at DESC').all();
   res.json(clients);
 });
 
@@ -155,16 +155,48 @@ router.put('/:id', (req, res) => {
   res.json(client);
 });
 
-// Delete client
+// Soft delete client (cancellazione logica).
+// REGOLA: l'eliminazione è permessa SOLO se il cliente è già archiviato.
+// Imposta deleted_at = now ma NON rimuove il record né i file media:
+// è recuperabile dal DB se serve. Il cliente sparisce da tutte le UI:
+// lista attivi, lista archiviati, insights, cron (filtrati su deleted_at IS NULL).
 router.delete('/:id', (req, res) => {
   const db = getDb();
-  const result = db.prepare('DELETE FROM clients WHERE id = ?').run(req.params.id);
-  if (!result.changes) return res.status(404).json({ error: 'Client not found' });
+  const client = db.prepare('SELECT id, status, deleted_at FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
 
-  // Pulizia file orfani: rimuovi tutta la cartella media del cliente
-  try { postMedia.removeClientDir(req.params.id); }
-  catch (err) { console.warn('[clients] cleanup failed for', req.params.id, err.message); }
+  if (client.deleted_at) {
+    return res.status(409).json({ error: 'Cliente già eliminato' });
+  }
+  if (client.status !== 'archived') {
+    return res.status(400).json({ error: 'Per eliminare un cliente prima archivialo (Stato → Archiviato)' });
+  }
 
+  db.prepare(`UPDATE clients SET deleted_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`).run(req.params.id);
+  audit.logFromReq(req, {
+    client_id: req.params.id,
+    action: 'client.soft_deleted',
+    entity_type: 'client',
+    entity_id: req.params.id
+  });
+  res.json({ success: true, soft_deleted: true });
+});
+
+// Restore: ripristina un cliente soft-deleted (utile per errori).
+// Riporta status a 'archived' (visibile solo nella vista Archiviati).
+router.post('/:id/restore', (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT id, deleted_at FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  if (!client.deleted_at) return res.status(400).json({ error: 'Cliente non è eliminato' });
+
+  db.prepare(`UPDATE clients SET deleted_at = NULL, updated_at = datetime('now') WHERE id = ?`).run(req.params.id);
+  audit.logFromReq(req, {
+    client_id: req.params.id,
+    action: 'client.restored',
+    entity_type: 'client',
+    entity_id: req.params.id
+  });
   res.json({ success: true });
 });
 

@@ -19,15 +19,47 @@
     </div>
   <% } %>
   <% clients.forEach(c => { %>
-    <a href="/dashboard/clients/<%= c.id %>" class="client-card" style="opacity:0.8">
-      <div class="client-logo" style="background:var(--gray-200);color:var(--gray-500)"><%= (c.display_name || c.id).charAt(0).toUpperCase() %></div>
-      <div class="client-info">
-        <h3><%= c.display_name %></h3>
-        <p><%= c.sector ? c.sector.replace(/_/g, ' ') : 'Settore non definito' %> &middot; <%= c.location || '' %></p>
-        <span class="badge badge-archived">archiviato</span>
-      </div>
-    </a>
+    <div class="client-card" style="opacity:0.85;position:relative">
+      <a href="/dashboard/clients/<%= c.id %>" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;flex:1">
+        <div class="client-logo" style="background:var(--gray-200);color:var(--gray-500)"><%= (c.display_name || c.id).charAt(0).toUpperCase() %></div>
+        <div class="client-info">
+          <h3><%= c.display_name %></h3>
+          <p><%= c.sector ? c.sector.replace(/_/g, ' ') : 'Settore non definito' %> &middot; <%= c.location || '' %></p>
+          <span class="badge badge-archived">archiviato</span>
+        </div>
+      </a>
+      <button type="button"
+              onclick="hardDeleteClient('<%= c.id %>', '<%= (c.display_name || c.id).replace(/'/g, "\\'") %>')"
+              title="Elimina definitivamente questo cliente (cancellazione logica, non recuperabile dall'UI)"
+              style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-weight:700;cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
   <% }) %>
 </div>
+
+<script>
+async function hardDeleteClient(id, name) {
+  if (typeof showConfirm !== 'function') {
+    if (!confirm('Elimina definitivamente "' + name + '"?\n\nIl cliente sparirà da TUTTE le viste (incluso questa lista archiviati).\nI dati restano salvati in DB ma non sono più recuperabili dall\'interfaccia.\nUsare con cautela.')) return;
+  } else {
+    const ok = await showConfirm('Elimina DEFINITIVAMENTE "' + name + '"?\n\nIl cliente sparirà da TUTTE le viste (incluso questa lista).\nI dati restano in DB ma non più recuperabili dall\'UI.\nUsare con cautela.');
+    if (!ok) return;
+  }
+  try {
+    const res = await fetch('/dashboard/api/clients/' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: typeof getToken === 'function' && getToken() ? { 'Authorization': 'Bearer ' + getToken() } : {}
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert('Errore: ' + (data.error || 'sconosciuto'));
+      return;
+    }
+    if (typeof toast === 'function') toast('Cliente eliminato definitivamente');
+    setTimeout(() => window.location.reload(), 600);
+  } catch (err) {
+    alert('Errore di rete: ' + (err.message || err));
+  }
+}
+</script>
 
 <%- include('layout-end') %>
