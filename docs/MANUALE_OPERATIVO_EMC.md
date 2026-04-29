@@ -2,7 +2,7 @@
 
 Guida passo-passo per l'operatore (Enrico). Dalla creazione di un cliente fino alla prima pubblicazione approvata dal cliente.
 
-**URL dashboard**: https://img.emcdigitalsolutions.it/dashboard
+**URL dashboard**: https://media.emcdigitalsolutions.it/dashboard
 
 ---
 
@@ -215,7 +215,7 @@ Tempo medio per cliente: ~2h/mese a regime.
 ## 13. Contatti e supporto
 
 - Infrastruttura: Hetzner + Coolify (UUID `hcbf6qsi1f97t0ea636x55f7`)
-- Dominio: `img.emcdigitalsolutions.it`
+- Dominio: `media.emcdigitalsolutions.it`
 - DB + media: volume persistente Coolify (`/app/data` + `/app/public/images`)
 - Backup: giornaliero 03:00, ultimi 7 tenuti (`data/backups/`)
 - Meta App: "EMC Social Manager" (ID `2032202394359422`, LIVE)

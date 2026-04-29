@@ -19,7 +19,7 @@ Solo i post **approvati** vengono pubblicati. Se non rispondi, non viene pubblic
 ## Come funziona in 4 step
 
 ### 1. Apri il link dal tuo telefono o computer
-Il link è del tipo `https://img.emcdigitalsolutions.it/dashboard/approve/XXXXX`. Non serve registrarti, non serve password, basta cliccarci sopra.
+Il link è del tipo `https://media.emcdigitalsolutions.it/dashboard/approve/XXXXX`. Non serve registrarti, non serve password, basta cliccarci sopra.
 
 ### 2. Scorri i post
 Vedi una lista di tutti i post del mese con:

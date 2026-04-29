@@ -2,7 +2,7 @@
 
 Dashboard interna EMC Digital Solutions per la gestione del servizio Social Media Management multi-cliente.
 
-**URL produzione**: https://img.emcdigitalsolutions.it/dashboard
+**URL produzione**: https://media.emcdigitalsolutions.it/dashboard
 
 ## Cosa fa
 
