@@ -137,6 +137,39 @@ router.get('/clients/:id', (req, res) => {
   const plans = db.prepare('SELECT * FROM editorial_plans WHERE client_id = ? ORDER BY created_at DESC').all(req.params.id);
   const sectors = Object.entries(SETTORI).map(([k, v]) => ({ key: k, label: v.label }));
 
+  // Shortcut "mese in corso": prende il piano più rilevante (active > confirmed > draft,
+  // più recente) e calcola il month_number dei post programmati nel mese solare corrente.
+  // Se non c'è nulla nel mese solare, fallback al primo mese con post non tutti published.
+  let currentMonthShortcut = null;
+  const activePlan = db.prepare(`
+    SELECT id FROM editorial_plans WHERE client_id = ?
+    ORDER BY
+      CASE status WHEN 'active' THEN 0 WHEN 'confirmed' THEN 1 WHEN 'draft' THEN 2 ELSE 3 END,
+      datetime(updated_at) DESC
+    LIMIT 1
+  `).get(req.params.id);
+  if (activePlan) {
+    const row = db.prepare(`
+      SELECT month_number, COUNT(*) AS n FROM posts
+      WHERE editorial_plan_id = ?
+        AND substr(scheduled_date, 1, 7) = strftime('%Y-%m', 'now', 'localtime')
+      GROUP BY month_number ORDER BY n DESC LIMIT 1
+    `).get(activePlan.id);
+    let m = row && row.month_number;
+    if (!m) {
+      // Fallback: primo mese con post non-published rimanenti
+      const fb = db.prepare(`
+        SELECT month_number FROM posts
+        WHERE editorial_plan_id = ? AND status != 'published' AND month_number IS NOT NULL
+        ORDER BY month_number ASC LIMIT 1
+      `).get(activePlan.id);
+      m = fb && fb.month_number;
+    }
+    if (m) {
+      currentMonthShortcut = `/dashboard/clients/${req.params.id}/plan/${activePlan.id}/month/${m}`;
+    }
+  }
+
   // Onboarding checklist
   const onboardingSteps = {
     profile: !!(client.sector && client.location),
@@ -153,7 +186,7 @@ router.get('/clients/:id', (req, res) => {
     total: Object.keys(onboardingSteps).length
   };
 
-  res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, onboarding, user: req.user });
+  res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, onboarding, currentMonthShortcut, user: req.user });
 });
 
 // Plan editor

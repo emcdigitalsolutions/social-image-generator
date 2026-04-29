@@ -4,9 +4,12 @@
   <a href="/dashboard">Clienti</a> / <%= client.display_name %>
 </div>
 
-<div class="page-header">
-  <h1><%= client.display_name %></h1>
+<div class="page-header" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <h1 style="margin:0"><%= client.display_name %></h1>
   <span class="badge badge-<%= client.status %>"><%= client.status %></span>
+  <% if (typeof currentMonthShortcut !== 'undefined' && currentMonthShortcut) { %>
+    <a href="<%= currentMonthShortcut %>" class="btn btn-primary btn-sm" style="margin-left:auto" title="Apri direttamente la vista del mese in corso del piano editoriale">📅 Mese in corso</a>
+  <% } %>
 </div>
 
 <div class="tabs">
