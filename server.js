@@ -80,6 +80,12 @@ app.use('/images', express.static(path.join(__dirname, 'public', 'images'), {
   maxAge: '1h',
   etag: true,
   lastModified: true,
+  // acceptRanges:false forza risposta 200 OK invece di 206 Partial Content.
+  // Il crawler di Meta/IG fa Range request → server risponde 206 → IG considera
+  // il file non conforme e rifiuta il container ("URL not accessible / corrupt").
+  // FB è più tollerante e accetta 206, ma IG no. File <200KB → range fetching
+  // non porta benefici, solo rischi.
+  acceptRanges: false,
   setHeaders: (res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
