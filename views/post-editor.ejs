@@ -1264,17 +1264,74 @@
     }
   }
 
+  // Mostra un modal con textarea editabile per il prompt visivo. Risolve con la
+  // stringa finale (utente ha confermato) o null (annullato).
+  function promptEditorModal(initialPrompt, aspect) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+      overlay.innerHTML = `
+        <div style="background:#fff;border-radius:10px;max-width:680px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+            <strong style="font-size:15px">✨ Affina il prompt visivo (${aspect})</strong>
+            <button id="pe-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
+          </div>
+          <div style="padding:16px 20px;overflow-y:auto;flex:1">
+            <p style="font-size:12px;color:var(--gray-600);margin:0 0 8px">Modifica il prompt prima di generare. Suggerimenti: aggiungi dettagli su lighting, mood, palette colori, soggetti specifici. Mantieni "no text, no typography, no watermark" per evitare lettere malformate.</p>
+            <textarea id="pe-textarea" style="width:100%;min-height:240px;padding:10px;border:1px solid var(--gray-300);border-radius:6px;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="margin-top:6px;font-size:11px;color:var(--gray-500)"><span id="pe-count">0</span> caratteri</div>
+          </div>
+          <div style="padding:14px 20px;border-top:1px solid var(--gray-200);display:flex;gap:8px;justify-content:flex-end">
+            <button id="pe-cancel" class="btn btn-sm" style="background:var(--gray-200)">Annulla</button>
+            <button id="pe-reset" class="btn btn-sm" style="background:var(--gray-200)" title="Ripristina il prompt auto-generato">↺ Reset</button>
+            <button id="pe-confirm" class="btn btn-sm btn-primary">✨ Genera immagine</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const ta = overlay.querySelector('#pe-textarea');
+      const counter = overlay.querySelector('#pe-count');
+      ta.value = initialPrompt;
+      counter.textContent = ta.value.length;
+      ta.addEventListener('input', () => { counter.textContent = ta.value.length; });
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+
+      const close = (val) => { document.body.removeChild(overlay); resolve(val); };
+      overlay.querySelector('#pe-close').onclick = () => close(null);
+      overlay.querySelector('#pe-cancel').onclick = () => close(null);
+      overlay.querySelector('#pe-reset').onclick = () => { ta.value = initialPrompt; counter.textContent = ta.value.length; };
+      overlay.querySelector('#pe-confirm').onclick = () => {
+        const v = ta.value.trim();
+        if (!v) { ta.focus(); return; }
+        close(v);
+      };
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
+    });
+  }
+
   async function generateAIImage() {
     const btn = document.getElementById('gen-ai-btn');
     const aspectSel = document.getElementById('ai-aspect');
     const aspect = aspectSel ? aspectSel.value : '1:1';
     btn.disabled = true;
-    btn.innerHTML = '<span class="loading"></span> Generazione AI...';
+    btn.innerHTML = '<span class="loading"></span> Costruzione prompt...';
+    let editedPrompt = null;
     try {
       await saveDetails();
-      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-ai-image', {
+      const buildRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/build-visual-prompt', {
         method: 'POST',
         body: { aspect_ratio: aspect }
+      });
+      if (buildRes.error) { await showAlert(buildRes.error + (buildRes.details ? '\n' + buildRes.details : '')); return; }
+
+      editedPrompt = await promptEditorModal(buildRes.prompt || '', aspect);
+      if (!editedPrompt) { toast('Generazione annullata'); return; }
+
+      btn.innerHTML = '<span class="loading"></span> Generazione AI...';
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-ai-image', {
+        method: 'POST',
+        body: { aspect_ratio: aspect, prompt: editedPrompt }
       });
       if (res.error) { await showAlert(res.error + (res.details ? '\n' + res.details : '')); return; }
       const mediaRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media');

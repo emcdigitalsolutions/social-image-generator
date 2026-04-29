@@ -199,6 +199,28 @@ router.post('/:id/generate-image', async (req, res) => {
   }
 });
 
+// Build visual prompt SENZA generare l'immagine. Serve all'editor manuale:
+// l'utente vede il prompt auto-generato, lo affina, poi conferma → /generate-ai-image
+// con `prompt` override. Evita di sprecare quote Gemini Image durante l'iterazione.
+router.post('/:id/build-visual-prompt', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const validRatios = ['1:1', '4:5', '9:16', '16:9'];
+  const aspectRatio = validRatios.includes(req.body && req.body.aspect_ratio) ? req.body.aspect_ratio : '1:1';
+
+  try {
+    const prompt = await visualPrompt.buildPrompt(client, post, aspectRatio);
+    res.json({ prompt, aspect_ratio: aspectRatio });
+  } catch (err) {
+    console.error('[build-visual-prompt] error:', err.message);
+    res.status(500).json({ error: 'Costruzione prompt fallita', details: err.message });
+  }
+});
+
 // Generate AI image via Gemini Flash Image (Nano-Banana, gratuito).
 // Differente da /generate-image: niente template HTML, l'immagine è generata
 // dall'AI a partire dalla caption + brand. Aspect ratio configurabile.
