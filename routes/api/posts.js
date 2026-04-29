@@ -12,6 +12,9 @@ const { snapshotPostInsights, getLatestInsights } = require('../../lib/insights'
 const { renderImage } = require('../../lib/renderer');
 const postMedia = require('../../lib/post-media');
 const audit = require('../../lib/audit');
+const geminiImage = require('../../lib/gemini-image');
+const visualPrompt = require('../../lib/visual-prompt');
+const fs = require('fs');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -193,6 +196,78 @@ router.post('/:id/generate-image', async (req, res) => {
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Image generation failed', details: err.message });
+  }
+});
+
+// Generate AI image via Gemini Flash Image (Nano-Banana, gratuito).
+// Differente da /generate-image: niente template HTML, l'immagine è generata
+// dall'AI a partire dalla caption + brand. Aspect ratio configurabile.
+router.post('/:id/generate-ai-image', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  if (!client.gemini_api_key) {
+    return res.status(400).json({ error: 'Cliente senza Gemini API key configurata.' });
+  }
+
+  const validRatios = ['1:1', '4:5', '9:16', '16:9'];
+  const aspectRatio = validRatios.includes(req.body && req.body.aspect_ratio) ? req.body.aspect_ratio : '1:1';
+  // Override prompt opzionale: se l'utente vuole controllare manualmente bypassa
+  // il visual-prompt builder e passa la stringa esatta a Gemini Image.
+  const overridePrompt = (req.body && typeof req.body.prompt === 'string' && req.body.prompt.trim()) || null;
+
+  try {
+    const finalPrompt = overridePrompt || await visualPrompt.buildPrompt(client, post, aspectRatio);
+    const { buffer, mime } = await geminiImage.generateForPost(client.gemini_api_key, finalPrompt, aspectRatio);
+
+    // Scrivi su tmp e attacca come post_media generato
+    const ext = mime === 'image/png' ? '.png' : '.jpg';
+    const tmpPath = path.join(os.tmpdir(), `sig-aiimg-${uuidv4()}${ext}`);
+    fs.writeFileSync(tmpPath, buffer);
+
+    let media;
+    try {
+      media = postMedia.attachGeneratedFile({
+        clientId: post.client_id,
+        postId: post.id,
+        absolutePath: tmpPath,
+        source: 'ai',
+        kind: 'image'
+      });
+    } catch (err) {
+      if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+      throw err;
+    }
+
+    // Normalizza per Meta (flatten alpha, strip ICC) — già JPEG flatten dal nostro
+    // sharp pipeline, ma chiamiamo per sicurezza e per popolare width/height nel DB.
+    try {
+      const dest = path.join(postMedia.postDir(post.client_id, post.id), media.filename);
+      await postMedia.normalizeImageForMeta(dest);
+      const imageSize = require('image-size');
+      const dim = imageSize(dest);
+      if (dim && dim.width && dim.height) {
+        db.prepare('UPDATE post_media SET width = ?, height = ?, bytes = ? WHERE id = ?')
+          .run(dim.width, dim.height, fs.statSync(dest).size, media.id);
+        media = postMedia.getMedia(media.id);
+      }
+    } catch (e) { console.warn('[generate-ai-image] post-process failed:', e.message); }
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.ai_image_generated',
+      entity_type: 'post',
+      entity_id: post.id,
+      details: { aspect_ratio: aspectRatio, prompt_used: finalPrompt.substring(0, 200) }
+    });
+
+    res.json({ media, prompt: finalPrompt, aspect_ratio: aspectRatio });
+  } catch (err) {
+    console.error('[generate-ai-image] error:', err.message);
+    res.status(500).json({ error: 'Generazione AI fallita', details: err.message });
   }
 });
 

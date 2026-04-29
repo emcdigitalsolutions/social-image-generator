@@ -428,7 +428,16 @@
     <div class="card" style="margin-bottom:16px">
       <div class="card-header">
         <h3>Media <span id="media-count" style="font-size:12px;color:var(--gray-400);font-weight:normal"></span></h3>
-        <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn" title="Renderizza un'immagine dal template selezionato e la aggiunge come media generato"><span style="margin-right:3px">✨</span>Genera da template</button>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <select id="ai-aspect" title="Aspect ratio dell'immagine generata" style="padding:5px 8px;border:1px solid var(--gray-300);border-radius:6px;font-size:12px">
+            <option value="1:1">1:1 — IG quadrato</option>
+            <option value="4:5">4:5 — IG verticale feed</option>
+            <option value="9:16">9:16 — Reel / Story</option>
+            <option value="16:9">16:9 — FB orizzontale</option>
+          </select>
+          <button class="btn btn-sm btn-primary" onclick="generateAIImage()" id="gen-ai-btn" title="Genera un'immagine AI con Gemini (Nano-Banana) a partire dalla caption e dal contesto cliente"><span style="margin-right:3px">✨</span>Genera AI</button>
+          <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn" title="Renderizza un'immagine dal template HTML selezionato (poster con testo)"><span style="margin-right:3px">🖼️</span>Da template</button>
+        </div>
       </div>
 
       <label class="uploader" id="uploader">
@@ -1251,7 +1260,32 @@
       await showAlert('Errore: ' + err.message);
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<span style="margin-right:3px">✨</span>Genera da template';
+      btn.innerHTML = '<span style="margin-right:3px">🖼️</span>Da template';
+    }
+  }
+
+  async function generateAIImage() {
+    const btn = document.getElementById('gen-ai-btn');
+    const aspectSel = document.getElementById('ai-aspect');
+    const aspect = aspectSel ? aspectSel.value : '1:1';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Generazione AI...';
+    try {
+      await saveDetails();
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-ai-image', {
+        method: 'POST',
+        body: { aspect_ratio: aspect }
+      });
+      if (res.error) { await showAlert(res.error + (res.details ? '\n' + res.details : '')); return; }
+      const mediaRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media');
+      MEDIA = mediaRes.media || [];
+      renderMedia();
+      toast('Immagine AI generata (' + aspect + ')');
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span style="margin-right:3px">✨</span>Genera AI';
     }
   }
 
