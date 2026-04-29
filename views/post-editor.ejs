@@ -578,9 +578,12 @@
     SELECTED = new Set([...SELECTED].filter(id => MEDIA.some(m => m.id === id)));
     grid.innerHTML = MEDIA.map((m, i) => {
       const url = m.url + (m.created_at ? '?v=' + encodeURIComponent(m.created_at) : '');
+      // crossorigin="anonymous" anche sulla thumb: la cache del browser distingue
+      // le risposte CORS da quelle no-CORS. Se la thumb è no-CORS e la lightbox
+      // CORS, il browser non riusa la cache → l'<img> della lightbox fallisce.
       const thumb = m.kind === 'video'
-        ? '<video src="' + url + '" muted preload="metadata"></video>'
-        : '<img src="' + url + '" alt="">';
+        ? '<video src="' + url + '" muted preload="metadata" crossorigin="anonymous"></video>'
+        : '<img src="' + url + '" alt="" crossorigin="anonymous">';
       const srcBadge = m.source !== 'upload' ? '<span class="media-source-badge ' + m.source + '">' + m.source + '</span>' : '';
       const posBadge = MEDIA.length > 1 ? '<span class="media-pos-badge">' + (i + 1) + ' / ' + MEDIA.length + '</span>' : '';
       // Warning proporzioni IG: se il cliente ha IG e il ratio è fuori range, mostra un badge rosso

@@ -72,10 +72,18 @@ app.use('/images', (req, res, next) => {
 // con immutable Meta/CDN li mettono in cache alla prima versione e non rileggono
 // mai la modifica → IG rifiuta al publish pensando che le proporzioni siano ancora
 // quelle originali. Cache breve + ETag basato su mtime permette di rileggere.
+//
+// Access-Control-Allow-Origin: * serve al Cropper.js della lightbox: il canvas
+// non viene marcato "tainted" e canvas.toBlob() può estrarre il blob croppato.
+// Senza CORS header, l'<img crossorigin="anonymous"> fallisce il caricamento.
 app.use('/images', express.static(path.join(__dirname, 'public', 'images'), {
   maxAge: '1h',
   etag: true,
-  lastModified: true
+  lastModified: true,
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
 }));
 
 // Static files — dashboard assets (CSS/JS only)
