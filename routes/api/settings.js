@@ -38,6 +38,7 @@ const ALLOWED_KEYS = [
   'google_script_url',
   'gas_email_url', 'gas_email_secret',
   'anthropic_api_key', 'gemini_api_key', 'huggingface_api_key', 'replicate_api_key',
+  'gemini_force_global',
   'base_url'
 ];
 const SECRET_KEYS = new Set(['smtp_pass', 'anthropic_api_key', 'gemini_api_key', 'huggingface_api_key', 'replicate_api_key', 'gas_email_secret']);

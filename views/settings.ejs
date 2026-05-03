@@ -19,8 +19,15 @@
       <input type="password" id="setAnthropicKey" placeholder="sk-ant-...">
     </div>
     <div class="form-group">
-      <label>Gemini API Key</label>
+      <label>Gemini API Key <span style="font-weight:400;color:var(--gray-500);font-size:12px">(globale, fallback per clienti senza key propria)</span></label>
       <input type="password" id="setGeminiKey" placeholder="AIza...">
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="setGeminiForceGlobal" style="width:auto">
+        <span>🔒 <strong>Usa sempre la key globale</strong> (ignora le key per cliente)</span>
+      </label>
+      <p style="font-size:11px;color:var(--gray-500);margin-top:4px;margin-left:24px">Utile quando billing è attivo solo sulla key globale: tutti i clienti useranno questa key indipendentemente da quella loro configurata.</p>
     </div>
     <div class="form-group">
       <label>Replicate API Token <span style="font-weight:400;color:var(--gray-500);font-size:12px">(consigliato, per generare musica AI)</span></label>
@@ -149,6 +156,7 @@ async function loadSettings() {
     document.getElementById('setGeminiKey').value = s.gemini_api_key || '';
     document.getElementById('setHfKey').value = s.huggingface_api_key || '';
     document.getElementById('setReplicateKey').value = s.replicate_api_key || '';
+    document.getElementById('setGeminiForceGlobal').checked = s.gemini_force_global === '1';
     document.getElementById('setBaseUrl').value = s.base_url || '';
   } catch (err) {
     setBanner('smtpAlert','error', 'Errore nel caricamento: ' + err.message);
@@ -165,7 +173,8 @@ async function saveApi(e) {
         anthropic_api_key: document.getElementById('setAnthropicKey').value,
         gemini_api_key: document.getElementById('setGeminiKey').value,
         huggingface_api_key: document.getElementById('setHfKey').value,
-        replicate_api_key: document.getElementById('setReplicateKey').value
+        replicate_api_key: document.getElementById('setReplicateKey').value,
+        gemini_force_global: document.getElementById('setGeminiForceGlobal').checked ? '1' : '0'
       }})
     });
     const data = await res.json();

@@ -14,6 +14,7 @@ const postMedia = require('../../lib/post-media');
 const audit = require('../../lib/audit');
 const geminiImage = require('../../lib/gemini-image');
 const visualPrompt = require('../../lib/visual-prompt');
+const { getEffectiveGeminiKey } = require('../../lib/settings');
 const fs = require('fs');
 
 const router = express.Router();
@@ -231,8 +232,9 @@ router.post('/:id/generate-ai-image', async (req, res) => {
 
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
   if (!client) return res.status(404).json({ error: 'Client not found' });
-  if (!client.gemini_api_key) {
-    return res.status(400).json({ error: 'Cliente senza Gemini API key configurata.' });
+  const apiKey = getEffectiveGeminiKey(client);
+  if (!apiKey) {
+    return res.status(400).json({ error: 'Nessuna Gemini API key disponibile (né per il cliente né globale).' });
   }
 
   const validRatios = ['1:1', '4:5', '9:16', '16:9'];
@@ -243,7 +245,7 @@ router.post('/:id/generate-ai-image', async (req, res) => {
 
   try {
     const finalPrompt = overridePrompt || await visualPrompt.buildPrompt(client, post, aspectRatio);
-    const { buffer, mime } = await geminiImage.generateForPost(client.gemini_api_key, finalPrompt, aspectRatio);
+    const { buffer, mime } = await geminiImage.generateForPost(apiKey, finalPrompt, aspectRatio);
 
     // Scrivi su tmp e attacca come post_media generato
     const ext = mime === 'image/png' ? '.png' : '.jpg';
@@ -328,8 +330,9 @@ router.post('/:id/generate-veo-video', async (req, res) => {
 
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
   if (!client) return res.status(404).json({ error: 'Client not found' });
-  if (!client.gemini_api_key) {
-    return res.status(400).json({ error: 'Cliente senza Gemini API key configurata.' });
+  const apiKey = getEffectiveGeminiKey(client);
+  if (!apiKey) {
+    return res.status(400).json({ error: 'Nessuna Gemini API key disponibile (né per il cliente né globale).' });
   }
 
   const aspectRatio = (req.body && req.body.aspect_ratio) === '16:9' ? '16:9' : '9:16';
@@ -339,7 +342,7 @@ router.post('/:id/generate-veo-video', async (req, res) => {
 
   try {
     const finalPrompt = overridePrompt || await visualPrompt.buildVideoPrompt(client, post, aspectRatio);
-    const job = await veoVideo.submitJob(client.gemini_api_key, finalPrompt, {
+    const job = await veoVideo.submitJob(apiKey, finalPrompt, {
       aspectRatio, durationSeconds, modelVariant
     });
 
@@ -378,8 +381,9 @@ router.post('/:id/check-veo-status', async (req, res) => {
 
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
   if (!client) return res.status(404).json({ error: 'Client not found' });
-  if (!client.gemini_api_key) {
-    return res.status(400).json({ error: 'Cliente senza Gemini API key configurata.' });
+  const apiKey = getEffectiveGeminiKey(client);
+  if (!apiKey) {
+    return res.status(400).json({ error: 'Nessuna Gemini API key disponibile (né per il cliente né globale).' });
   }
 
   const opName = req.body && req.body.operation_name;
@@ -389,11 +393,11 @@ router.post('/:id/check-veo-status', async (req, res) => {
 
   let videoTmpPath = null;
   try {
-    const status = await veoVideo.checkOperation(client.gemini_api_key, opName);
+    const status = await veoVideo.checkOperation(apiKey, opName);
     if (!status.done) return res.json({ done: false });
 
     // Done: scarica binario, salva, attach
-    const { buffer } = await veoVideo.fetchCompletedVideo(client.gemini_api_key, status.response);
+    const { buffer } = await veoVideo.fetchCompletedVideo(apiKey, status.response);
     videoTmpPath = path.join(os.tmpdir(), `sig-veo-${uuidv4()}.mp4`);
     fs.writeFileSync(videoTmpPath, buffer);
 
@@ -432,8 +436,9 @@ router.post('/:id/generate-ai-video', async (req, res) => {
 
   const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
   if (!client) return res.status(404).json({ error: 'Client not found' });
-  if (!client.gemini_api_key) {
-    return res.status(400).json({ error: 'Cliente senza Gemini API key configurata.' });
+  const apiKey = getEffectiveGeminiKey(client);
+  if (!apiKey) {
+    return res.status(400).json({ error: 'Nessuna Gemini API key disponibile (né per il cliente né globale).' });
   }
 
   const validRatios = ['1:1', '4:5', '9:16', '16:9'];
@@ -469,7 +474,7 @@ router.post('/:id/generate-ai-video', async (req, res) => {
 
     // Step 2: genera N immagini in parallelo (riusa geminiImage)
     const imageBuffers = await Promise.all(prompts.map(p =>
-      geminiImage.generateForPost(client.gemini_api_key, p, aspectRatio)
+      geminiImage.generateForPost(apiKey, p, aspectRatio)
     ));
 
     // Step 3: scrivi su tmp
