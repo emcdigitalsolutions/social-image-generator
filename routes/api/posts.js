@@ -297,6 +297,133 @@ router.post('/:id/generate-ai-image', async (req, res) => {
 // crossfade via ffmpeg. Costo = N immagini (~$0.04 × N), niente API video.
 // Output salvato come post_media kind='video' source='ai_video'.
 const videoSlideshow = require('../../lib/video-slideshow');
+const veoVideo = require('../../lib/veo-video');
+
+// Build prompt video Veo (preview senza generare). Speculare a /build-visual-prompt
+// ma usa il system instruction cinematografico (camera movement + ambient sound).
+router.post('/:id/build-video-prompt', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const aspectRatio = (req.body && req.body.aspect_ratio) === '16:9' ? '16:9' : '9:16';
+  try {
+    const prompt = await visualPrompt.buildVideoPrompt(client, post, aspectRatio);
+    res.json({ prompt, aspect_ratio: aspectRatio });
+  } catch (err) {
+    console.error('[build-video-prompt] error:', err.message);
+    res.status(500).json({ error: 'Costruzione prompt fallita', details: err.message });
+  }
+});
+
+// Submit job Veo 3. Ritorna immediatamente con operation_name. Il frontend
+// poi polla /check-veo-status ogni N secondi finché ready, perché Veo richiede
+// 1-3 min e supererebbe il timeout del proxy (Caddy/Coolify ~60s).
+router.post('/:id/generate-veo-video', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  if (!client.gemini_api_key) {
+    return res.status(400).json({ error: 'Cliente senza Gemini API key configurata.' });
+  }
+
+  const aspectRatio = (req.body && req.body.aspect_ratio) === '16:9' ? '16:9' : '9:16';
+  const durationSeconds = Math.max(4, Math.min(8, parseInt(req.body && req.body.duration_seconds, 10) || 8));
+  const modelVariant = (req.body && req.body.model_variant) === 'fast' ? 'fast' : 'standard';
+  const overridePrompt = (req.body && typeof req.body.prompt === 'string' && req.body.prompt.trim()) || null;
+
+  try {
+    const finalPrompt = overridePrompt || await visualPrompt.buildVideoPrompt(client, post, aspectRatio);
+    const job = await veoVideo.submitJob(client.gemini_api_key, finalPrompt, {
+      aspectRatio, durationSeconds, modelVariant
+    });
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.veo_video_submitted',
+      entity_type: 'post',
+      entity_id: post.id,
+      details: {
+        operation_name: job.opName, model: job.model,
+        aspect_ratio: aspectRatio, duration_seconds: durationSeconds,
+        prompt_used: finalPrompt.substring(0, 200)
+      }
+    });
+
+    res.json({
+      operation_name: job.opName,
+      model: job.model,
+      prompt: finalPrompt,
+      aspect_ratio: aspectRatio,
+      duration_seconds: durationSeconds,
+      model_variant: modelVariant
+    });
+  } catch (err) {
+    console.error('[generate-veo-video] submit error:', err.message);
+    res.status(500).json({ error: 'Submit Veo fallito', details: err.message });
+  }
+});
+
+// Polling status di un job Veo. Se done=true scarica il video, lo attacca come
+// post_media kind='video' source='veo' e ritorna il media. Altrimenti { done: false }.
+router.post('/:id/check-veo-status', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  if (!client.gemini_api_key) {
+    return res.status(400).json({ error: 'Cliente senza Gemini API key configurata.' });
+  }
+
+  const opName = req.body && req.body.operation_name;
+  if (!opName || typeof opName !== 'string') {
+    return res.status(400).json({ error: 'operation_name richiesto' });
+  }
+
+  let videoTmpPath = null;
+  try {
+    const status = await veoVideo.checkOperation(client.gemini_api_key, opName);
+    if (!status.done) return res.json({ done: false });
+
+    // Done: scarica binario, salva, attach
+    const { buffer } = await veoVideo.fetchCompletedVideo(client.gemini_api_key, status.response);
+    videoTmpPath = path.join(os.tmpdir(), `sig-veo-${uuidv4()}.mp4`);
+    fs.writeFileSync(videoTmpPath, buffer);
+
+    const media = postMedia.attachGeneratedFile({
+      clientId: post.client_id,
+      postId: post.id,
+      absolutePath: videoTmpPath,
+      source: 'veo',
+      kind: 'video'
+    });
+    videoTmpPath = null;
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.veo_video_completed',
+      entity_type: 'post',
+      entity_id: post.id,
+      details: { operation_name: opName, media_id: media.id }
+    });
+
+    res.json({ done: true, media });
+  } catch (err) {
+    console.error('[check-veo-status] error:', err.message);
+    res.status(500).json({ error: 'Check Veo fallito', details: err.message });
+  } finally {
+    if (videoTmpPath) {
+      try { if (fs.existsSync(videoTmpPath)) fs.unlinkSync(videoTmpPath); } catch (_) {}
+    }
+  }
+});
 
 router.post('/:id/generate-ai-video', async (req, res) => {
   const db = getDb();

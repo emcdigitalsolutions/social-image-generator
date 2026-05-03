@@ -437,6 +437,7 @@
           </select>
           <button class="btn btn-sm btn-primary" onclick="generateAIImage()" id="gen-ai-btn" title="Genera un'immagine AI con Gemini (Nano-Banana) a partire dalla caption e dal contesto cliente"><span style="margin-right:3px">✨</span>Genera AI</button>
           <button class="btn btn-sm btn-primary" onclick="generateAIVideo()" id="gen-aivid-btn" title="Genera un Reel slideshow Ken Burns: 3 immagini AI animate con zoom/pan e crossfade" style="background:#7c3aed">🎬 Reel AI</button>
+          <button class="btn btn-sm btn-primary" onclick="generateVeoVideo()" id="gen-veo-btn" title="Genera un video AI premium con Veo 3 (full-motion + audio nativo). Richiede billing attivo. Costo: ~$3-6 per 8s." style="background:linear-gradient(135deg,#f59e0b,#dc2626);border:none">💎 Veo Premium</button>
           <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn" title="Renderizza un'immagine dal template HTML selezionato (poster con testo)"><span style="margin-right:3px">🖼️</span>Da template</button>
         </div>
       </div>
@@ -1456,6 +1457,169 @@
     } finally {
       btn.disabled = false;
       btn.innerHTML = '🎬 Reel AI';
+    }
+  }
+
+  // Veo 3 Premium: video AI generativo con audio nativo. Long-running operation
+  // (1-3 min), splittato in submit + polling client-side per evitare timeout proxy.
+  function veoConfigModal(initialPrompt) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+      overlay.innerHTML = `
+        <div style="background:#fff;border-radius:10px;max-width:680px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#fef3c7,#fee2e2)">
+            <strong style="font-size:15px">💎 Veo 3 Premium — Video AI generativo</strong>
+            <button id="veo-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
+          </div>
+          <div style="padding:16px 20px;overflow-y:auto;flex:1">
+            <p style="font-size:12px;color:var(--gray-600);margin:0 0 14px">Veo 3 genera video full-motion 8s con audio nativo (musica, ambient, dialoghi) da prompt cinematografico. Richiede billing Gemini API attivo.</p>
+
+            <div style="display:flex;gap:14px;margin-bottom:12px">
+              <div style="flex:1">
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Aspect ratio</label>
+                <select id="veo-aspect" style="width:100%;padding:7px 9px;border:1px solid var(--gray-300);border-radius:5px;font-size:13px">
+                  <option value="9:16" selected>9:16 — Reel/Story</option>
+                  <option value="16:9">16:9 — FB orizzontale</option>
+                </select>
+              </div>
+              <div style="flex:1">
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Durata (sec)</label>
+                <select id="veo-dur" style="width:100%;padding:7px 9px;border:1px solid var(--gray-300);border-radius:5px;font-size:13px">
+                  <option value="4">4 sec</option>
+                  <option value="6">6 sec</option>
+                  <option value="8" selected>8 sec</option>
+                </select>
+              </div>
+              <div style="flex:1">
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Modello</label>
+                <select id="veo-variant" style="width:100%;padding:7px 9px;border:1px solid var(--gray-300);border-radius:5px;font-size:13px">
+                  <option value="fast" selected>Fast (720p, ~$0.40/s)</option>
+                  <option value="standard">Standard (1080p, ~$0.75/s)</option>
+                </select>
+              </div>
+            </div>
+
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Prompt cinematografico (inglese)</label>
+            <textarea id="veo-prompt" style="width:100%;min-height:180px;padding:10px;border:1px solid var(--gray-300);border-radius:6px;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="font-size:11px;color:var(--gray-500);margin-top:6px">Suggerimento: includi <strong>camera movement</strong> ("slow dolly in", "tracking shot"), <strong>ambient sound</strong> ("birds chirping", "soft acoustic guitar"), e <strong>action</strong> verbale (cosa succede negli 8 sec).</div>
+
+            <div id="veo-cost" style="margin-top:10px;font-size:12px;font-weight:600;padding:8px 10px;background:#fef3c7;border-radius:5px;color:#92400e"></div>
+          </div>
+          <div style="padding:14px 20px;border-top:1px solid var(--gray-200);display:flex;gap:8px;justify-content:flex-end">
+            <button id="veo-cancel" class="btn btn-sm" style="background:var(--gray-200)">Annulla</button>
+            <button id="veo-confirm" class="btn btn-sm btn-primary" style="background:linear-gradient(135deg,#f59e0b,#dc2626);border:none">💎 Genera con Veo 3</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const promptTa = overlay.querySelector('#veo-prompt');
+      promptTa.value = initialPrompt;
+      promptTa.focus();
+
+      const updateCost = () => {
+        const dur = parseInt(overlay.querySelector('#veo-dur').value, 10);
+        const variant = overlay.querySelector('#veo-variant').value;
+        const ratePerSec = variant === 'fast' ? 0.40 : 0.75;
+        const cost = (dur * ratePerSec).toFixed(2);
+        overlay.querySelector('#veo-cost').textContent =
+          `💰 Costo stimato: ~$${cost} per ${dur}s (${variant === 'fast' ? 'Fast 720p' : 'Standard 1080p'})`;
+      };
+      overlay.querySelector('#veo-dur').onchange = updateCost;
+      overlay.querySelector('#veo-variant').onchange = updateCost;
+      updateCost();
+
+      const close = (val) => { document.body.removeChild(overlay); resolve(val); };
+      overlay.querySelector('#veo-close').onclick = () => close(null);
+      overlay.querySelector('#veo-cancel').onclick = () => close(null);
+      overlay.querySelector('#veo-confirm').onclick = () => {
+        const p = promptTa.value.trim();
+        if (!p) { promptTa.focus(); return; }
+        close({
+          prompt: p,
+          aspect_ratio: overlay.querySelector('#veo-aspect').value,
+          duration_seconds: parseInt(overlay.querySelector('#veo-dur').value, 10),
+          model_variant: overlay.querySelector('#veo-variant').value
+        });
+      };
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
+    });
+  }
+
+  async function generateVeoVideo() {
+    const btn = document.getElementById('gen-veo-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Costruzione prompt...';
+
+    try {
+      await saveDetails();
+      // Step 1: build prompt video
+      const aspectInit = (document.getElementById('ai-aspect') && document.getElementById('ai-aspect').value === '16:9') ? '16:9' : '9:16';
+      const buildRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/build-video-prompt', {
+        method: 'POST',
+        body: { aspect_ratio: aspectInit }
+      });
+      if (buildRes.error) { await showAlert(buildRes.error + (buildRes.details ? '\n' + buildRes.details : '')); return; }
+
+      // Step 2: modal config + prompt editor
+      const cfg = await veoConfigModal(buildRes.prompt || '');
+      if (!cfg) { toast('Generazione annullata'); return; }
+
+      // Step 3: submit job
+      btn.innerHTML = '<span class="loading"></span> Submit Veo...';
+      const submitRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-veo-video', {
+        method: 'POST',
+        body: cfg
+      });
+      if (submitRes.error) { await showAlert(submitRes.error + (submitRes.details ? '\n' + submitRes.details : '')); return; }
+
+      // Step 4: polling client-side ogni 8s, max 5 min
+      const opName = submitRes.operation_name;
+      const startedAt = Date.now();
+      const MAX_MS = 6 * 60 * 1000;
+      const POLL_MS = 8000;
+      let attempts = 0;
+
+      while (true) {
+        attempts++;
+        const elapsed = Math.round((Date.now() - startedAt) / 1000);
+        btn.innerHTML = `<span class="loading"></span> Veo (${elapsed}s)...`;
+
+        if (Date.now() - startedAt > MAX_MS) {
+          await showAlert('Veo: timeout dopo 6 minuti. Il job potrebbe essere ancora in corso lato Google: riprova tra qualche minuto, gli endpoint di status accettano la stessa operation_name.\n\nOperation: ' + opName);
+          return;
+        }
+
+        await new Promise(r => setTimeout(r, POLL_MS));
+
+        const statusRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/check-veo-status', {
+          method: 'POST',
+          body: { operation_name: opName }
+        });
+        if (statusRes.error) {
+          await showAlert('Veo status error: ' + statusRes.error + (statusRes.details ? '\n' + statusRes.details : ''));
+          return;
+        }
+        if (statusRes.done) {
+          // Imposta media_type a 'reel' se 9:16
+          if (cfg.aspect_ratio === '9:16' && MEDIA_TYPE === 'single_image') {
+            MEDIA_TYPE = 'reel';
+            await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'PUT', body: { media_type: 'reel' } });
+          }
+          const mediaRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media');
+          MEDIA = mediaRes.media || [];
+          renderMedia();
+          const totalSec = Math.round((Date.now() - startedAt) / 1000);
+          toast('💎 Veo video generato in ' + totalSec + 's (' + cfg.duration_seconds + 's, ' + cfg.aspect_ratio + ')');
+          return;
+        }
+        // not done yet — continua polling
+      }
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '💎 Veo Premium';
     }
   }
 
