@@ -1449,7 +1449,8 @@
       const mediaRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media');
       MEDIA = mediaRes.media || [];
       renderMedia();
-      toast('Reel AI generato (' + (res.duration_sec || '?').toFixed ? res.duration_sec.toFixed(1) : res.duration_sec + 's, ' + cfg.num_clips + ' clip)');
+      const dur = typeof res.duration_sec === 'number' ? res.duration_sec.toFixed(1) : '?';
+      toast('Reel AI generato (' + dur + 's, ' + cfg.num_clips + ' clip)');
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     } finally {
