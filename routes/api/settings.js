@@ -37,10 +37,10 @@ const ALLOWED_KEYS = [
   'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_notify_to',
   'google_script_url',
   'gas_email_url', 'gas_email_secret',
-  'anthropic_api_key', 'gemini_api_key',
+  'anthropic_api_key', 'gemini_api_key', 'huggingface_api_key',
   'base_url'
 ];
-const SECRET_KEYS = new Set(['smtp_pass', 'anthropic_api_key', 'gemini_api_key', 'gas_email_secret']);
+const SECRET_KEYS = new Set(['smtp_pass', 'anthropic_api_key', 'gemini_api_key', 'huggingface_api_key', 'gas_email_secret']);
 const MASK = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
 
 // GET - legge tutte le impostazioni (segreti mascherati)

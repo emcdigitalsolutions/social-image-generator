@@ -1349,14 +1349,24 @@
   }
 
   // Reel AI: slideshow Ken Burns da N immagini AI animate via ffmpeg server-side.
-  // Apre un modal per configurare aspect/numero clip/durata, poi lancia il job.
-  // Il job lato server può durare 20-40 sec (N * generazione immagine + ffmpeg).
+  // Apre un modal per configurare aspect/numero clip/durata + audio (silenzio /
+  // libreria / genera AI), poi lancia il job. Job lato server: 20-40s.
   function aiVideoConfigModal() {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
+      // Pre-fetch libreria audio (best-effort, non blocca se fallisce)
+      let library = { tracks: [], hf_configured: false };
+      try {
+        const lib = await apiFetch('/dashboard/api/music');
+        if (lib && Array.isArray(lib.tracks)) library = lib;
+      } catch (_) {}
+
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+      const tracksOptions = library.tracks.length
+        ? library.tracks.map(t => `<option value="${t.filename}">${t.filename} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('')
+        : '<option value="">— Libreria vuota: carica un MP3 o genera con AI —</option>';
       overlay.innerHTML = `
-        <div style="background:#fff;border-radius:10px;max-width:520px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+        <div style="background:#fff;border-radius:10px;max-width:560px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)">
           <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
             <strong style="font-size:15px">🎬 Genera Reel AI (slideshow)</strong>
             <button id="vc-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
@@ -1395,6 +1405,40 @@
               </div>
             </div>
 
+            <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:10px 12px;margin-bottom:12px">
+              <legend style="font-size:12px;font-weight:600;padding:0 6px">🎵 Audio</legend>
+              <div style="display:flex;gap:14px;margin-bottom:8px;flex-wrap:wrap">
+                <label style="font-size:12px;cursor:pointer"><input type="radio" name="vc-audio-mode" value="none" checked> Silenzio</label>
+                <label style="font-size:12px;cursor:pointer"><input type="radio" name="vc-audio-mode" value="library"> Libreria</label>
+                <label style="font-size:12px;cursor:pointer"><input type="radio" name="vc-audio-mode" value="ai"> ✨ Genera con AI</label>
+              </div>
+
+              <div id="vc-audio-library" style="display:none;margin-top:8px">
+                <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+                  <select id="vc-audio-track" style="flex:1;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px">${tracksOptions}</select>
+                  <button id="vc-audio-upload-btn" type="button" class="btn btn-sm" style="background:var(--gray-200);font-size:11px;padding:5px 8px">⬆ Upload</button>
+                  <button id="vc-audio-refresh-btn" type="button" class="btn btn-sm" style="background:var(--gray-200);font-size:11px;padding:5px 8px">↻</button>
+                </div>
+                <audio id="vc-audio-preview" controls style="width:100%;height:36px"></audio>
+                <input type="file" id="vc-audio-upload-input" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/ogg" style="display:none">
+                <div style="font-size:10px;color:var(--gray-500);margin-top:4px">MP3/WAV/M4A/OGG · max 15MB · usa solo musica royalty-free</div>
+              </div>
+
+              <div id="vc-audio-ai" style="display:none;margin-top:8px">
+                ${library.hf_configured
+                  ? '<textarea id="vc-audio-prompt" rows="2" placeholder="es. upbeat acoustic guitar, mediterranean summer vibes, light percussion" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>'
+                  + '<div style="display:flex;gap:6px;align-items:center;margin-top:6px">'
+                  + '<select id="vc-audio-ai-dur" style="padding:5px 7px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px">'
+                  + '<option value="10">10s</option><option value="15" selected>15s</option><option value="20">20s</option><option value="30">30s</option>'
+                  + '</select>'
+                  + '<button id="vc-audio-ai-btn" type="button" class="btn btn-sm btn-primary" style="font-size:12px;padding:5px 10px">✨ Genera traccia</button>'
+                  + '<span id="vc-audio-ai-status" style="font-size:11px;color:var(--gray-500)"></span>'
+                  + '</div>'
+                  + '<div style="font-size:10px;color:var(--gray-500);margin-top:4px">MusicGen via Hugging Face. Cold-start: 10-30s al primo utilizzo. Free tier.</div>'
+                  : '<div style="font-size:11px;color:#92400e;background:#fef3c7;padding:8px 10px;border-radius:4px">⚠ Hugging Face token non configurato. Vai su <a href="/dashboard/settings" target="_blank">Settings</a> → "Hugging Face API key" (gratis su <a href="https://huggingface.co/settings/tokens" target="_blank">huggingface.co/settings/tokens</a>).</div>'}
+              </div>
+            </fieldset>
+
             <div id="vc-summary" style="font-size:11px;color:var(--gray-500);padding:8px 10px;background:var(--gray-50);border-radius:5px"></div>
           </div>
           <div style="padding:14px 20px;border-top:1px solid var(--gray-200);display:flex;gap:8px;justify-content:flex-end">
@@ -1416,14 +1460,114 @@
       overlay.querySelector('#vc-dur').onchange = updateSummary;
       updateSummary();
 
+      // Audio mode toggle
+      const audioModeChange = () => {
+        const mode = overlay.querySelector('input[name="vc-audio-mode"]:checked').value;
+        overlay.querySelector('#vc-audio-library').style.display = mode === 'library' ? 'block' : 'none';
+        overlay.querySelector('#vc-audio-ai').style.display = mode === 'ai' ? 'block' : 'none';
+      };
+      overlay.querySelectorAll('input[name="vc-audio-mode"]').forEach(r => r.addEventListener('change', audioModeChange));
+
+      // Preview audio quando cambia track
+      const trackSel = overlay.querySelector('#vc-audio-track');
+      const audioPreview = overlay.querySelector('#vc-audio-preview');
+      const updatePreview = () => {
+        const v = trackSel.value;
+        if (audioPreview && v) audioPreview.src = '/music/' + v;
+        else if (audioPreview) audioPreview.removeAttribute('src');
+      };
+      if (trackSel) trackSel.onchange = updatePreview;
+      updatePreview();
+
+      // Refresh libreria
+      overlay.querySelector('#vc-audio-refresh-btn').onclick = async () => {
+        try {
+          const lib = await apiFetch('/dashboard/api/music');
+          if (lib && Array.isArray(lib.tracks)) {
+            trackSel.innerHTML = lib.tracks.length
+              ? lib.tracks.map(t => `<option value="${t.filename}">${t.filename} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('')
+              : '<option value="">— Libreria vuota —</option>';
+            updatePreview();
+          }
+        } catch (e) { console.warn('Refresh libreria fallito', e); }
+      };
+
+      // Upload audio
+      const uploadInput = overlay.querySelector('#vc-audio-upload-input');
+      overlay.querySelector('#vc-audio-upload-btn').onclick = () => uploadInput.click();
+      uploadInput.onchange = async () => {
+        const f = uploadInput.files[0];
+        if (!f) return;
+        try {
+          const fd = new FormData();
+          fd.append('file', f);
+          const xhr = await fetch('/dashboard/api/music/upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + getToken() },
+            body: fd
+          });
+          const data = await xhr.json();
+          if (!xhr.ok) { await showAlert(data.error || 'Upload fallito'); return; }
+          // Refresh + seleziona il nuovo file
+          overlay.querySelector('#vc-audio-refresh-btn').click();
+          setTimeout(() => {
+            const opt = [...trackSel.options].find(o => o.value === data.filename);
+            if (opt) { trackSel.value = data.filename; updatePreview(); }
+          }, 200);
+          toast('Caricato ' + data.filename);
+        } catch (e) { await showAlert('Upload errore: ' + e.message); }
+        uploadInput.value = '';
+      };
+
+      // Genera traccia AI
+      const aiBtn = overlay.querySelector('#vc-audio-ai-btn');
+      if (aiBtn) {
+        aiBtn.onclick = async () => {
+          const prompt = (overlay.querySelector('#vc-audio-prompt').value || '').trim();
+          if (!prompt) { overlay.querySelector('#vc-audio-prompt').focus(); return; }
+          const dur = parseInt(overlay.querySelector('#vc-audio-ai-dur').value, 10);
+          const status = overlay.querySelector('#vc-audio-ai-status');
+          aiBtn.disabled = true;
+          status.textContent = 'Generazione (10-30s al cold start)...';
+          try {
+            const res = await apiFetch('/dashboard/api/music/generate', {
+              method: 'POST',
+              body: { prompt, duration_sec: dur, model_size: 'small' }
+            });
+            if (res.error) { status.textContent = 'Errore: ' + res.error; aiBtn.disabled = false; return; }
+            status.textContent = '✓ ' + res.filename;
+            // Switch a libreria + seleziona il nuovo file
+            overlay.querySelector('input[name="vc-audio-mode"][value="library"]').checked = true;
+            audioModeChange();
+            overlay.querySelector('#vc-audio-refresh-btn').click();
+            setTimeout(() => {
+              const opt = [...trackSel.options].find(o => o.value === res.filename);
+              if (opt) { trackSel.value = res.filename; updatePreview(); }
+            }, 200);
+          } catch (e) {
+            status.textContent = 'Errore: ' + e.message;
+          } finally {
+            aiBtn.disabled = false;
+          }
+        };
+      }
+
       const close = (val) => { document.body.removeChild(overlay); resolve(val); };
       overlay.querySelector('#vc-close').onclick = () => close(null);
       overlay.querySelector('#vc-cancel').onclick = () => close(null);
-      overlay.querySelector('#vc-confirm').onclick = () => close({
-        aspect_ratio: overlay.querySelector('#vc-aspect').value,
-        num_clips: parseInt(overlay.querySelector('#vc-num').value, 10),
-        clip_duration: parseInt(overlay.querySelector('#vc-dur').value, 10)
-      });
+      overlay.querySelector('#vc-confirm').onclick = () => {
+        const mode = overlay.querySelector('input[name="vc-audio-mode"]:checked').value;
+        let audioFilename = null;
+        if (mode === 'library' && trackSel.value) audioFilename = trackSel.value;
+        // Se mode === 'ai' senza ancora aver generato, l'utente può comunque
+        // cliccare "Genera Reel" e parte senza audio (silenzio).
+        close({
+          aspect_ratio: overlay.querySelector('#vc-aspect').value,
+          num_clips: parseInt(overlay.querySelector('#vc-num').value, 10),
+          clip_duration: parseInt(overlay.querySelector('#vc-dur').value, 10),
+          audio_filename: audioFilename
+        });
+      };
       overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
     });
   }
@@ -1451,7 +1595,8 @@
       MEDIA = mediaRes.media || [];
       renderMedia();
       const dur = typeof res.duration_sec === 'number' ? res.duration_sec.toFixed(1) : '?';
-      toast('Reel AI generato (' + dur + 's, ' + cfg.num_clips + ' clip)');
+      const audioInfo = res.audio ? ' + 🎵 ' + res.audio : '';
+      toast('Reel AI generato (' + dur + 's, ' + cfg.num_clips + ' clip' + audioInfo + ')');
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     } finally {

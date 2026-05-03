@@ -446,6 +446,20 @@ router.post('/:id/generate-ai-video', async (req, res) => {
     ? req.body.prompts.slice(0, numClips).map(p => String(p).trim()).filter(Boolean)
     : null;
 
+  // Audio: filename relativo a public/music/ (sanitized da music.js).
+  // Risolto a path assoluto + safety check no-traversal.
+  let audioPath = null;
+  if (req.body && req.body.audio_filename && typeof req.body.audio_filename === 'string') {
+    const af = req.body.audio_filename.replace(/[^a-zA-Z0-9._-]/g, '');
+    const musicDir = path.join(__dirname, '..', '..', 'public', 'music');
+    const candidate = path.resolve(musicDir, af);
+    if (candidate.startsWith(path.resolve(musicDir) + path.sep) && fs.existsSync(candidate)) {
+      audioPath = candidate;
+    } else {
+      console.warn('[generate-ai-video] audio_filename non valido o non trovato:', req.body.audio_filename);
+    }
+  }
+
   const tmpFiles = [];
   try {
     // Step 1: costruisci N prompt
@@ -467,11 +481,11 @@ router.post('/:id/generate-ai-video', async (req, res) => {
       return tmpPath;
     });
 
-    // Step 4: ffmpeg slideshow Ken Burns
+    // Step 4: ffmpeg slideshow Ken Burns (con audio se selezionato)
     const videoTmp = path.join(os.tmpdir(), `sig-aivid-${uuidv4()}.mp4`);
     tmpFiles.push(videoTmp);
     const result = await videoSlideshow.createSlideshow(imagePaths, {
-      aspectRatio, clipDuration, outputPath: videoTmp
+      aspectRatio, clipDuration, outputPath: videoTmp, audioPath
     });
 
     // Step 5: attacca come post_media kind='video'
@@ -504,13 +518,14 @@ router.post('/:id/generate-ai-video', async (req, res) => {
       entity_id: post.id,
       details: {
         aspect_ratio: aspectRatio, num_clips: numClips, clip_duration: clipDuration,
-        duration_sec: result.durationSec
+        duration_sec: result.durationSec, audio: audioPath ? path.basename(audioPath) : null
       }
     });
 
     res.json({
       media, aspect_ratio: aspectRatio, num_clips: numClips,
-      clip_duration: clipDuration, duration_sec: result.durationSec, prompts
+      clip_duration: clipDuration, duration_sec: result.durationSec, prompts,
+      audio: audioPath ? path.basename(audioPath) : null
     });
   } catch (err) {
     console.error('[generate-ai-video] error:', err.message);

@@ -22,6 +22,11 @@
       <label>Gemini API Key</label>
       <input type="password" id="setGeminiKey" placeholder="AIza...">
     </div>
+    <div class="form-group">
+      <label>Hugging Face API Key <span style="font-weight:400;color:var(--gray-500);font-size:12px">(opzionale, per generare musica AI)</span></label>
+      <input type="password" id="setHfKey" placeholder="hf_...">
+      <p style="font-size:11px;color:var(--gray-500);margin-top:4px">Token gratuito: <a href="https://huggingface.co/settings/tokens" target="_blank">huggingface.co/settings/tokens</a> (read access). Usato per MusicGen via Inference API.</p>
+    </div>
     <button type="submit" class="btn btn-primary">Salva</button>
   </form>
 </div>
@@ -137,6 +142,7 @@ async function loadSettings() {
     document.getElementById('setGasEmailSecret').value = s.gas_email_secret || '';
     document.getElementById('setAnthropicKey').value = s.anthropic_api_key || '';
     document.getElementById('setGeminiKey').value = s.gemini_api_key || '';
+    document.getElementById('setHfKey').value = s.huggingface_api_key || '';
     document.getElementById('setBaseUrl').value = s.base_url || '';
   } catch (err) {
     setBanner('smtpAlert','error', 'Errore nel caricamento: ' + err.message);
@@ -151,7 +157,8 @@ async function saveApi(e) {
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
       body: JSON.stringify({ settings: {
         anthropic_api_key: document.getElementById('setAnthropicKey').value,
-        gemini_api_key: document.getElementById('setGeminiKey').value
+        gemini_api_key: document.getElementById('setGeminiKey').value,
+        huggingface_api_key: document.getElementById('setHfKey').value
       }})
     });
     const data = await res.json();

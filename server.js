@@ -92,6 +92,18 @@ app.use('/images', express.static(path.join(__dirname, 'public', 'images'), {
   }
 }));
 
+// Music library: tracce audio per slideshow Reel AI. Stesse regole CORS delle
+// immagini per uniformità (anche se /music non viene linkato direttamente da Meta).
+app.use('/music', express.static(path.join(__dirname, 'public', 'music'), {
+  maxAge: '1h',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
+
 // Static files — dashboard assets (CSS/JS only)
 app.use('/dashboard/css', express.static(path.join(__dirname, 'public', 'dashboard', 'css'), { maxAge: '1d' }));
 app.use('/dashboard/js', express.static(path.join(__dirname, 'public', 'dashboard', 'js'), { maxAge: '1d' }));
@@ -181,6 +193,7 @@ app.use('/dashboard/api/settings', require('./routes/api/settings'));
 app.use('/dashboard/api/approvals', require('./routes/api/approvals'));
 app.use('/dashboard/api/insights-share', require('./routes/api/insights-share'));
 app.use('/dashboard/api/plan-templates', require('./routes/api/plan-templates'));
+app.use('/dashboard/api/music', require('./routes/api/music'));
 
 // Page routes
 app.use('/dashboard', require('./routes/dashboard'));
