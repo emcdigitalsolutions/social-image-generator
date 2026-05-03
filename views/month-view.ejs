@@ -16,6 +16,10 @@
   .cal-cell.empty { background:var(--gray-50); border-style:dashed; }
   .cal-cell .day { font-size:11px; color:var(--gray-400); font-weight:600; }
   .cal-cell.today .day { color:var(--blue); }
+  .cal-cell .day-row { display:flex; justify-content:space-between; align-items:center; gap:4px; }
+  .cal-cell .day-add { background:none; border:1px solid var(--gray-200); color:var(--gray-400); font-size:11px; line-height:1; padding:1px 5px; border-radius:3px; cursor:pointer; opacity:0; transition:opacity .15s, color .15s, border-color .15s; font-weight:600; }
+  .cal-cell:hover .day-add { opacity:1; }
+  .cal-cell .day-add:hover { color:var(--blue); border-color:var(--blue); }
   .cal-post { display:block; padding:4px 6px; border-radius:4px; font-size:11px; line-height:1.3; text-decoration:none; border-left:3px solid; background:var(--gray-50); color:var(--gray-700); }
   .cal-post:hover { background:var(--gray-100); }
   .cal-post.s-draft           { border-left-color:#9ca3af; }
@@ -338,7 +342,8 @@
       if (!dayPosts.length) cls.push('empty');
       if (iso === today) cls.push('today');
       html += '<div class="' + cls.join(' ') + '">';
-      html += '<div class="day">' + d.getDate() + '</div>';
+      html += '<div class="day-row"><span class="day">' + d.getDate() + '</span>'
+           +  '<button class="day-add" onclick="addPostForDate(\'' + iso + '\')" title="Aggiungi un post in questo giorno">+</button></div>';
       dayPosts.forEach(p => {
         const label = categoryName(p.category) + (p.scheduled_time ? ' · ' + p.scheduled_time.slice(0,5) : '');
         let titleAttr = p.sub_topic || p.status;
@@ -906,6 +911,121 @@
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  // Aggiungi un post a una data specifica (click "+" sulla cella calendario).
+  // Modal con form pulito: la data è preset, il sub_topic è una textarea per
+  // dare contesto specifico al giorno (es. "Festa della Repubblica - 2 giugno:
+  // celebrare i valori democratici") che la AI userà per la caption.
+  function addPostForDate(iso) {
+    // Calcola week_number: eredita dai post esistenti in quella data, altrimenti
+    // ceil(giorno_del_mese / 7) capped a max settimana esistente nel piano.
+    const existingSameDay = POSTS.filter(p => p.scheduled_date === iso);
+    const maxWeekInPosts = POSTS.reduce((acc, p) => Math.max(acc, p.week_number || 1), 1);
+    let weekNumber;
+    if (existingSameDay.length) {
+      weekNumber = existingSameDay[0].week_number || 1;
+    } else {
+      const day = parseInt(iso.split('-')[2], 10);
+      weekNumber = Math.min(Math.max(maxWeekInPosts, 4), Math.ceil(day / 7));
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-backdrop';
+    wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
+    wrap.innerHTML = `
+      <div class="modal-card" onclick="event.stopPropagation()" style="max-width:560px">
+        <h3>➕ Nuovo post — ${iso}</h3>
+        <div class="modal-sub">Settimana ${weekNumber} · puoi avere più post nello stesso giorno (es. mattina + sera).</div>
+
+        <div class="modal-row" style="flex-direction:column;align-items:stretch;gap:4px">
+          <label style="font-size:12px;font-weight:600">Categoria <span style="color:var(--gray-400);font-weight:400">(es. C7, "Eventi", facoltativo)</span></label>
+          <input type="text" id="np-cat" placeholder="es. C5 oppure Eventi" style="padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">
+        </div>
+
+        <div class="modal-row" style="flex-direction:column;align-items:stretch;gap:4px">
+          <label style="font-size:12px;font-weight:600">Tema / contesto del giorno ✨ <span style="color:var(--gray-400);font-weight:400">(usato dall'AI per la caption)</span></label>
+          <textarea id="np-sub" rows="3" placeholder="es. Festa della Repubblica 2 giugno: celebrare i valori della democrazia italiana" style="padding:8px 10px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+          <div style="font-size:11px;color:var(--gray-500)">Più dettagli scrivi (festività, ricorrenza, evento locale, prodotto specifico), migliore sarà la caption generata.</div>
+        </div>
+
+        <div class="modal-row" style="gap:14px">
+          <div style="flex:1">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Ora pubblicazione</label>
+            <input type="time" id="np-time" value="14:00" style="width:100%;padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">
+          </div>
+          <div style="flex:1">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Tipo media</label>
+            <select id="np-mt" style="width:100%;padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">
+              <option value="single_image">🖼 Singola immagine</option>
+              <option value="carousel">🎠 Carousel</option>
+              <option value="reel">🎬 Reel</option>
+              <option value="story">✨ Storia (cliente)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-row">
+          <label><input type="checkbox" id="np-genai" checked> ✨ Genera la caption AI subito (usando il tema sopra)</label>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Annulla</button>
+          <button class="btn btn-sm btn-primary" id="np-create-btn" onclick="submitNewPostForDate('${iso}', ${weekNumber})">Crea post</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    setTimeout(() => { const ta = document.getElementById('np-sub'); if (ta) ta.focus(); }, 30);
+  }
+
+  async function submitNewPostForDate(iso, weekNumber) {
+    const btn = document.getElementById('np-create-btn');
+    const cat  = document.getElementById('np-cat').value.trim();
+    const sub  = document.getElementById('np-sub').value.trim();
+    const time = document.getElementById('np-time').value;
+    const mt   = document.getElementById('np-mt').value;
+    const genAi = document.getElementById('np-genai').checked;
+
+    if (!sub) { await showAlert('Inserisci almeno il tema/contesto del giorno.'); return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Creazione...';
+
+    try {
+      const created = await apiFetch('/dashboard/api/posts', {
+        method: 'POST',
+        body: {
+          client_id: CLIENT_ID,
+          editorial_plan_id: PLAN_ID,
+          month_number: MONTH,
+          week_number: weekNumber,
+          category: cat || null,
+          sub_topic: sub,
+          media_type: mt,
+          scheduled_date: iso,
+          scheduled_time: time || null
+        }
+      });
+      if (created.error) { await showAlert(created.error); btn.disabled = false; btn.textContent = 'Crea post'; return; }
+
+      if (genAi) {
+        btn.innerHTML = '<span class="loading"></span> Genero caption AI...';
+        const captionRes = await apiFetch('/dashboard/api/posts/' + created.id + '/generate-caption', { method: 'POST' });
+        if (captionRes && captionRes.error) {
+          // Post creato comunque, segnalo solo l'errore caption
+          toast('Post creato, ma caption AI fallita: ' + captionRes.error);
+        } else {
+          toast('Post creato + caption AI generata');
+        }
+      } else {
+        toast('Post creato');
+      }
+      btn.closest('.modal-backdrop').remove();
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Crea post';
     }
   }
 
