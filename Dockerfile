@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     sqlite3 \
+    ffmpeg \
     python3 \
     make \
     g++ \

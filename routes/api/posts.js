@@ -293,6 +293,109 @@ router.post('/:id/generate-ai-image', async (req, res) => {
   }
 });
 
+// Generate AI video slideshow Ken Burns: N immagini AI animate con zoom/pan +
+// crossfade via ffmpeg. Costo = N immagini (~$0.04 × N), niente API video.
+// Output salvato come post_media kind='video' source='ai_video'.
+const videoSlideshow = require('../../lib/video-slideshow');
+
+router.post('/:id/generate-ai-video', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  if (!client.gemini_api_key) {
+    return res.status(400).json({ error: 'Cliente senza Gemini API key configurata.' });
+  }
+
+  const validRatios = ['1:1', '4:5', '9:16', '16:9'];
+  const aspectRatio = validRatios.includes(req.body && req.body.aspect_ratio) ? req.body.aspect_ratio : '9:16';
+  const numClips = Math.max(2, Math.min(6, parseInt(req.body && req.body.num_clips, 10) || 3));
+  const clipDuration = Math.max(2, Math.min(8, parseInt(req.body && req.body.clip_duration, 10) || 4));
+  // Override prompts opzionale: array di stringhe (uno per clip). Se non fornito,
+  // visual-prompt costruisce N varianti automatiche.
+  const overridePrompts = Array.isArray(req.body && req.body.prompts) && req.body.prompts.length
+    ? req.body.prompts.slice(0, numClips).map(p => String(p).trim()).filter(Boolean)
+    : null;
+
+  const tmpFiles = [];
+  try {
+    // Step 1: costruisci N prompt
+    const prompts = (overridePrompts && overridePrompts.length === numClips)
+      ? overridePrompts
+      : await visualPrompt.buildVariationPrompts(client, post, aspectRatio, numClips);
+
+    // Step 2: genera N immagini in parallelo (riusa geminiImage)
+    const imageBuffers = await Promise.all(prompts.map(p =>
+      geminiImage.generateForPost(client.gemini_api_key, p, aspectRatio)
+    ));
+
+    // Step 3: scrivi su tmp
+    const imagePaths = imageBuffers.map((img) => {
+      const ext = img.mime === 'image/png' ? '.png' : '.jpg';
+      const tmpPath = path.join(os.tmpdir(), `sig-aivid-frame-${uuidv4()}${ext}`);
+      fs.writeFileSync(tmpPath, img.buffer);
+      tmpFiles.push(tmpPath);
+      return tmpPath;
+    });
+
+    // Step 4: ffmpeg slideshow Ken Burns
+    const videoTmp = path.join(os.tmpdir(), `sig-aivid-${uuidv4()}.mp4`);
+    tmpFiles.push(videoTmp);
+    const result = await videoSlideshow.createSlideshow(imagePaths, {
+      aspectRatio, clipDuration, outputPath: videoTmp
+    });
+
+    // Step 5: attacca come post_media kind='video'
+    let media;
+    try {
+      media = postMedia.attachGeneratedFile({
+        clientId: post.client_id,
+        postId: post.id,
+        absolutePath: videoTmp,
+        source: 'ai_video',
+        kind: 'video'
+      });
+      // attachGeneratedFile fa moveSync, quindi videoTmp non esiste più
+      const idx = tmpFiles.indexOf(videoTmp); if (idx >= 0) tmpFiles.splice(idx, 1);
+    } catch (err) {
+      throw err;
+    }
+
+    // Aggiorna width/height/duration nel DB (post_media ha le colonne)
+    try {
+      db.prepare('UPDATE post_media SET width = ?, height = ? WHERE id = ?')
+        .run(result.width, result.height, media.id);
+      media = postMedia.getMedia(media.id);
+    } catch (e) { console.warn('[generate-ai-video] dim update failed:', e.message); }
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.ai_video_generated',
+      entity_type: 'post',
+      entity_id: post.id,
+      details: {
+        aspect_ratio: aspectRatio, num_clips: numClips, clip_duration: clipDuration,
+        duration_sec: result.durationSec
+      }
+    });
+
+    res.json({
+      media, aspect_ratio: aspectRatio, num_clips: numClips,
+      clip_duration: clipDuration, duration_sec: result.durationSec, prompts
+    });
+  } catch (err) {
+    console.error('[generate-ai-video] error:', err.message);
+    res.status(500).json({ error: 'Generazione video AI fallita', details: err.message });
+  } finally {
+    // Cleanup tmp residui (immagini frame + eventuale video se attach fallito)
+    for (const f of tmpFiles) {
+      try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {}
+    }
+  }
+});
+
 // Publish post to FB+IG (single_image / carousel / video / reel)
 router.post('/:id/publish', async (req, res) => {
   const db = getDb();

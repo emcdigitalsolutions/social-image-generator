@@ -436,6 +436,7 @@
             <option value="16:9">16:9 — FB orizzontale</option>
           </select>
           <button class="btn btn-sm btn-primary" onclick="generateAIImage()" id="gen-ai-btn" title="Genera un'immagine AI con Gemini (Nano-Banana) a partire dalla caption e dal contesto cliente"><span style="margin-right:3px">✨</span>Genera AI</button>
+          <button class="btn btn-sm btn-primary" onclick="generateAIVideo()" id="gen-aivid-btn" title="Genera un Reel slideshow Ken Burns: 3 immagini AI animate con zoom/pan e crossfade" style="background:#7c3aed">🎬 Reel AI</button>
           <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn" title="Renderizza un'immagine dal template HTML selezionato (poster con testo)"><span style="margin-right:3px">🖼️</span>Da template</button>
         </div>
       </div>
@@ -1343,6 +1344,117 @@
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<span style="margin-right:3px">✨</span>Genera AI';
+    }
+  }
+
+  // Reel AI: slideshow Ken Burns da N immagini AI animate via ffmpeg server-side.
+  // Apre un modal per configurare aspect/numero clip/durata, poi lancia il job.
+  // Il job lato server può durare 20-40 sec (N * generazione immagine + ffmpeg).
+  function aiVideoConfigModal() {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+      overlay.innerHTML = `
+        <div style="background:#fff;border-radius:10px;max-width:520px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+            <strong style="font-size:15px">🎬 Genera Reel AI (slideshow)</strong>
+            <button id="vc-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
+          </div>
+          <div style="padding:16px 20px">
+            <p style="font-size:12px;color:var(--gray-600);margin:0 0 14px">Genera N immagini AI variando angolo/inquadratura, le anima con effetto Ken Burns (zoom + pan) e crossfade. Costo: ~$0.04 × N immagini.</p>
+
+            <div style="margin-bottom:12px">
+              <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Aspect ratio</label>
+              <select id="vc-aspect" style="width:100%;padding:7px 9px;border:1px solid var(--gray-300);border-radius:5px;font-size:13px">
+                <option value="9:16" selected>9:16 — Reel / Story (verticale)</option>
+                <option value="1:1">1:1 — IG quadrato</option>
+                <option value="4:5">4:5 — IG verticale feed</option>
+                <option value="16:9">16:9 — FB orizzontale</option>
+              </select>
+            </div>
+
+            <div style="display:flex;gap:14px;margin-bottom:12px">
+              <div style="flex:1">
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Numero clip</label>
+                <select id="vc-num" style="width:100%;padding:7px 9px;border:1px solid var(--gray-300);border-radius:5px;font-size:13px">
+                  <option value="2">2 immagini</option>
+                  <option value="3" selected>3 immagini</option>
+                  <option value="4">4 immagini</option>
+                  <option value="5">5 immagini</option>
+                </select>
+              </div>
+              <div style="flex:1">
+                <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Durata per clip (sec)</label>
+                <select id="vc-dur" style="width:100%;padding:7px 9px;border:1px solid var(--gray-300);border-radius:5px;font-size:13px">
+                  <option value="3">3 sec</option>
+                  <option value="4" selected>4 sec</option>
+                  <option value="5">5 sec</option>
+                  <option value="6">6 sec</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="vc-summary" style="font-size:11px;color:var(--gray-500);padding:8px 10px;background:var(--gray-50);border-radius:5px"></div>
+          </div>
+          <div style="padding:14px 20px;border-top:1px solid var(--gray-200);display:flex;gap:8px;justify-content:flex-end">
+            <button id="vc-cancel" class="btn btn-sm" style="background:var(--gray-200)">Annulla</button>
+            <button id="vc-confirm" class="btn btn-sm btn-primary" style="background:#7c3aed">🎬 Genera Reel</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const updateSummary = () => {
+        const n = parseInt(overlay.querySelector('#vc-num').value, 10);
+        const d = parseInt(overlay.querySelector('#vc-dur').value, 10);
+        const total = (n * d - (n - 1) * 0.5).toFixed(1);
+        const cost = (0.04 * n).toFixed(2);
+        overlay.querySelector('#vc-summary').textContent =
+          `Durata video: ~${total}s · Costo stimato: ~$${cost} (${n} immagini AI)`;
+      };
+      overlay.querySelector('#vc-num').onchange = updateSummary;
+      overlay.querySelector('#vc-dur').onchange = updateSummary;
+      updateSummary();
+
+      const close = (val) => { document.body.removeChild(overlay); resolve(val); };
+      overlay.querySelector('#vc-close').onclick = () => close(null);
+      overlay.querySelector('#vc-cancel').onclick = () => close(null);
+      overlay.querySelector('#vc-confirm').onclick = () => close({
+        aspect_ratio: overlay.querySelector('#vc-aspect').value,
+        num_clips: parseInt(overlay.querySelector('#vc-num').value, 10),
+        clip_duration: parseInt(overlay.querySelector('#vc-dur').value, 10)
+      });
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
+    });
+  }
+
+  async function generateAIVideo() {
+    const btn = document.getElementById('gen-aivid-btn');
+    const cfg = await aiVideoConfigModal();
+    if (!cfg) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Generazione Reel...';
+    try {
+      await saveDetails();
+      // Set media_type a 'reel' se ancora 'single_image' (UX: il reel è probabile)
+      if (MEDIA_TYPE === 'single_image' && cfg.aspect_ratio === '9:16') {
+        MEDIA_TYPE = 'reel';
+        await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'PUT', body: { media_type: 'reel' } });
+      }
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-ai-video', {
+        method: 'POST',
+        body: cfg
+      });
+      if (res.error) { await showAlert(res.error + (res.details ? '\n' + res.details : '')); return; }
+      const mediaRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media');
+      MEDIA = mediaRes.media || [];
+      renderMedia();
+      toast('Reel AI generato (' + (res.duration_sec || '?').toFixed ? res.duration_sec.toFixed(1) : res.duration_sec + 's, ' + cfg.num_clips + ' clip)');
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '🎬 Reel AI';
     }
   }
 
