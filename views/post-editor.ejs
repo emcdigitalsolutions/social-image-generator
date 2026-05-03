@@ -1425,7 +1425,7 @@
               </div>
 
               <div id="vc-audio-ai" style="display:none;margin-top:8px">
-                ${library.hf_configured
+                ${library.ai_configured
                   ? '<textarea id="vc-audio-prompt" rows="2" placeholder="es. upbeat acoustic guitar, mediterranean summer vibes, light percussion" style="width:100%;padding:6px 8px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>'
                   + '<div style="display:flex;gap:6px;align-items:center;margin-top:6px">'
                   + '<select id="vc-audio-ai-dur" style="padding:5px 7px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px">'
@@ -1434,8 +1434,8 @@
                   + '<button id="vc-audio-ai-btn" type="button" class="btn btn-sm btn-primary" style="font-size:12px;padding:5px 10px">✨ Genera traccia</button>'
                   + '<span id="vc-audio-ai-status" style="font-size:11px;color:var(--gray-500)"></span>'
                   + '</div>'
-                  + '<div style="font-size:10px;color:var(--gray-500);margin-top:4px">MusicGen via Hugging Face. Cold-start: 10-30s al primo utilizzo. Free tier.</div>'
-                  : '<div style="font-size:11px;color:#92400e;background:#fef3c7;padding:8px 10px;border-radius:4px">⚠ Hugging Face token non configurato. Vai su <a href="/dashboard/settings" target="_blank">Settings</a> → "Hugging Face API key" (gratis su <a href="https://huggingface.co/settings/tokens" target="_blank">huggingface.co/settings/tokens</a>).</div>'}
+                  + '<div style="font-size:10px;color:var(--gray-500);margin-top:4px">MusicGen via ' + (library.replicate_configured ? 'Replicate (~$0.05/track)' : 'Hugging Face') + '. Tempo: 15-30s.</div>'
+                  : '<div style="font-size:11px;color:#92400e;background:#fef3c7;padding:8px 10px;border-radius:4px">⚠ Nessun provider audio configurato. Vai su <a href="/dashboard/settings" target="_blank">Settings</a> e aggiungi <strong>Replicate token</strong> (consigliato, $5 gratis ≈ 100 tracce su <a href="https://replicate.com/account/api-tokens" target="_blank">replicate.com</a>).</div>'}
               </div>
             </fieldset>
 

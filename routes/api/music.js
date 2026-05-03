@@ -17,7 +17,7 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 
 const { authMiddleware } = require('../../lib/auth');
-const { getHuggingFaceKey } = require('../../lib/settings');
+const { getHuggingFaceKey, getReplicateKey } = require('../../lib/settings');
 const musicGenerator = require('../../lib/music-generator');
 const audit = require('../../lib/audit');
 
@@ -62,7 +62,12 @@ function listTracks() {
 
 router.get('/', (req, res) => {
   try {
-    res.json({ tracks: listTracks(), hf_configured: !!getHuggingFaceKey() });
+    res.json({
+      tracks: listTracks(),
+      hf_configured: !!getHuggingFaceKey(),
+      replicate_configured: !!getReplicateKey(),
+      ai_configured: !!(getReplicateKey() || getHuggingFaceKey())
+    });
   } catch (err) {
     res.status(500).json({ error: 'Lettura libreria fallita', details: err.message });
   }
@@ -117,11 +122,12 @@ router.post('/upload', upload.single('file'), (req, res) => {
 });
 
 router.post('/generate', async (req, res) => {
+  const replicateToken = getReplicateKey();
   const hfToken = getHuggingFaceKey();
-  if (!hfToken) {
+  if (!replicateToken && !hfToken) {
     return res.status(400).json({
-      error: 'Hugging Face token non configurato. Vai su Settings → Hugging Face API key.',
-      help_url: 'https://huggingface.co/settings/tokens'
+      error: 'Nessun provider audio configurato. Vai su Settings e aggiungi Replicate token (consigliato) o Hugging Face token.',
+      help_url: 'https://replicate.com/account/api-tokens'
     });
   }
 
@@ -129,10 +135,13 @@ router.post('/generate', async (req, res) => {
   if (!prompt) return res.status(400).json({ error: 'prompt richiesto' });
 
   const durationSec = Math.max(5, Math.min(30, parseInt(req.body && req.body.duration_sec, 10) || 15));
-  const modelSize = (req.body && req.body.model_size) === 'medium' ? 'medium' : 'small';
 
   try {
-    const result = await musicGenerator.generateMusic(hfToken, prompt, { durationSec, modelSize });
+    const result = await musicGenerator.generateMusic(
+      { replicateToken, huggingfaceToken: hfToken },
+      prompt,
+      { durationSec }
+    );
 
     ensureDir();
     // Filename derivato dal prompt + uuid corto per univocità
