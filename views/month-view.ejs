@@ -12,8 +12,10 @@
 
   .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:8px; }
   .cal-head { font-size:11px; font-weight:600; color:var(--gray-500); text-transform:uppercase; padding:4px 6px; }
-  .cal-cell { min-height:110px; border:1px solid var(--gray-200); border-radius:6px; padding:6px; background:white; display:flex; flex-direction:column; gap:4px; }
+  .cal-cell { min-height:110px; border:1px solid var(--gray-200); border-radius:6px; padding:6px; background:white; display:flex; flex-direction:column; gap:4px; cursor:pointer; transition:background .12s, border-color .12s; }
+  .cal-cell:hover { background:#f8fafc; border-color:var(--blue); }
   .cal-cell.empty { background:var(--gray-50); border-style:dashed; }
+  .cal-cell.empty:hover { background:#eff6ff; }
   .cal-cell .day { font-size:11px; color:var(--gray-400); font-weight:600; }
   .cal-cell.today .day { color:var(--blue); }
   .cal-cell .day-row { display:flex; justify-content:space-between; align-items:center; gap:4px; }
@@ -341,9 +343,9 @@
       const cls = ['cal-cell'];
       if (!dayPosts.length) cls.push('empty');
       if (iso === today) cls.push('today');
-      html += '<div class="' + cls.join(' ') + '">';
+      html += '<div class="' + cls.join(' ') + '" onclick="addPostForDate(\'' + iso + '\')" title="Clicca per aggiungere un post in questo giorno">';
       html += '<div class="day-row"><span class="day">' + d.getDate() + '</span>'
-           +  '<button class="day-add" onclick="addPostForDate(\'' + iso + '\')" title="Aggiungi un post in questo giorno">+</button></div>';
+           +  '<button class="day-add" onclick="event.stopPropagation();addPostForDate(\'' + iso + '\')" title="Aggiungi un post in questo giorno">+</button></div>';
       dayPosts.forEach(p => {
         const label = categoryName(p.category) + (p.scheduled_time ? ' · ' + p.scheduled_time.slice(0,5) : '');
         let titleAttr = p.sub_topic || p.status;
@@ -351,7 +353,8 @@
         if (p.has_bad_ratio) titleAttr += '\n\n⚠️ Immagine da ricroppare: ' + (p.bad_ratio_detail || 'fuori range IG');
         const apClass = p.approval_status ? ' ap-' + p.approval_status : '';
         const ratioClass = p.has_bad_ratio ? ' bad-ratio' : '';
-        html += '<a href="/dashboard/posts/' + p.id + '" class="cal-post s-' + p.status + apClass + ratioClass + '" title="' + escapeHtml(titleAttr) + '">' + escapeHtml(label) + '</a>';
+        // stopPropagation: il click sul link non deve aprire anche il modal "nuovo post"
+        html += '<a href="/dashboard/posts/' + p.id + '" onclick="event.stopPropagation()" class="cal-post s-' + p.status + apClass + ratioClass + '" title="' + escapeHtml(titleAttr) + '">' + escapeHtml(label) + '</a>';
       });
       html += '</div>';
     }
