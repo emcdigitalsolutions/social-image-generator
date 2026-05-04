@@ -835,13 +835,26 @@ tbody tr:hover td { background: var(--blue-50); }
   }
   .card-header > div { flex-wrap: wrap; }
 
-  /* Tabelle dense → scroll orizzontale con hint visivo + righe più spaziate
-     e bordi più visibili. min-width più alto per evitare che le colonne si
-     comprimano facendo sembrare le righe "schiacciate". */
-  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .table-wrap table { min-width: 600px; }
-  td { padding: 14px 12px; }
-  th { padding: 12px; font-size: 11px; }
+  /* Tabelle: niente min-width forzato (causerebbe scroll-x sempre attivo).
+     Lasciamo che il browser comprima e il testo vada a capo, così le righe
+     rispettano il viewport. Solo se il contenuto è davvero ineliminabile
+     (link lunghi, ID UUID), il wrapper scrolla. */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  .table-wrap table { min-width: 0; width: 100%; }
+  td, th {
+    word-break: break-word;
+    overflow-wrap: anywhere;  /* spezza anche stringhe lunghe senza spazi */
+    white-space: normal;
+  }
+  td { padding: 12px 10px; font-size: 13px; }
+  th { padding: 10px; font-size: 11px; }
   /* Zebra più contrastata su mobile per leggibilità */
   tbody tr:nth-child(even) td { background: #f3f4f6; }
+  /* Tabelle in card senza wrapper: aggiungi scroll-x al table stesso */
+  .card > table,
+  .tab-content > table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
 }
