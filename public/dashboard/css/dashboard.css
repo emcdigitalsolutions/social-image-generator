@@ -419,10 +419,13 @@ th {
 
 td {
   padding: 12px;
-  border-bottom: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--gray-200);
 }
 
-tr:hover td { background: var(--gray-50); }
+/* Zebra striping per separare visivamente le righe (specialmente su mobile
+   dove le tabelle in scroll-x con colonne strette tendono a fondersi). */
+tbody tr:nth-child(even) td { background: var(--gray-50); }
+tbody tr:hover td { background: var(--blue-50); }
 
 /* ── Post grid ── */
 .posts-grid {
@@ -832,7 +835,13 @@ tr:hover td { background: var(--gray-50); }
   }
   .card-header > div { flex-wrap: wrap; }
 
-  /* Tabelle dense → scroll orizzontale con hint visivo. */
+  /* Tabelle dense → scroll orizzontale con hint visivo + righe più spaziate
+     e bordi più visibili. min-width più alto per evitare che le colonne si
+     comprimano facendo sembrare le righe "schiacciate". */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .table-wrap table { min-width: 480px; }
+  .table-wrap table { min-width: 600px; }
+  td { padding: 14px 12px; }
+  th { padding: 12px; font-size: 11px; }
+  /* Zebra più contrastata su mobile per leggibilità */
+  tbody tr:nth-child(even) td { background: #f3f4f6; }
 }
