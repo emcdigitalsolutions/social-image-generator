@@ -765,7 +765,74 @@ tr:hover td { background: var(--gray-50); }
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .sidebar { display: none; }
-  .main { padding: 20px; }
+  .main { padding: 16px 12px; }
   .post-editor-layout { grid-template-columns: 1fr; }
   .clients-grid { grid-template-columns: 1fr; }
+
+  /* Touch targets ≥44px: WCAG / Apple HIG. Aumenta padding bottoni piccoli. */
+  .btn { min-height: 44px; padding: 10px 16px; }
+  .btn-sm { min-height: 38px; padding: 8px 12px; font-size: 13px; }
+
+  /* iOS auto-zoom kick-in se font-size <16px sui form input. Forziamo. */
+  input[type=text], input[type=email], input[type=password], input[type=number],
+  input[type=url], input[type=date], input[type=time], input[type=search],
+  textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* Tab scrollabili orizzontalmente con scrollbar nascosta + shadow indicators
+     sui bordi laterali per suggerire scroll. Usa un wrapper relativo. */
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;  /* Firefox */
+    position: relative;
+    /* Shadow gradient ai bordi (visibile quando il contenuto è clipped). */
+    background:
+      linear-gradient(to right, white 30%, rgba(255,255,255,0)) left center / 30px 100% no-repeat,
+      linear-gradient(to left,  white 30%, rgba(255,255,255,0)) right center / 30px 100% no-repeat,
+      radial-gradient(farthest-side at 0% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)) left center / 14px 100% no-repeat,
+      radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.12), rgba(0,0,0,0)) right center / 14px 100% no-repeat;
+    background-attachment: local, local, scroll, scroll;
+  }
+  .tabs::-webkit-scrollbar { display: none; }  /* WebKit/Blink */
+  .tab {
+    flex: 0 0 auto;          /* niente stretching */
+    padding: 12px 18px;
+    font-size: 14px;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  .tab.active {
+    background: var(--blue-50, #eff6ff);
+    border-radius: 6px 6px 0 0;
+  }
+}
+
+/* Mobile stretto: modali fullscreen + bottoni stack verticale per evitare
+   overflow nei modal action bar. */
+@media (max-width: 600px) {
+  /* Modali (tutte le varianti del progetto: prompt editor, Reel/Veo config,
+     audio picker, time bulk, ecc.) → quasi-fullscreen. */
+  .modal-backdrop > .modal-card,
+  .modal-backdrop > div[onclick*="stopPropagation"],
+  div[style*="position:fixed"][style*="inset:0"] > div {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 95vh !important;
+    border-radius: 8px !important;
+    margin: 0 !important;
+  }
+
+  /* Card header con bottoni inline che escono dallo schermo: wrappa tutto. */
+  .card-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-header > div { flex-wrap: wrap; }
+
+  /* Tabelle dense → scroll orizzontale con hint visivo. */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-wrap table { min-width: 480px; }
 }
