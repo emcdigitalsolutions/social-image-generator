@@ -1574,10 +1574,20 @@
 
   async function generateAIVideo() {
     const btn = document.getElementById('gen-aivid-btn');
-    const cfg = await aiVideoConfigModal();
-    if (!cfg) return;
-
+    // Lock IMMEDIATO: disabilito il bottone PRIMA del modal per impedire che
+    // doppi click aprano due modali e quindi due richieste backend (= doppia
+    // generazione = doppia spesa Gemini).
+    if (btn.disabled) return;
     btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Configurazione...';
+
+    const cfg = await aiVideoConfigModal();
+    if (!cfg) {
+      btn.disabled = false;
+      btn.innerHTML = '🎬 Reel AI';
+      return;
+    }
+
     btn.innerHTML = '<span class="loading"></span> Generazione Reel...';
     try {
       await saveDetails();
@@ -1695,6 +1705,7 @@
 
   async function generateVeoVideo() {
     const btn = document.getElementById('gen-veo-btn');
+    if (btn.disabled) return;  // safeguard contro doppio click rapido
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> Costruzione prompt...';
 
