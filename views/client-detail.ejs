@@ -210,6 +210,7 @@
         <div id="lib-video-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;min-height:60px">
           <div class="lib-empty" style="grid-column:1/-1;color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessun video —</div>
         </div>
+        <div id="lib-video-pagination" style="margin-top:10px"></div>
       </fieldset>
 
       <!-- AUDIO -->
@@ -224,6 +225,7 @@
         <div id="lib-audio-list" style="display:flex;flex-direction:column;gap:8px;min-height:60px">
           <div class="lib-empty" style="color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessun audio —</div>
         </div>
+        <div id="lib-audio-pagination" style="margin-top:10px"></div>
       </fieldset>
     </div>
   </div>
@@ -457,16 +459,67 @@
   }
   function escAttr(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
 
+  // Paginazione client-side della libreria.
+  // PAGE_SIZE differente per video (grid 2D) vs audio (lista 1D).
+  const LIB_PAGE_SIZE = { video: 12, audio: 10 };
+  const libCache = { video: [], audio: [] };
+  const libPage  = { video: 1, audio: 1 };
+
   async function loadLibrary() {
     try {
       const data = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library');
       const items = (data && data.items) || [];
-      renderLibList('video', items.filter(i => i.kind === 'video'));
-      renderLibList('audio', items.filter(i => i.kind === 'audio'));
+      libCache.video = items.filter(i => i.kind === 'video');
+      libCache.audio = items.filter(i => i.kind === 'audio');
+      // Reset alla prima pagina ogni volta che ricarico (es. dopo upload/delete)
+      libPage.video = 1;
+      libPage.audio = 1;
+      renderLibPage('video');
+      renderLibPage('audio');
     } catch (err) {
       console.warn('[library] load failed:', err.message);
     }
   }
+
+  function renderLibPage(kind) {
+    const all = libCache[kind] || [];
+    const pageSize = LIB_PAGE_SIZE[kind];
+    const totalPages = Math.max(1, Math.ceil(all.length / pageSize));
+    if (libPage[kind] > totalPages) libPage[kind] = totalPages;
+    const page = libPage[kind];
+    const start = (page - 1) * pageSize;
+    const slice = all.slice(start, start + pageSize);
+    renderLibList(kind, slice);
+    renderLibPagination(kind, all.length, page, totalPages);
+  }
+
+  function renderLibPagination(kind, total, page, totalPages) {
+    const box = document.getElementById('lib-' + kind + '-pagination');
+    if (!box) return;
+    if (total <= LIB_PAGE_SIZE[kind]) { box.innerHTML = ''; return; }
+    const prevDis = page <= 1 ? 'disabled' : '';
+    const nextDis = page >= totalPages ? 'disabled' : '';
+    const fromN = total === 0 ? 0 : (page - 1) * LIB_PAGE_SIZE[kind] + 1;
+    const toN = Math.min(page * LIB_PAGE_SIZE[kind], total);
+    box.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--gray-600);padding-top:8px;border-top:1px solid var(--gray-100)">'
+      + '<span>' + fromN + '–' + toN + ' di ' + total + '</span>'
+      + '<div style="display:flex;gap:6px;align-items:center">'
+      +   '<button class="btn btn-sm btn-secondary" ' + prevDis + ' onclick="libGoPage(\'' + kind + '\', ' + (page - 1) + ')" style="padding:3px 8px;font-size:11px">← Prev</button>'
+      +   '<span>Pag. ' + page + ' / ' + totalPages + '</span>'
+      +   '<button class="btn btn-sm btn-secondary" ' + nextDis + ' onclick="libGoPage(\'' + kind + '\', ' + (page + 1) + ')" style="padding:3px 8px;font-size:11px">Next →</button>'
+      + '</div>'
+      + '</div>';
+  }
+
+  function libGoPage(kind, n) {
+    const total = (libCache[kind] || []).length;
+    const totalPages = Math.max(1, Math.ceil(total / LIB_PAGE_SIZE[kind]));
+    if (n < 1 || n > totalPages) return;
+    libPage[kind] = n;
+    renderLibPage(kind);
+  }
+  window.libGoPage = libGoPage;
 
   function renderLibList(kind, items) {
     const root = document.getElementById('lib-' + kind + '-list');
@@ -480,7 +533,7 @@
     if (kind === 'video') {
       root.innerHTML = items.map(it => `
         <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#000;position:relative">
-          <video src="${escAttr(it.url)}" controls preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:contain;display:block;background:#000"></video>
+          <video src="${escAttr(it.url)}#t=0.5" controls preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:contain;display:block;background:#000"></video>
           <div style="padding:6px 8px;background:#fff;border-top:1px solid var(--gray-200)">
             <div style="font-size:11px;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
             <div style="font-size:10px;color:var(--gray-500);display:flex;justify-content:space-between;align-items:center;margin-top:3px">

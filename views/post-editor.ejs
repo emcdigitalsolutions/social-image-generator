@@ -599,7 +599,7 @@
       // le risposte CORS da quelle no-CORS. Se la thumb è no-CORS e la lightbox
       // CORS, il browser non riusa la cache → l'<img> della lightbox fallisce.
       const thumb = m.kind === 'video'
-        ? '<video src="' + url + '" muted preload="metadata" crossorigin="anonymous"></video>'
+        ? '<video src="' + url + (url.includes('#') ? '&t=0.5' : '#t=0.5') + '" muted preload="metadata" crossorigin="anonymous"></video>'
         : '<img src="' + url + '" alt="" crossorigin="anonymous">';
       const srcBadge = m.source !== 'upload' ? '<span class="media-source-badge ' + m.source + '">' + m.source + '</span>' : '';
       const posBadge = MEDIA.length > 1 ? '<span class="media-pos-badge">' + (i + 1) + ' / ' + MEDIA.length + '</span>' : '';
@@ -1423,7 +1423,7 @@
     const grid = items.length
       ? items.map(it => `
           <div data-id="${escAttr(it.id)}" style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#000;cursor:pointer;display:flex;flex-direction:column">
-            <video src="${escAttr(it.url)}" muted preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:cover;background:#000"></video>
+            <video src="${escAttr(it.url)}#t=0.5" muted preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:cover;background:#000"></video>
             <div style="padding:6px 8px;background:#fff;border-top:1px solid var(--gray-200);font-size:11px">
               <div style="font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
               <div style="color:var(--gray-500);font-size:10px;margin-top:2px">${fmtBytes(it.bytes)}</div>
