@@ -994,8 +994,24 @@
       const d = res.data;
       let imported = [];
 
-      // Import logo
-      if (d.logo_urls && d.logo_urls.length) {
+      // Import logo: priorità SVG inline (di solito il logo vero del sito);
+      // fallback su URL esterne (apple-touch-icon, og:image, favicon).
+      let logoOk = false;
+      if (d.inline_svg) {
+        try {
+          const r = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/save-svg-logo', {
+            method: 'POST',
+            body: { svg: d.inline_svg }
+          });
+          if (r && r.filename) {
+            document.getElementById('logo-status-value').innerHTML = '<span style="color:#16a34a">&#10003;</span> logo-' + CLIENT_ID + '.svg <span style="font-size:10px;color:var(--gray-400)">(SVG inline)</span>';
+            loadLogoPreview();
+            imported.push('Logo (SVG inline)');
+            logoOk = true;
+          }
+        } catch (err) { console.error('Inline SVG logo save failed:', err); }
+      }
+      if (!logoOk && d.logo_urls && d.logo_urls.length) {
         try {
           const logoRes = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/import-logo', {
             method: 'POST',

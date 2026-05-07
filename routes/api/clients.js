@@ -362,6 +362,27 @@ router.post('/:id/import-logo', async (req, res) => {
   }
 });
 
+// Salva un SVG inline (estratto da scan-website) come logo del cliente.
+// Diverso da /logo (multipart) e /import-logo (URL): qui riceviamo il
+// markup SVG direttamente nel body, senza scaricamento esterno.
+router.post('/:id/save-svg-logo', express.json({ limit: '256kb' }), (req, res) => {
+  const svg = (req.body && typeof req.body.svg === 'string') ? req.body.svg : null;
+  if (!svg || svg.length < 50) return res.status(400).json({ error: 'SVG mancante o troppo corto' });
+  if (!/<svg\b/i.test(svg) || !/<\/svg>/i.test(svg)) return res.status(400).json({ error: 'Non è un SVG valido' });
+
+  const db = getDb();
+  const filename = `logo-${req.params.id}.svg`;
+  const dest = path.join(ensureBrandingDir(req.params.id), filename);
+  // Aggiunge xmlns se mancante (alcuni SVG inline non lo hanno)
+  let normalized = svg.trim();
+  if (!/xmlns=["']http:\/\/www\.w3\.org\/2000\/svg["']/i.test(normalized)) {
+    normalized = normalized.replace(/^<svg\b/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+  fs.writeFileSync(dest, normalized);
+  db.prepare("UPDATE clients SET logo_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
+  res.json({ filename, source: 'inline_svg' });
+});
+
 // Upload/generate theme CSS
 router.post('/:id/theme', themeUpload.single('theme'), (req, res) => {
   const db = getDb();
@@ -544,7 +565,47 @@ function extractTextFromHtml(html) {
   const ogDesc = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([\s\S]*?)["']/i);
   if (ogDesc) meta.og_description = ogDesc[1].trim();
 
-  // Extract logo candidates
+  // Extract inline SVG logos: cerca <svg>...</svg> con viewBox o dimensioni
+  // ragionevoli, escludendo SVG decorativi (icons piccole, social bottoni).
+  // Priorità a SVG dentro <header>, <a class*=logo>, o con class*="logo".
+  const svgInline = [];
+  const svgRegex = /<svg\b[^>]*>[\s\S]*?<\/svg>/gi;
+  let svgMatch;
+  while ((svgMatch = svgRegex.exec(html)) !== null) {
+    const svg = svgMatch[0];
+    if (svg.length < 100 || svg.length > 50000) continue;
+    // Heuristic: deve avere almeno un path/circle/rect/polygon (no svg vuoto)
+    if (!/<(path|circle|rect|polygon|polyline|ellipse|line)\b/i.test(svg)) continue;
+    // Filtro icone troppo piccole (es. icone social in footer)
+    const wM = svg.match(/\bwidth=["']?(\d+)/i);
+    const hM = svg.match(/\bheight=["']?(\d+)/i);
+    const w = wM ? parseInt(wM[1], 10) : 0;
+    const h = hM ? parseInt(hM[1], 10) : 0;
+    if ((w && w < 24) || (h && h < 24)) continue;
+    svgInline.push(svg);
+  }
+  // Bonus score per SVG vicino a "logo": cerco tra i primi 5 il più "loghesco"
+  let bestInlineSvg = null;
+  if (svgInline.length) {
+    const candidates = svgInline.slice(0, 8).map(s => {
+      let score = 0;
+      // Cerco contesto: i 200 char prima dell'SVG nell'HTML originale
+      const idx = html.indexOf(s);
+      const ctx = idx > 0 ? html.substring(Math.max(0, idx - 200), idx).toLowerCase() : '';
+      if (/class=["'][^"']*logo/.test(ctx)) score += 10;
+      if (/<header|<a [^>]*href=["']\/?["']/i.test(ctx)) score += 3;
+      if (/aria-label=["'][^"']*logo/i.test(s)) score += 5;
+      if (/<title>[^<]*logo/i.test(s)) score += 3;
+      // Bonus se SVG sta nelle prime righe del body (logo in header)
+      if (idx > 0 && idx < html.length / 4) score += 2;
+      return { s, score };
+    });
+    candidates.sort((a, b) => b.score - a.score);
+    if (candidates[0].score > 0) bestInlineSvg = candidates[0].s;
+  }
+  if (bestInlineSvg) meta.inline_svg = bestInlineSvg;
+
+  // Extract logo candidates (URL esterne)
   const logoUrls = [];
   // apple-touch-icon (high-res, best candidate)
   const appleIcon = html.match(/<link[^>]*rel=["']apple-touch-icon["'][^>]*href=["']([^"']+)["']/i)
@@ -698,6 +759,11 @@ router.post('/:id/scan-website', async (req, res) => {
         });
       } catch { data.logo_urls = meta.logo_urls; }
     }
+
+    // Inline SVG logo: passa al frontend così può salvarlo direttamente
+    // senza dover scaricare un URL esterno (utile per siti che usano SVG
+    // inline come logo in header).
+    if (meta.inline_svg) data.inline_svg = meta.inline_svg;
 
     res.json({ success: true, data });
   } catch (err) {
