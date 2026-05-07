@@ -1555,8 +1555,30 @@ router.post('/:id/media/:mediaId/stylize', stylizeRateLimit, async (req, res) =>
   if (!orig || orig.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
   if (orig.kind !== 'image') return res.status(400).json({ error: 'Solo immagini possono essere stilizzate' });
 
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+
   const template = req.body.template || 'image-overlay';
-  const includeCaption = req.body.include_caption !== false; // default true
+  const includeCaption = req.body.include_caption !== false;     // default true
+  const variant = ['badge','watermark','banner','none'].includes(req.body.variant) ? req.body.variant : 'badge';
+  const position = ['tl','tr','bl','br','c'].includes(req.body.logo_position) ? req.body.logo_position : 'tr';
+  const showBrandName = req.body.show_brand_name !== false;       // default true
+  const showTagline = !!req.body.show_tagline;                    // default false
+
+  const escHtml = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+  // Costruisci HEADER_BLOCK in base alle scelte utente. Per variant=none
+  // nessun overlay logo (solo immagine + caption opzionale).
+  let headerBlock = '';
+  if (variant !== 'none' && client) {
+    const brandName = client.brand_name || client.display_name || '';
+    const tagline = client.tagline || '';
+    const showLogoOnly = !showBrandName && !(showTagline && tagline);
+    const textParts = [];
+    if (showBrandName && brandName) textParts.push(`<span class="brand-name">${escHtml(brandName)}</span>`);
+    if (showTagline && tagline) textParts.push(`<span class="brand-tagline">${escHtml(tagline)}</span>`);
+    const textBlock = textParts.length ? `<div class="brand-text">${textParts.join('')}</div>` : '';
+    headerBlock = `<div class="header var-${variant} pos-${position}">{{LOGO_SVG}}${textBlock}</div>`;
+  }
 
   const captionSnippet = includeCaption && post.caption
     ? post.caption.split('\n')[0].slice(0, 240)
@@ -1564,6 +1586,7 @@ router.post('/:id/media/:mediaId/stylize', stylizeRateLimit, async (req, res) =>
 
   const data = {
     image_url: orig.url,
+    header_block: headerBlock,
     caption_block: captionSnippet
       ? `<div class="caption-strip">${captionSnippet.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>`
       : '',

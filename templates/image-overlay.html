@@ -21,7 +21,6 @@ body {
     z-index: 0;
 }
 
-/* Subtle bottom gradient for legibility of caption / website strip */
 .bg-overlay {
     position: absolute;
     inset: 0;
@@ -29,33 +28,69 @@ body {
     z-index: 1;
 }
 
-/* Logo badge — top right */
-.header {
-    position: absolute;
-    top: 36px;
-    right: 36px;
-    z-index: 3;
-}
+/* ── Header logo + brand: 3 varianti × 4 posizioni (5 con center) ─────── */
+.header { position: absolute; z-index: 3; display: flex; align-items: center; gap: 10px; }
 
-.header .logo-badge {
+/* Posizioni */
+.header.pos-tl { top: 36px;    left: 36px;   right: auto; bottom: auto; }
+.header.pos-tr { top: 36px;    right: 36px;  left: auto;  bottom: auto; }
+.header.pos-bl { bottom: 92px; left: 36px;   right: auto; top: auto; }
+.header.pos-br { bottom: 92px; right: 36px;  left: auto;  top: auto; }
+.header.pos-c  { top: 50%;     left: 50%;    transform: translate(-50%,-50%); right: auto; bottom: auto; }
+
+/* Variante BADGE (default): card bianca con shadow */
+.header.var-badge {
     background: rgba(255, 255, 255, 0.92);
     border-radius: 14px;
     padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.18);
 }
+.header.var-badge .brand-name { color: #1a1a1a; }
+.header.var-badge .brand-tagline { color: #555; }
 
-.header .logo-badge svg { max-height: 36px; width: auto; }
+/* Variante WATERMARK: trasparente, look sobrio in bianco */
+.header.var-watermark {
+    padding: 6px 10px;
+    opacity: 0.85;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+.header.var-watermark .brand-name { color: #fff; }
+.header.var-watermark .brand-tagline { color: rgba(255,255,255,0.8); }
+.header.var-watermark svg { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)); }
+
+/* Variante BANNER (forza posizione bottom full-width) */
+.header.var-banner {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(255,255,255,0.12);
+    padding: 18px 32px;
+    justify-content: center;
+}
+.header.var-banner .brand-name { color: #fff; font-size: 18px; }
+.header.var-banner .brand-tagline { color: rgba(255,255,255,0.85); font-size: 13px; }
+
+.header svg { max-height: 36px; width: auto; }
 .header .brand-name {
     font-family: 'Inter', sans-serif;
     font-weight: 600;
     font-size: 15px;
-    color: #1a1a1a;
 }
+.header .brand-tagline {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 11px;
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+}
+.header .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
 
-/* Optional caption strip — bottom */
+/* Caption strip — bottom */
 .caption-strip {
     position: absolute;
     bottom: 84px;
@@ -80,7 +115,6 @@ body {
     -webkit-box-orient: vertical;
 }
 
-/* Bottom website bar */
 .bottom-bar {
     position: absolute;
     bottom: 24px;
@@ -101,12 +135,7 @@ body {
 <div class="bg-image"></div>
 <div class="bg-overlay"></div>
 
-<div class="header">
-    <div class="logo-badge">
-        {{LOGO_SVG}}
-        <span class="brand-name">{{BRAND_NAME}}</span>
-    </div>
-</div>
+{{HEADER_BLOCK}}
 
 {{CAPTION_BLOCK}}
 

@@ -1249,15 +1249,116 @@
     renderMedia();
   }
 
+  // Modale Stilizza con scelta variante, posizione logo, tagline.
+  // POST a /:id/media/:mid/stylize con i nuovi parametri.
   async function stylizeMedia(id) {
-    if (!await showConfirm('Generare versione stilizzata di questo media?')) return;
+    const cfg = await stylizeConfigModal();
+    if (!cfg) return;
     toast('Stilizzazione in corso (10-20s)...');
     const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media/' + id + '/stylize', {
-      method: 'POST', body: { template: 'image-overlay', include_caption: true }
+      method: 'POST',
+      body: {
+        template: 'image-overlay',
+        variant: cfg.variant,
+        logo_position: cfg.logo_position,
+        show_brand_name: cfg.show_brand_name,
+        show_tagline: cfg.show_tagline,
+        include_caption: cfg.include_caption
+      }
     });
     if (res.error) { await showAlert(res.error); return; }
     MEDIA.push(res.media);
     renderMedia();
+  }
+  window.stylizeMedia = stylizeMedia;
+
+  function stylizeConfigModal() {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+      overlay.innerHTML = `
+        <div style="background:#fff;border-radius:10px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+          <div style="padding:14px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+            <strong style="font-size:15px">✨ Stilizza con brand</strong>
+            <button id="sc-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
+          </div>
+          <div style="padding:18px 20px">
+            <p style="font-size:12px;color:var(--gray-600);margin:0 0 14px">Sovrappongo all'immagine il logo e nome del cliente. La versione stilizzata viene aggiunta come nuovo media (l'originale resta).</p>
+
+            <div style="margin-bottom:14px">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px">Variante</label>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
+                <label style="display:flex;gap:6px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;cursor:pointer;font-size:12px">
+                  <input type="radio" name="sc-variant" value="badge" checked>
+                  <span><strong>Badge</strong><br><span style="color:var(--gray-500);font-size:11px">Card bianca, look premium</span></span>
+                </label>
+                <label style="display:flex;gap:6px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;cursor:pointer;font-size:12px">
+                  <input type="radio" name="sc-variant" value="watermark">
+                  <span><strong>Filigrana</strong><br><span style="color:var(--gray-500);font-size:11px">Sobrio, semitrasparente</span></span>
+                </label>
+                <label style="display:flex;gap:6px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;cursor:pointer;font-size:12px">
+                  <input type="radio" name="sc-variant" value="banner">
+                  <span><strong>Banner</strong><br><span style="color:var(--gray-500);font-size:11px">Barra bassa full-width</span></span>
+                </label>
+                <label style="display:flex;gap:6px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;cursor:pointer;font-size:12px">
+                  <input type="radio" name="sc-variant" value="none">
+                  <span><strong>Senza logo</strong><br><span style="color:var(--gray-500);font-size:11px">Solo caption (se attiva)</span></span>
+                </label>
+              </div>
+            </div>
+
+            <div id="sc-pos-section" style="margin-bottom:14px">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px">Posizione logo</label>
+              <select id="sc-pos" style="width:100%;padding:8px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px">
+                <option value="tr" selected>Alto destra</option>
+                <option value="tl">Alto sinistra</option>
+                <option value="br">Basso destra</option>
+                <option value="bl">Basso sinistra</option>
+                <option value="c">Centro</option>
+              </select>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:4px">(Per variante "Banner" la posizione è fissa in basso)</div>
+            </div>
+
+            <div style="margin-bottom:14px;display:flex;flex-direction:column;gap:6px">
+              <label style="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer">
+                <input type="checkbox" id="sc-name" checked> Mostra nome brand
+              </label>
+              <label style="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer">
+                <input type="checkbox" id="sc-tagline"> Mostra tagline (se presente)
+              </label>
+              <label style="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer">
+                <input type="checkbox" id="sc-caption" checked> Mostra anteprima caption sull'immagine
+              </label>
+            </div>
+          </div>
+          <div style="padding:12px 20px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:8px">
+            <button id="sc-cancel" class="btn btn-sm btn-secondary">Annulla</button>
+            <button id="sc-apply" class="btn btn-sm btn-primary">✨ Stilizza</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      const close = (val) => { document.body.removeChild(overlay); resolve(val); };
+      overlay.querySelector('#sc-close').onclick = () => close(null);
+      overlay.querySelector('#sc-cancel').onclick = () => close(null);
+      // Banner ignora la posizione → grayout della select
+      overlay.querySelectorAll('input[name="sc-variant"]').forEach(r => r.addEventListener('change', () => {
+        const v = overlay.querySelector('input[name="sc-variant"]:checked').value;
+        const posSec = overlay.querySelector('#sc-pos-section');
+        posSec.style.opacity = (v === 'banner' || v === 'none') ? '0.4' : '1';
+        overlay.querySelector('#sc-pos').disabled = (v === 'banner' || v === 'none');
+      }));
+      overlay.querySelector('#sc-apply').onclick = () => {
+        close({
+          variant: overlay.querySelector('input[name="sc-variant"]:checked').value,
+          logo_position: overlay.querySelector('#sc-pos').value,
+          show_brand_name: overlay.querySelector('#sc-name').checked,
+          show_tagline: overlay.querySelector('#sc-tagline').checked,
+          include_caption: overlay.querySelector('#sc-caption').checked
+        });
+      };
+      overlay.addEventListener('click', e => { if (e.target === overlay) close(null); });
+    });
   }
 
   // ── Type chip clicks ──
