@@ -123,9 +123,16 @@ router.put('/:id', (req, res) => {
     'fb_page_id', 'fb_system_user_token', 'ig_user_id',
     'linkedin_org_id', 'linkedin_access_token', 'linkedin_token_expires_at',
     'system_instruction', 'anthropic_api_key', 'gemini_api_key', 'ai_provider',
-    'status', 'logo_filename', 'theme_filename',
+    'status', 'logo_filename', 'theme_filename', 'brand_colors',
     'subscription_plan', 'subscription_price', 'subscription_notes',
     'editorial_months'];
+
+  // brand_colors arriva come array dal frontend; serializzo a JSON string
+  if (Array.isArray(req.body.brand_colors)) {
+    req.body.brand_colors = JSON.stringify(req.body.brand_colors.filter(c =>
+      typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)
+    ));
+  }
 
   const updates = [];
   const values = [];
@@ -403,7 +410,11 @@ router.post('/:id/generate-theme', async (req, res) => {
     const filename = `${req.params.id}.css`;
     const dest = path.join(ensureBrandingDir(req.params.id), filename);
     fs.writeFileSync(dest, css);
-    db.prepare("UPDATE clients SET theme_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
+    // Salvo anche i brand_colors nel DB così persistono nei picker della UI
+    // tra una sessione e l'altra (prima erano solo in memoria runtime).
+    const validColors = colors.filter(c => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));
+    db.prepare("UPDATE clients SET theme_filename = ?, brand_colors = ?, updated_at = datetime('now') WHERE id = ?")
+      .run(filename, JSON.stringify(validColors), req.params.id);
 
     // Parse generated CSS to extract colors
     const parsedColors = {};

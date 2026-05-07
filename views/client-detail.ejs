@@ -356,8 +356,9 @@
       <!-- Logo Section -->
       <div>
         <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px" id="logo-status-text">Logo: <span id="logo-status-value"><%- client.logo_filename ? '<span style="color:#16a34a">&#10003;</span> ' + client.logo_filename : 'non caricato' %></span></p>
-        <div id="logo-preview-container" style="margin-bottom:12px;padding:12px;background:repeating-conic-gradient(#808080 0% 25%, #a0a0a0 0% 50%) 50% / 16px 16px;border-radius:8px;border:1px solid var(--gray-200);display:none">
-          <img id="logo-preview-img" style="max-width:80px;max-height:80px;display:block">
+        <div id="logo-preview-container" style="margin-bottom:12px;padding:16px;background:repeating-conic-gradient(#e5e7eb 0% 25%, #f3f4f6 0% 50%) 50% / 14px 14px;border-radius:8px;border:1px solid var(--gray-200);display:none;text-align:center">
+          <img id="logo-preview-img" style="max-width:160px;max-height:160px;display:inline-block" onerror="this.style.display='none'; this.nextElementSibling && (this.nextElementSibling.style.display='block');">
+          <div style="display:none;font-size:11px;color:var(--gray-500);padding:20px">⚠ Anteprima non disponibile<br><span style="font-size:10px">(file presente, ma il browser non riesce a renderizzarlo)</span></div>
         </div>
         <form id="logo-form" enctype="multipart/form-data">
           <input type="file" name="logo" accept=".svg,.jpg,.jpeg,.png">
@@ -369,20 +370,37 @@
       <div>
         <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px" id="theme-status-text">Tema CSS: <span id="theme-status-value"><%- client.theme_filename ? '<span style="color:#16a34a">&#10003;</span> ' + client.theme_filename : 'non caricato' %></span></p>
         <!-- Brand colors pickers for theme generation -->
+        <%
+          // Pre-popola i picker con i colori salvati in DB se presenti.
+          // Fallback: palette neutra default.
+          let brandColors = ['#6b9ef7', '#1a1f2e', '#e8eaed'];
+          if (client.brand_colors) {
+            try {
+              const parsed = JSON.parse(client.brand_colors);
+              if (Array.isArray(parsed)) {
+                for (let i = 0; i < 3 && i < parsed.length; i++) {
+                  if (typeof parsed[i] === 'string' && /^#[0-9a-fA-F]{6}$/.test(parsed[i])) {
+                    brandColors[i] = parsed[i];
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+        %>
         <div style="margin-bottom:12px">
           <p style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px">Colori Brand</p>
           <div id="brand-colors-pickers" style="display:flex;flex-direction:column;gap:8px">
             <div class="color-picker-row" style="display:flex;align-items:center;gap:10px">
-              <input type="color" id="brand-color-1" value="#6b9ef7" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
-              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore primario</label><input type="text" id="brand-hex-1" value="#6b9ef7" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
+              <input type="color" id="brand-color-1" value="<%= brandColors[0] %>" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
+              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore primario</label><input type="text" id="brand-hex-1" value="<%= brandColors[0] %>" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
             </div>
             <div class="color-picker-row" style="display:flex;align-items:center;gap:10px">
-              <input type="color" id="brand-color-2" value="#1a1f2e" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
-              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore secondario</label><input type="text" id="brand-hex-2" value="#1a1f2e" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
+              <input type="color" id="brand-color-2" value="<%= brandColors[1] %>" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
+              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore secondario</label><input type="text" id="brand-hex-2" value="<%= brandColors[1] %>" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
             </div>
             <div class="color-picker-row" style="display:flex;align-items:center;gap:10px">
-              <input type="color" id="brand-color-3" value="#e8eaed" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
-              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore terziario (opzionale)</label><input type="text" id="brand-hex-3" value="#e8eaed" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
+              <input type="color" id="brand-color-3" value="<%= brandColors[2] %>" style="width:36px;height:36px;border:2px solid var(--gray-200);border-radius:8px;cursor:pointer;padding:2px">
+              <div style="flex:1"><label style="font-size:11px;color:var(--gray-400);display:block">Colore terziario (opzionale)</label><input type="text" id="brand-hex-3" value="<%= brandColors[2] %>" style="font-size:13px;font-family:monospace;width:100%;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px" maxlength="7"></div>
             </div>
           </div>
           <button type="button" class="btn btn-sm btn-primary" id="generate-theme-btn" onclick="generateTheme()" style="margin-top:10px;width:100%"><span style="margin-right:3px">✨</span>Genera Tema da colori</button>
