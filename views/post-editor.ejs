@@ -342,6 +342,11 @@
     <% } else if (post.status === 'ready') { %>
       <button class="btn btn-secondary btn-sm" onclick="markDraft()" title="Rimette il post in bozza (non verrà pubblicato automaticamente)">&#8617; Torna in draft</button>
     <% } %>
+    <% if (post.status !== 'published') { %>
+      <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="deleteCurrentPost()" title="Elimina definitivamente questo post (non disponibile per i post pubblicati)">🗑 Elimina post</button>
+    <% } else { %>
+      <button class="btn btn-sm" style="background:var(--gray-300);color:var(--gray-600);cursor:not-allowed" onclick="alertPublishedLocked()" title="I post pubblicati possono essere eliminati solo dall'amministratore">🔒 Pubblicato</button>
+    <% } %>
   </div>
 </div>
 
@@ -439,6 +444,7 @@
           <button class="btn btn-sm btn-primary" onclick="generateAIVideo()" id="gen-aivid-btn" title="Genera un Reel slideshow Ken Burns: 3 immagini AI animate con zoom/pan e crossfade" style="background:#7c3aed">🎬 Reel AI</button>
           <button class="btn btn-sm btn-primary" onclick="generateVeoVideo()" id="gen-veo-btn" title="Genera un video AI premium con Veo 3 (full-motion + audio nativo). Richiede billing attivo. Costo: ~$3-6 per 8s." style="background:linear-gradient(135deg,#f59e0b,#dc2626);border:none">💎 Veo Premium</button>
           <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn" title="Renderizza un'immagine dal template HTML selezionato (poster con testo)"><span style="margin-right:3px">🖼️</span>Da template</button>
+          <button class="btn btn-sm btn-secondary" onclick="openLibraryPicker()" id="library-picker-btn" title="Scegli un video già presente nella libreria di questo cliente"><span style="margin-right:3px">📚</span>Da libreria</button>
         </div>
       </div>
 
@@ -609,7 +615,9 @@
       }
       const stylizeBtn = m.kind === 'image' && m.source !== 'styled'
         ? '<button onclick="event.stopPropagation();stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>'
-        : '<span></span>';
+        : (m.kind === 'video'
+          ? '<button onclick="event.stopPropagation();saveMediaToLibrary(\'' + m.id + '\')" title="Salva questo video nella libreria del cliente per riusarlo">\uD83D\uDCBE Libreria</button>'
+          : '<span></span>');
       const arrows = MEDIA.length > 1
         ? '<button class="btn-arrow" onclick="event.stopPropagation();moveMedia(\'' + m.id + '\', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Sposta a sinistra">\u2190</button>'
           + '<button class="btn-arrow" onclick="event.stopPropagation();moveMedia(\'' + m.id + '\', 1)" ' + (i === MEDIA.length - 1 ? 'disabled' : '') + ' title="Sposta a destra">\u2192</button>'
@@ -1048,6 +1056,45 @@
     renderMedia();
   }
 
+  async function deleteCurrentPost() {
+    if (!await showConfirm('Eliminare definitivamente questo post? L\u2019operazione non si pu\u00f2 annullare.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'DELETE' });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Post eliminato');
+      // Torna alla vista mese del piano editoriale del post
+      const planId = POST.editorial_plan_id;
+      const month = POST.month_number;
+      if (planId && month) {
+        window.location.href = '/dashboard/plans/' + planId + '/month/' + month;
+      } else {
+        window.location.href = '/dashboard/clients/' + CLIENT_ID;
+      }
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+  window.deleteCurrentPost = deleteCurrentPost;
+
+  function alertPublishedLocked() {
+    showAlert('Questo post è già stato pubblicato e non può essere eliminato. Per rimuoverlo contatta l\u2019amministratore.');
+  }
+  window.alertPublishedLocked = alertPublishedLocked;
+
+  async function saveMediaToLibrary(id) {
+    if (!await showConfirm('Salvare questo video nella libreria del cliente? Sarà disponibile per altri post futuri.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media/' + id + '/save-to-library', {
+        method: 'POST', body: {}
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast('Video salvato in libreria cliente');
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+  window.saveMediaToLibrary = saveMediaToLibrary;
+
   async function moveMedia(id, delta) {
     const idx = MEDIA.findIndex(m => m.id === id);
     if (idx < 0) return;
@@ -1238,6 +1285,89 @@
     toast('Dettagli salvati');
   }
 
+  // Apre un picker dalla libreria video del cliente. Click "Usa" → POST a
+  // /:id/library-attach che copia il file nel post (indipendente dalla libreria).
+  async function openLibraryPicker() {
+    const btn = document.getElementById('library-picker-btn');
+    btn.disabled = true;
+    let items = [];
+    try {
+      const data = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library?kind=video');
+      items = (data && data.items) || [];
+    } catch (err) {
+      btn.disabled = false;
+      await showAlert('Errore caricamento libreria: ' + err.message);
+      return;
+    }
+    btn.disabled = false;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    const escAttr = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    const fmtBytes = n => !n ? '—' : n < 1024*1024 ? (n/1024).toFixed(0)+' KB' : (n/1048576).toFixed(1)+' MB';
+    const grid = items.length
+      ? items.map(it => `
+          <div data-id="${escAttr(it.id)}" style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#000;cursor:pointer;display:flex;flex-direction:column">
+            <video src="${escAttr(it.url)}" muted preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:cover;background:#000"></video>
+            <div style="padding:6px 8px;background:#fff;border-top:1px solid var(--gray-200);font-size:11px">
+              <div style="font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
+              <div style="color:var(--gray-500);font-size:10px;margin-top:2px">${fmtBytes(it.bytes)}</div>
+              <button class="lib-pick-btn btn btn-sm btn-primary" data-id="${escAttr(it.id)}" style="width:100%;margin-top:6px;font-size:11px;padding:4px 6px">Usa questo</button>
+            </div>
+          </div>
+        `).join('')
+      : '<div style="grid-column:1/-1;text-align:center;color:var(--gray-500);font-size:13px;padding:40px 0">— Libreria video vuota —<br><a href="/dashboard/clients/' + CLIENT_ID + '#libreria" target="_blank" style="font-size:12px">Apri scheda cliente per caricare video →</a></div>';
+
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:10px;max-width:760px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:15px">📚 Scegli video dalla libreria</strong>
+          <button id="lib-pick-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
+        </div>
+        <div style="padding:14px 20px;overflow-y:auto">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">${grid}</div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    overlay.querySelector('#lib-pick-close').onclick = close;
+
+    overlay.querySelectorAll('.lib-pick-btn').forEach(b => {
+      b.addEventListener('click', async () => {
+        const itemId = b.dataset.id;
+        b.disabled = true;
+        b.textContent = 'Aggiungo...';
+        try {
+          const r = await apiFetch('/dashboard/api/posts/' + POST_ID + '/library-attach', {
+            method: 'POST',
+            body: { library_item_id: itemId }
+          });
+          if (r.error) { await showAlert(r.error); b.disabled = false; b.textContent = 'Usa questo'; return; }
+          if (r.media) {
+            MEDIA.push(r.media);
+            renderMedia();
+            // auto-switch tipo a reel se è il primo video
+            if (MEDIA_TYPE !== 'reel' && MEDIA_TYPE !== 'video' && MEDIA_TYPE !== 'story') {
+              try {
+                await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'PUT', body: { media_type: 'reel' } });
+                if (typeof setType === 'function') setType('reel');
+              } catch (_) {}
+            }
+          }
+          toast('Video aggiunto dalla libreria');
+          close();
+        } catch (err) {
+          b.disabled = false;
+          b.textContent = 'Usa questo';
+          await showAlert('Errore: ' + err.message);
+        }
+      });
+    });
+  }
+  window.openLibraryPicker = openLibraryPicker;
+
   async function generateImage() {
     const btn = document.getElementById('gen-image-btn');
     btn.disabled = true;
@@ -1353,18 +1483,32 @@
   // libreria / genera AI), poi lancia il job. Job lato server: 20-40s.
   function aiVideoConfigModal() {
     return new Promise(async (resolve) => {
-      // Pre-fetch libreria audio (best-effort, non blocca se fallisce)
+      // Pre-fetch libreria audio globale + libreria audio cliente (entrambi best-effort)
       let library = { tracks: [], hf_configured: false };
+      let clientAudio = [];
       try {
         const lib = await apiFetch('/dashboard/api/music');
         if (lib && Array.isArray(lib.tracks)) library = lib;
       } catch (_) {}
+      try {
+        const cl = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library?kind=audio');
+        if (cl && Array.isArray(cl.items)) clientAudio = cl.items;
+      } catch (_) {}
 
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-      const tracksOptions = library.tracks.length
-        ? library.tracks.map(t => `<option value="${t.filename}">${t.filename} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('')
-        : '<option value="">— Libreria vuota: carica un MP3 o genera con AI —</option>';
+      // Audio sources: prefisso "client:" identifica audio dalla libreria cliente,
+      // valori senza prefisso sono filename della libreria globale /music/.
+      // Backend distingue dal prefisso.
+      const clientOpts = clientAudio.length
+        ? '<optgroup label="📚 Libreria del cliente">' + clientAudio.map(a => `<option value="client:${a.id}">${(a.original_name || a.filename).replace(/[<>"]/g, '')} (${(a.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+        : '';
+      const globalOpts = library.tracks.length
+        ? '<optgroup label="🌐 Libreria globale">' + library.tracks.map(t => `<option value="${t.filename}">${t.filename} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+        : '';
+      const tracksOptions = (clientOpts || globalOpts)
+        ? clientOpts + globalOpts
+        : '<option value="">— Nessuna traccia disponibile —</option>';
       overlay.innerHTML = `
         <div style="background:#fff;border-radius:10px;max-width:560px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)">
           <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">

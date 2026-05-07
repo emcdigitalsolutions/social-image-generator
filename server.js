@@ -104,6 +104,18 @@ app.use('/music', express.static(path.join(__dirname, 'public', 'music'), {
   }
 }));
 
+// Libreria media per cliente (video + audio riusabili).
+// Path: /library/<client_id>/<kind>/<filename>
+app.use('/library', express.static(path.join(__dirname, 'public', 'library'), {
+  maxAge: '1h',
+  etag: true,
+  lastModified: true,
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
+
 // Static files — dashboard assets (CSS/JS only)
 app.use('/dashboard/css', express.static(path.join(__dirname, 'public', 'dashboard', 'css'), { maxAge: '1d' }));
 app.use('/dashboard/js', express.static(path.join(__dirname, 'public', 'dashboard', 'js'), { maxAge: '1d' }));

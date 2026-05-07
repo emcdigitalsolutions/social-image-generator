@@ -451,17 +451,31 @@ router.post('/:id/generate-ai-video', async (req, res) => {
     ? req.body.prompts.slice(0, numClips).map(p => String(p).trim()).filter(Boolean)
     : null;
 
-  // Audio: filename relativo a public/music/ (sanitized da music.js).
-  // Risolto a path assoluto + safety check no-traversal.
+  // Audio: due sorgenti supportate
+  //  - Libreria globale: filename relativo a public/music/ (sanitized da music.js)
+  //  - Libreria cliente: prefisso "client:<library_item_id>" (audio in client_media_library)
   let audioPath = null;
   if (req.body && req.body.audio_filename && typeof req.body.audio_filename === 'string') {
-    const af = req.body.audio_filename.replace(/[^a-zA-Z0-9._-]/g, '');
-    const musicDir = path.join(__dirname, '..', '..', 'public', 'music');
-    const candidate = path.resolve(musicDir, af);
-    if (candidate.startsWith(path.resolve(musicDir) + path.sep) && fs.existsSync(candidate)) {
-      audioPath = candidate;
+    const raw = req.body.audio_filename;
+    if (raw.startsWith('client:')) {
+      const clientLibrary = require('../../lib/client-library');
+      const itemId = raw.slice('client:'.length);
+      const item = clientLibrary.getLibraryItem(itemId);
+      // Sicurezza: l'audio deve appartenere allo stesso cliente del post.
+      if (item && item.kind === 'audio' && item.client_id === post.client_id) {
+        const candidate = path.join(clientLibrary.libraryDir(item.client_id, 'audio'), item.filename);
+        if (fs.existsSync(candidate)) audioPath = candidate;
+      }
+      if (!audioPath) console.warn('[generate-ai-video] audio cliente non valido:', raw);
     } else {
-      console.warn('[generate-ai-video] audio_filename non valido o non trovato:', req.body.audio_filename);
+      const af = raw.replace(/[^a-zA-Z0-9._-]/g, '');
+      const musicDir = path.join(__dirname, '..', '..', 'public', 'music');
+      const candidate = path.resolve(musicDir, af);
+      if (candidate.startsWith(path.resolve(musicDir) + path.sep) && fs.existsSync(candidate)) {
+        audioPath = candidate;
+      } else {
+        console.warn('[generate-ai-video] audio_filename non valido o non trovato:', raw);
+      }
     }
   }
 
@@ -809,6 +823,98 @@ router.delete('/:id/media/:mediaId', (req, res) => {
 
   postMedia.deleteMedia(req.params.mediaId);
   res.json({ success: true });
+});
+
+// Aggancia un video dalla libreria del cliente al post (copia indipendente:
+// cancellando dalla libreria il post non si rompe).
+// Body: { library_item_id }
+router.post('/:id/library-attach', async (req, res) => {
+  const clientLibrary = require('../../lib/client-library');
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const itemId = req.body && req.body.library_item_id;
+  if (!itemId) return res.status(400).json({ error: 'library_item_id richiesto' });
+
+  const item = clientLibrary.getLibraryItem(itemId);
+  if (!item || item.client_id !== post.client_id) {
+    return res.status(404).json({ error: 'Item libreria non trovato per questo cliente' });
+  }
+  if (item.kind !== 'video') {
+    return res.status(400).json({ error: 'Solo video possono essere agganciati ai post (gli audio si selezionano nel modal Reel AI)' });
+  }
+
+  try {
+    // Copia il file in una cartella temporanea poi lascia che attachGeneratedFile
+    // lo sposti nella post dir come "library-<uuid>.mp4".
+    const tmpDest = path.join(os.tmpdir(), `sig-libattach-${uuidv4()}${path.extname(item.filename)}`);
+    clientLibrary.copyToPostDir({
+      libraryItem: item,
+      destDir: path.dirname(tmpDest),
+      destFilename: path.basename(tmpDest)
+    });
+    const media = postMedia.attachGeneratedFile({
+      clientId: post.client_id,
+      postId: post.id,
+      absolutePath: tmpDest,
+      source: 'library',
+      kind: 'video'
+    });
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.media.library_attached',
+      entity_type: 'post_media',
+      entity_id: media.id,
+      details: { library_item_id: item.id }
+    });
+    res.json({ media });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Salva un media del post (video o immagine) nella libreria del cliente.
+// Crea una COPIA del file, così cancellare il media dal post non rompe la libreria.
+router.post('/:id/media/:mediaId/save-to-library', async (req, res) => {
+  const clientLibrary = require('../../lib/client-library');
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const m = postMedia.getMedia(req.params.mediaId);
+  if (!m || m.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+
+  // Per ora salviamo in libreria solo i video (richiesta utente).
+  if (m.kind !== 'video') {
+    return res.status(400).json({ error: 'Solo i video possono essere salvati in libreria' });
+  }
+
+  try {
+    const srcPath = path.join(postMedia.postDir(post.client_id, post.id), m.filename);
+    if (!fs.existsSync(srcPath)) return res.status(404).json({ error: 'File sorgente non trovato' });
+
+    // Copio in tmp e poi addFromUpload sposta+registra. Manteniamo l'originale nel post.
+    const tmpDest = path.join(os.tmpdir(), `sig-libsave-${uuidv4()}${path.extname(m.filename)}`);
+    fs.copyFileSync(srcPath, tmpDest);
+
+    const item = await clientLibrary.addFromUpload({
+      clientId: post.client_id,
+      tmpPath: tmpDest,
+      originalName: m.filename,
+      mimetype: 'video/mp4'
+    });
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'library.saved_from_post',
+      entity_type: 'library_item',
+      entity_id: item.id,
+      details: { post_id: post.id, source_media_id: m.id }
+    });
+    res.json({ item });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Reorder media items
@@ -1316,17 +1422,33 @@ router.post('/', (req, res) => {
   res.status(201).json(post);
 });
 
-// Elimina un post (e i suoi media via cascade FK + cleanup file)
+// Elimina un post (e i suoi media via cascade FK + cleanup file).
+// Guard: i post pubblicati non possono essere eliminati dall'utente standard.
+// Per la futura gerarchia ruoli, l'admin avrà un override (header X-Admin-Force
+// o ruolo nel JWT) — per ora blocco tutti.
 router.delete('/:id', (req, res) => {
   const db = getDb();
-  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  const post = db.prepare('SELECT id, client_id, status FROM posts WHERE id = ?').get(req.params.id);
   if (!post) return res.status(404).json({ error: 'Post not found' });
 
-  // Cleanup file media su disco prima del DELETE (FK CASCADE elimina le righe DB)
+  if (post.status === 'published') {
+    return res.status(403).json({
+      error: 'Questo post è già stato pubblicato e non può essere eliminato. Per rimuoverlo contatta l\u2019amministratore.',
+      code: 'POST_PUBLISHED_LOCKED'
+    });
+  }
+
   try { postMedia.removePostDir(post.client_id, post.id); }
   catch (err) { console.warn('[posts] cleanup post dir failed:', err.message); }
 
   db.prepare('DELETE FROM posts WHERE id = ?').run(req.params.id);
+  audit.logFromReq(req, {
+    client_id: post.client_id,
+    action: 'post.deleted',
+    entity_type: 'post',
+    entity_id: post.id,
+    details: { previous_status: post.status }
+  });
   res.json({ success: true });
 });
 

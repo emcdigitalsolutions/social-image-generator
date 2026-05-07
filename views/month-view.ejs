@@ -1243,7 +1243,12 @@
     if (!await showConfirm('Eliminare definitivamente questo post? L\u2019operazione non si pu\u00f2 annullare.')) return;
     try {
       const res = await apiFetch('/dashboard/api/posts/' + postId, { method: 'DELETE' });
-      if (res.error) { await showAlert(res.error); return; }
+      if (res.error) {
+        // Caso speciale: post pubblicato, blocco lato server con messaggio specifico.
+        // Mostriamo un alert più visibile (il messaggio è già verbose dal backend).
+        await showAlert(res.error);
+        return;
+      }
       toast('Post eliminato');
       window.location.reload();
     } catch (err) {

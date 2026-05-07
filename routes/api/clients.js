@@ -14,6 +14,9 @@ const audit = require('../../lib/audit');
 const router = express.Router();
 router.use(authMiddleware);
 
+// Sub-router libreria media per cliente: /:id/library
+router.use('/:clientId/library', require('./library'));
+
 const logoUpload = multer({
   dest: path.join(__dirname, '..', '..', 'assets'),
   limits: { fileSize: 5 * 1024 * 1024 },
