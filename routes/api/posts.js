@@ -1066,6 +1066,86 @@ router.post('/:id/media/:mediaId/replace-audio', async (req, res) => {
   }
 });
 
+// Ritaglia un video del post tra start_sec e end_sec.
+// Body:
+//   start_sec: number (default 0)
+//   end_sec: number (richiesto)
+//   mode: "overwrite" (default) | "duplicate"
+router.post('/:id/media/:mediaId/trim', async (req, res) => {
+  const videoTrim = require('../../lib/video-trim');
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const m = postMedia.getMedia(req.params.mediaId);
+  if (!m || m.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+  if (m.kind !== 'video') return res.status(400).json({ error: 'Solo i video possono essere trimmati' });
+
+  const startSec = Math.max(0, Number(req.body && req.body.start_sec) || 0);
+  const endSec = Number(req.body && req.body.end_sec);
+  if (!isFinite(endSec) || endSec <= startSec) {
+    return res.status(400).json({ error: 'start_sec / end_sec non validi' });
+  }
+  const mode = req.body.mode === 'duplicate' ? 'duplicate' : 'overwrite';
+
+  const srcVideo = path.join(postMedia.postDir(post.client_id, post.id), m.filename);
+  if (!fs.existsSync(srcVideo)) return res.status(404).json({ error: 'File video sorgente non trovato' });
+
+  const tmpOut = path.join(os.tmpdir(), `sig-trim-${uuidv4()}.mp4`);
+  try {
+    const trimResult = await videoTrim.trimVideo({
+      videoPath: srcVideo,
+      startSec, endSec,
+      outputPath: tmpOut
+    });
+
+    let result;
+    if (mode === 'overwrite') {
+      fs.copyFileSync(tmpOut, srcVideo);
+      try { fs.unlinkSync(tmpOut); } catch (_) {}
+      const stat = fs.statSync(srcVideo);
+      db.prepare('UPDATE post_media SET bytes = ? WHERE id = ?').run(stat.size, m.id);
+      result = postMedia.getMedia(m.id);
+    } else {
+      result = postMedia.attachGeneratedFile({
+        clientId: post.client_id,
+        postId: post.id,
+        absolutePath: tmpOut,
+        source: 'trimmed',
+        styledFromId: m.id,
+        kind: 'video'
+      });
+      // Stesse dimensioni del video originale (no scale)
+      if (m.width && m.height) {
+        db.prepare('UPDATE post_media SET width = ?, height = ? WHERE id = ?')
+          .run(m.width, m.height, result.id);
+        result = postMedia.getMedia(result.id);
+      }
+    }
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.video_trimmed',
+      entity_type: 'post_media',
+      entity_id: m.id,
+      details: {
+        post_id: post.id,
+        start_sec: startSec,
+        end_sec: endSec,
+        new_duration_sec: trimResult.durationSec,
+        mode,
+        new_media_id: mode === 'duplicate' ? result.id : null
+      }
+    });
+
+    res.json({ media: result, mode, duration_sec: trimResult.durationSec });
+  } catch (err) {
+    try { if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut); } catch (_) {}
+    console.error('[trim] error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Reorder media items
 router.put('/:id/media/reorder', (req, res) => {
   const db = getDb();

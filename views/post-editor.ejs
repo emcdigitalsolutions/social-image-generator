@@ -804,10 +804,33 @@
         + '</div>';
     } else {
       title = 'Anteprima video — ' + (m.source || 'upload');
-      bodyHtml = '<video controls autoplay src="' + url + '"></video>';
+      bodyHtml = '<video id="lb-video" controls src="' + url + '" data-media-id="' + m.id + '"></video>';
       footerHtml =
-        '<span style="font-size:12px;color:var(--gray-500)">Trim video non ancora disponibile (coming soon)</span>'
-        + '<button class="btn btn-sm btn-secondary" onclick="closeLightbox()">Chiudi</button>';
+        '<div style="display:flex;flex-direction:column;gap:8px;width:100%">'
+        +   '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">'
+        +     '<span style="font-size:11px;color:var(--gray-600);font-weight:600">\u2702 Trim:</span>'
+        +     '<label style="font-size:11px;color:var(--gray-600);display:flex;align-items:center;gap:4px">Inizio (s)'
+        +       '<input type="number" id="lb-trim-start" value="0" min="0" step="0.1" style="width:80px;padding:4px 6px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px">'
+        +     '</label>'
+        +     '<label style="font-size:11px;color:var(--gray-600);display:flex;align-items:center;gap:4px">Fine (s)'
+        +       '<input type="number" id="lb-trim-end" value="" min="0" step="0.1" placeholder="—" style="width:80px;padding:4px 6px;border:1px solid var(--gray-300);border-radius:4px;font-size:12px">'
+        +     '</label>'
+        +     '<button class="btn btn-sm btn-secondary" id="lb-trim-set-cur-start" type="button" title="Usa il tempo corrente del player come inizio">\u2191 da player</button>'
+        +     '<button class="btn btn-sm btn-secondary" id="lb-trim-set-cur-end" type="button" title="Usa il tempo corrente del player come fine">\u2193 da player</button>'
+        +     '<button class="btn btn-sm btn-secondary" id="lb-trim-preview" type="button">\u25B6 Anteprima</button>'
+        +     '<span id="lb-trim-info" style="font-size:11px;color:var(--gray-500);margin-left:auto"></span>'
+        +   '</div>'
+        +   '<div style="display:flex;justify-content:flex-end;gap:8px">'
+        +     '<label style="font-size:11px;color:var(--gray-600);display:flex;align-items:center;gap:4px;margin-right:auto">'
+        +       '<input type="radio" name="lb-trim-mode" value="overwrite" checked> Sovrascrivi'
+        +     '</label>'
+        +     '<label style="font-size:11px;color:var(--gray-600);display:flex;align-items:center;gap:4px">'
+        +       '<input type="radio" name="lb-trim-mode" value="duplicate"> Mantieni originale'
+        +     '</label>'
+        +     '<button class="btn btn-sm btn-secondary" onclick="closeLightbox()">Chiudi</button>'
+        +     '<button class="btn btn-sm btn-primary" id="lb-trim-apply" type="button">\u2702 Applica trim</button>'
+        +   '</div>'
+        + '</div>';
     }
 
     box.innerHTML =
@@ -822,6 +845,90 @@
       +   '</div>'
       + '</div>';
     box.style.display = 'block';
+
+    if (m.kind === 'video') {
+      requestAnimationFrame(() => {
+        const v = document.getElementById('lb-video');
+        const startInp = document.getElementById('lb-trim-start');
+        const endInp = document.getElementById('lb-trim-end');
+        const info = document.getElementById('lb-trim-info');
+        const previewBtn = document.getElementById('lb-trim-preview');
+        const applyBtn = document.getElementById('lb-trim-apply');
+        const setStartBtn = document.getElementById('lb-trim-set-cur-start');
+        const setEndBtn = document.getElementById('lb-trim-set-cur-end');
+        if (!v || !applyBtn) return;
+
+        let dur = 0;
+        let previewTimer = null;
+
+        const fmt = (s) => {
+          if (!isFinite(s) || s < 0) return '0:00';
+          const mm = Math.floor(s / 60), ss = Math.floor(s % 60);
+          return mm + ':' + String(ss).padStart(2, '0');
+        };
+
+        v.addEventListener('loadedmetadata', () => {
+          dur = v.duration || 0;
+          info.textContent = 'Durata: ' + fmt(dur) + ' (' + dur.toFixed(1) + 's)';
+          startInp.max = dur.toFixed(1);
+          endInp.max = dur.toFixed(1);
+          endInp.placeholder = dur.toFixed(1);
+        });
+
+        setStartBtn.addEventListener('click', () => {
+          startInp.value = (v.currentTime || 0).toFixed(1);
+        });
+        setEndBtn.addEventListener('click', () => {
+          endInp.value = (v.currentTime || 0).toFixed(1);
+        });
+
+        previewBtn.addEventListener('click', () => {
+          if (previewTimer) { clearTimeout(previewTimer); previewTimer = null; }
+          const s = Math.max(0, parseFloat(startInp.value) || 0);
+          const e = parseFloat(endInp.value) || dur;
+          if (e <= s) { showAlert('Fine deve essere maggiore di inizio'); return; }
+          v.currentTime = s;
+          v.play();
+          previewTimer = setTimeout(() => { v.pause(); previewTimer = null; }, Math.round((e - s) * 1000));
+        });
+
+        applyBtn.addEventListener('click', async () => {
+          const s = Math.max(0, parseFloat(startInp.value) || 0);
+          const e = parseFloat(endInp.value);
+          if (!isFinite(e) || e <= s) { await showAlert('Fine deve essere maggiore di inizio'); return; }
+          if (e - s < 0.5) { await showAlert('Trim troppo corto (minimo 0.5s)'); return; }
+          const mode = (document.querySelector('input[name="lb-trim-mode"]:checked') || {}).value || 'overwrite';
+
+          applyBtn.disabled = true;
+          applyBtn.innerHTML = '<span class="loading"></span> Elaborazione...';
+          try {
+            const r = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media/' + mediaId + '/trim', {
+              method: 'POST',
+              body: { start_sec: s, end_sec: e, mode }
+            });
+            if (r.error) { await showAlert(r.error); applyBtn.disabled = false; applyBtn.textContent = '\u2702 Applica trim'; return; }
+            if (r.media) {
+              if (r.mode === 'duplicate') {
+                MEDIA.push(r.media);
+              } else {
+                const idx = MEDIA.findIndex(x => x.id === r.media.id);
+                if (idx >= 0) {
+                  r.media.url = r.media.url + (r.media.url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+                  MEDIA[idx] = r.media;
+                }
+              }
+              renderMedia();
+            }
+            toast(r.mode === 'duplicate' ? 'Nuovo video creato (trimmato)' : 'Video trimmato (' + r.duration_sec.toFixed(1) + 's)');
+            closeLightbox();
+          } catch (err) {
+            applyBtn.disabled = false;
+            applyBtn.textContent = '\u2702 Applica trim';
+            await showAlert('Errore: ' + err.message);
+          }
+        });
+      });
+    }
 
     if (m.kind === 'image') {
       // Aspetta il paint del modal prima di toccare il DOM
