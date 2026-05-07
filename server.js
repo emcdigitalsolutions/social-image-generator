@@ -106,13 +106,28 @@ app.use('/music', express.static(path.join(__dirname, 'public', 'music'), {
 
 // Libreria media per cliente (video + audio riusabili).
 // Path: /library/<client_id>/<kind>/<filename>
+// acceptRanges:false allineato a /images: alcuni proxy/CDN mangiano i Range
+// header → response 206 con Content-Range malformato → player browser non
+// riesce a leggere i metadati (durata = 0:00 / 0:00). Forziamo 200 OK pieno.
 app.use('/library', express.static(path.join(__dirname, 'public', 'library'), {
   maxAge: '1h',
   etag: true,
   lastModified: true,
-  setHeaders: (res) => {
+  acceptRanges: false,
+  setHeaders: (res, filePath) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    // Forza Content-Type esplicito (alcuni proxy strippano la deduzione)
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeMap = {
+      '.mp4': 'video/mp4',
+      '.mov': 'video/quicktime',
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
+      '.m4a': 'audio/mp4',
+      '.ogg': 'audio/ogg'
+    };
+    if (mimeMap[ext]) res.setHeader('Content-Type', mimeMap[ext]);
   }
 }));
 
