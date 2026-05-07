@@ -202,10 +202,11 @@
       <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:12px">
         <legend style="font-size:13px;font-weight:600;padding:0 6px">🎥 Video</legend>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-          <input type="file" id="lib-video-input" accept="video/mp4,video/quicktime" style="flex:1;font-size:12px">
+          <input type="file" id="lib-video-input" accept="video/mp4,video/quicktime" multiple style="flex:1;font-size:12px">
           <button class="btn btn-sm btn-primary" onclick="uploadLibraryFile('video')" id="lib-video-btn">Carica</button>
         </div>
-        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">MP4/MOV · max 100MB</div>
+        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">MP4/MOV · max 100MB · selezione multipla supportata</div>
+        <div id="lib-video-progress" style="display:none;font-size:11px;color:var(--gray-600);margin-bottom:10px"></div>
         <div id="lib-video-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;min-height:60px">
           <div class="lib-empty" style="grid-column:1/-1;color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessun video —</div>
         </div>
@@ -215,10 +216,11 @@
       <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:12px">
         <legend style="font-size:13px;font-weight:600;padding:0 6px">🎵 Audio</legend>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-          <input type="file" id="lib-audio-input" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/ogg" style="flex:1;font-size:12px">
+          <input type="file" id="lib-audio-input" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/ogg" multiple style="flex:1;font-size:12px">
           <button class="btn btn-sm btn-primary" onclick="uploadLibraryFile('audio')" id="lib-audio-btn">Carica</button>
         </div>
-        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">MP3/WAV/M4A/OGG · max 15MB · solo musica royalty-free</div>
+        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">MP3/WAV/M4A/OGG · max 15MB · selezione multipla supportata · solo musica royalty-free</div>
+        <div id="lib-audio-progress" style="display:none;font-size:11px;color:var(--gray-600);margin-bottom:10px"></div>
         <div id="lib-audio-list" style="display:flex;flex-direction:column;gap:8px;min-height:60px">
           <div class="lib-empty" style="color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessun audio —</div>
         </div>
@@ -478,7 +480,7 @@
     if (kind === 'video') {
       root.innerHTML = items.map(it => `
         <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#000;position:relative">
-          <video src="${escAttr(it.url)}" muted preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:cover;display:block;background:#000"></video>
+          <video src="${escAttr(it.url)}" controls preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:contain;display:block;background:#000"></video>
           <div style="padding:6px 8px;background:#fff;border-top:1px solid var(--gray-200)">
             <div style="font-size:11px;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
             <div style="font-size:10px;color:var(--gray-500);display:flex;justify-content:space-between;align-items:center;margin-top:3px">
@@ -505,34 +507,50 @@
   async function uploadLibraryFile(kind) {
     const input = document.getElementById('lib-' + kind + '-input');
     const btn = document.getElementById('lib-' + kind + '-btn');
+    const progress = document.getElementById('lib-' + kind + '-progress');
     if (!input.files || !input.files.length) {
-      await showAlert('Seleziona prima un file ' + kind);
+      await showAlert('Seleziona uno o più file ' + kind);
       return;
     }
-    const file = input.files[0];
-    const fd = new FormData();
-    fd.append('file', file);
+    const files = Array.from(input.files);
     btn.disabled = true;
     const orig = btn.textContent;
     btn.textContent = 'Caricando…';
+    progress.style.display = 'block';
+    progress.textContent = 'Upload di ' + files.length + ' file in corso…';
+
+    const fd = new FormData();
+    files.forEach(f => fd.append('files', f));
+
     try {
       const r = await fetch('/dashboard/api/clients/' + CLIENT_ID + '/library/upload', {
         method: 'POST',
         body: fd
       });
       const data = await r.json();
-      if (!r.ok) {
+      const ok = (data.items || []).length;
+      const errs = data.errors || [];
+      if (!r.ok && !ok) {
         await showAlert(data.error || 'Upload fallito');
         return;
       }
       input.value = '';
-      toast(kind === 'video' ? 'Video aggiunto in libreria' : 'Audio aggiunto in libreria');
+      if (errs.length) {
+        const detail = errs.map(e => '• ' + e.filename + ': ' + e.error).join('\n');
+        await showAlert(ok + ' file caricati, ' + errs.length + ' falliti:\n\n' + detail);
+      } else {
+        toast(ok === 1
+          ? (kind === 'video' ? 'Video aggiunto in libreria' : 'Audio aggiunto in libreria')
+          : ok + ' ' + kind + ' aggiunti in libreria');
+      }
       loadLibrary();
     } catch (err) {
       await showAlert('Errore upload: ' + err.message);
     } finally {
       btn.disabled = false;
       btn.textContent = orig;
+      progress.style.display = 'none';
+      progress.textContent = '';
     }
   }
   window.uploadLibraryFile = uploadLibraryFile;

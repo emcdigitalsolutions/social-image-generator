@@ -51,32 +51,57 @@ router.get('/', (req, res) => {
   res.json({ items });
 });
 
-// Upload file in libreria
-router.post('/upload', upload.single('file'), async (req, res) => {
-  if (!ensureClient(req, res)) {
-    if (req.file) { try { fs.unlinkSync(req.file.path); } catch (_) {} }
-    return;
-  }
-  if (!req.file) return res.status(400).json({ error: 'File mancante' });
+// Upload file in libreria. Accetta sia 'files' (multiplo) che 'file' (singolo,
+// per compat). Risposta: { items: [...], errors: [...] } in caso multiplo;
+// se viene caricato 1 solo file restituisce ANCHE l'item al top-level (compat).
+router.post('/upload', upload.fields([
+  { name: 'files', maxCount: 20 },
+  { name: 'file',  maxCount: 1 }
+]), async (req, res) => {
+  const cleanupAll = () => {
+    for (const list of Object.values(req.files || {})) {
+      for (const f of list) { try { fs.unlinkSync(f.path); } catch (_) {} }
+    }
+  };
+  if (!ensureClient(req, res)) { cleanupAll(); return; }
 
-  try {
-    const item = await clientLibrary.addFromUpload({
-      clientId: req.params.clientId,
-      tmpPath: req.file.path,
-      originalName: req.file.originalname,
-      mimetype: req.file.mimetype
-    });
-    audit.logFromReq(req, {
-      client_id: req.params.clientId,
-      action: 'library.uploaded',
-      entity_type: 'library_item',
-      entity_id: item.id,
-      details: { kind: item.kind, original_name: item.original_name, bytes: item.bytes }
-    });
-    res.json(item);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+  const incoming = [
+    ...((req.files && req.files.files) || []),
+    ...((req.files && req.files.file)  || [])
+  ];
+  if (!incoming.length) return res.status(400).json({ error: 'Nessun file ricevuto' });
+
+  const items = [];
+  const errors = [];
+  for (const f of incoming) {
+    try {
+      const item = await clientLibrary.addFromUpload({
+        clientId: req.params.clientId,
+        tmpPath: f.path,
+        originalName: f.originalname,
+        mimetype: f.mimetype
+      });
+      audit.logFromReq(req, {
+        client_id: req.params.clientId,
+        action: 'library.uploaded',
+        entity_type: 'library_item',
+        entity_id: item.id,
+        details: { kind: item.kind, original_name: item.original_name, bytes: item.bytes }
+      });
+      items.push(item);
+    } catch (err) {
+      // addFromUpload pulisce il tmp se fallisce, ma rete sicurezza:
+      try { if (fs.existsSync(f.path)) fs.unlinkSync(f.path); } catch (_) {}
+      errors.push({ filename: f.originalname, error: err.message });
+    }
   }
+
+  // Status: 200 se almeno uno OK, 400 se TUTTI falliti.
+  if (!items.length) return res.status(400).json({ items: [], errors });
+  // Compat single-file: campo top-level oltre a items[]
+  const out = { items, errors };
+  if (incoming.length === 1 && items.length === 1) Object.assign(out, items[0]);
+  res.json(out);
 });
 
 // Elimina un item dalla libreria
