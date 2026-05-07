@@ -391,4 +391,9 @@ router.get('/settings', (req, res) => {
   res.render('settings', { title: 'Impostazioni', user: req.user });
 });
 
+// Manuale utente
+router.get('/manuale', (req, res) => {
+  res.render('manuale', { title: 'Manuale Utente', user: req.user, activeNav: 'manuale' });
+});
+
 module.exports = router;

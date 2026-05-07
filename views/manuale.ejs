@@ -1,0 +1,267 @@
+<%- include('layout', { title, user, activeNav: 'manuale' }) %>
+
+<div class="page-header">
+  <h1>Manuale Utente</h1>
+  <small style="color:var(--gray-400)">Guida completa all'uso della SMM Dashboard</small>
+</div>
+
+<style>
+  .manual-wrap { display:grid; grid-template-columns: 240px 1fr; gap:24px; align-items:flex-start; }
+  @media (max-width: 1024px) { .manual-wrap { grid-template-columns: 1fr; } }
+  .manual-toc { position:sticky; top:16px; max-height:calc(100vh - 40px); overflow-y:auto; padding:16px; }
+  .manual-toc h3 { font-size:13px; text-transform:uppercase; letter-spacing:0.05em; color:var(--gray-400); margin:0 0 8px; }
+  .manual-toc a { display:block; padding:6px 8px; border-radius:6px; font-size:13px; color:var(--gray-700); text-decoration:none; line-height:1.4; }
+  .manual-toc a:hover { background:var(--gray-100); color:var(--primary); }
+  .manual-toc a.sub { padding-left:20px; font-size:12px; color:var(--gray-500); }
+  .manual-content { padding:24px 28px; line-height:1.65; }
+  .manual-content h2 { font-size:22px; margin:32px 0 12px; padding-bottom:8px; border-bottom:1px solid var(--gray-200); scroll-margin-top:16px; }
+  .manual-content h2:first-child { margin-top:0; }
+  .manual-content h3 { font-size:16px; margin:20px 0 8px; color:var(--primary); scroll-margin-top:16px; }
+  .manual-content p { margin:8px 0 12px; }
+  .manual-content ul, .manual-content ol { margin:8px 0 14px; padding-left:24px; }
+  .manual-content li { margin:4px 0; }
+  .manual-content code { background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:13px; font-family:'SF Mono',Monaco,monospace; }
+  .manual-content .tip { background:#fef3c7; border-left:3px solid #d97706; padding:10px 14px; border-radius:6px; margin:12px 0; font-size:14px; }
+  .manual-content .warn { background:#fee2e2; border-left:3px solid #dc2626; padding:10px 14px; border-radius:6px; margin:12px 0; font-size:14px; }
+  .manual-content .info { background:#dbeafe; border-left:3px solid #2563eb; padding:10px 14px; border-radius:6px; margin:12px 0; font-size:14px; }
+  .manual-content table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+  .manual-content th, .manual-content td { padding:8px 12px; text-align:left; border-bottom:1px solid var(--gray-200); }
+  .manual-content th { background:var(--gray-50); font-weight:600; }
+  .role-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; margin-right:6px; }
+  .role-admin { background:#1e3a8a; color:#fff; }
+  .role-cliente { background:#059669; color:#fff; }
+</style>
+
+<div class="manual-wrap">
+
+  <aside class="card manual-toc">
+    <h3>Indice</h3>
+    <a href="#intro">1. Introduzione</a>
+    <a href="#ruoli">2. Ruoli e accessi</a>
+    <a href="#login">3. Login</a>
+    <a href="#clienti">4. Clienti</a>
+    <a href="#clienti-anagrafica" class="sub">4.1 Anagrafica</a>
+    <a href="#clienti-social" class="sub">4.2 Account social</a>
+    <a href="#clienti-questionario" class="sub">4.3 Questionario</a>
+    <a href="#clienti-instruction" class="sub">4.4 System instruction</a>
+    <a href="#clienti-libreria" class="sub">4.5 Libreria media</a>
+    <a href="#piani">5. Piani editoriali</a>
+    <a href="#piani-template" class="sub">5.1 Template</a>
+    <a href="#piani-mese" class="sub">5.2 Mese e settimane</a>
+    <a href="#post">6. Editor post</a>
+    <a href="#post-caption" class="sub">6.1 Caption</a>
+    <a href="#post-immagini" class="sub">6.2 Immagini</a>
+    <a href="#post-video" class="sub">6.3 Video e Reel</a>
+    <a href="#post-schedule" class="sub">6.4 Scheduling</a>
+    <a href="#post-elimina" class="sub">6.5 Eliminazione</a>
+    <a href="#approvazione">7. Approvazione cliente</a>
+    <a href="#pubblicazione">8. Pubblicazione</a>
+    <a href="#insights">9. Insights</a>
+    <a href="#archivio">10. Archivio</a>
+    <a href="#audit">11. Audit & Log</a>
+    <a href="#impostazioni">12. Impostazioni</a>
+    <a href="#cliente-guide">13. Guida per il cliente</a>
+    <a href="#faq">14. FAQ</a>
+  </aside>
+
+  <article class="card manual-content">
+
+    <h2 id="intro">1. Introduzione</h2>
+    <p>La <strong>SMM Dashboard</strong> è la piattaforma con cui pianifichi, approvi e pubblichi contenuti social per i tuoi clienti. Ogni cliente ha il proprio spazio: anagrafica, account collegati, piano editoriale mensile, post con immagini/video, libreria media riusabile, approvazioni e analytics.</p>
+    <p>Il sistema è pensato per due casi d'uso:</p>
+    <ul>
+      <li><strong>Agenzia che gestisce più clienti</strong>: tu (admin) crei i clienti, prepari i piani, generi i contenuti, raccogli approvazioni e pubblichi.</li>
+      <li><strong>Cliente con accesso diretto</strong> (in arrivo): il cliente accede al solo proprio spazio per visualizzare il piano, approvare i post e vedere gli insights.</li>
+    </ul>
+
+    <h2 id="ruoli">2. Ruoli e accessi</h2>
+    <p>Attualmente il sistema ha un unico ruolo amministratore. È in roadmap l'estensione multi-utente con ruoli distinti.</p>
+    <table>
+      <thead><tr><th>Ruolo</th><th>Accesso</th><th>Permessi</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="role-badge role-admin">Admin</span></td>
+          <td>Login completo</td>
+          <td>Tutto: clienti, piani, post, pubblicazione, audit, settings, eliminazioni.</td>
+        </tr>
+        <tr>
+          <td><span class="role-badge role-cliente">Cliente</span></td>
+          <td>Link pubblici via token</td>
+          <td>Compila questionario, approva post del mese, vede insights — solo lettura sul resto.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="info">In futuro il cliente avrà un login dedicato per gestire autonomamente le proprie pubblicazioni. Vedi sezione <a href="#cliente-guide">13</a>.</div>
+
+    <h2 id="login">3. Login</h2>
+    <p>Apri <code>/dashboard/login</code>, inserisci username e password. La sessione viene mantenuta tramite cookie JWT. Per uscire, clicca <em>Esci</em> in fondo alla sidebar.</p>
+    <div class="tip">Se ricevi <em>"Sessione scaduta"</em>, basta rifare il login: i dati non si perdono mai.</div>
+
+    <h2 id="clienti">4. Clienti</h2>
+    <p>La home della dashboard (voce <strong>Clienti</strong> nel menu) mostra tutti i clienti attivi con il loro stato sintetico: post in bozza, in lavorazione, pronti, pubblicati e falliti, oltre alla prossima pubblicazione programmata.</p>
+    <p>Per creare un nuovo cliente clicca <em>+ Nuovo cliente</em>. Per aprire un cliente clicca sul nome.</p>
+
+    <h3 id="clienti-anagrafica">4.1 Anagrafica</h3>
+    <p>Tab <strong>Profilo</strong>: nome visualizzato, brand, settore, città. Il settore è importante perché determina:</p>
+    <ul>
+      <li>Le domande del questionario di onboarding</li>
+      <li>I template di piano editoriale disponibili</li>
+      <li>Il tono di voce di default per la generazione caption</li>
+    </ul>
+
+    <h3 id="clienti-social">4.2 Account social</h3>
+    <p>Tab <strong>Social</strong>: collega Facebook Page e Instagram Business attraverso il <em>System User Token</em>. Servono:</p>
+    <ul>
+      <li><code>fb_page_id</code> — ID della Pagina Facebook</li>
+      <li><code>fb_system_user_token</code> — token long-lived dell'app Meta</li>
+      <li><code>ig_user_id</code> — ID account Instagram (se collegato alla Page)</li>
+    </ul>
+    <div class="warn">Senza Page ID + token la pubblicazione automatica fallisce. Compila prima questi campi, poi prova un post di test.</div>
+
+    <h3 id="clienti-questionario">4.3 Questionario</h3>
+    <p>Genera un link pubblico (token) che il cliente compila per fornire informazioni di brand: tono, valori, prodotti/servizi, target. Le risposte vengono usate dall'AI per generare contenuti coerenti.</p>
+    <ol>
+      <li>Tab <strong>Questionario</strong> → <em>Genera nuovo link</em></li>
+      <li>Invia il link al cliente (WhatsApp, email)</li>
+      <li>Quando il cliente invia, lo stato passa a <em>submitted</em></li>
+    </ol>
+
+    <h3 id="clienti-instruction">4.4 System instruction</h3>
+    <p>Tab <strong>AI</strong>: prompt persistente che guida tutte le generazioni AI per quel cliente (caption, suggerimenti immagine). Tipicamente lo si compila a partire dal questionario inviato. Più è specifico, più i contenuti sono on-brand.</p>
+
+    <h3 id="clienti-libreria">4.5 Libreria media</h3>
+    <p>Tab <strong>Libreria Media</strong>: archivio per cliente di video e tracce audio caricati. Vantaggi:</p>
+    <ul>
+      <li>Cancellando un file qui lo rimuovi <strong>definitivamente dal disco</strong> (i post pubblicati continuano a funzionare perché hanno la propria copia).</li>
+      <li>Puoi <strong>riusare</strong> lo stesso video o audio in più post: in fase di editor trovi il pulsante <em>📚 Da libreria</em>.</li>
+      <li>I video generati durante un post possono essere salvati in libreria con il bottone <em>💾 Libreria</em>.</li>
+    </ul>
+    <div class="info">Formati supportati: MP4/MOV per video, MP3/WAV/M4A/OGG per audio. La validazione avviene per <em>magic number</em>, quindi rinominare un file con altra estensione non funziona.</div>
+
+    <h2 id="piani">5. Piani editoriali</h2>
+    <p>Un <strong>piano editoriale</strong> definisce la strategia di contenuti per uno o più mesi: categorie, mix di formati, frequenza. Si compone così:</p>
+    <ul>
+      <li><strong>Categorie</strong> (C1, C2, …): macro-temi (es. "Servizi offerti", "Dietro le quinte", "Educational")</li>
+      <li><strong>Mesi</strong>: ognuno con un set di post, divisi per settimana</li>
+      <li><strong>Settimane</strong>: organizzano i post nel tempo</li>
+    </ul>
+    <p>Stati piano: <code>draft</code> → <code>confirmed</code> → <code>active</code> → <code>archived</code>.</p>
+
+    <h3 id="piani-template">5.1 Template</h3>
+    <p>Voce di menu <strong>Template Piani</strong>: libreria di scheletri di piano per settore. Generano automaticamente categorie + scheduling consigliato. Si applicano in fase di creazione di un piano nuovo.</p>
+
+    <h3 id="piani-mese">5.2 Mese e settimane</h3>
+    <p>La <em>vista mese</em> mostra tutti i post di un mese del piano, ordinati per settimana e posizione. Da qui puoi:</p>
+    <ul>
+      <li>Aggiungere/duplicare/spostare post</li>
+      <li>Vedere lo stato di ciascuno (bozza, pronto, pubblicato, fallito)</li>
+      <li>Inviare al cliente il link di approvazione mensile</li>
+    </ul>
+    <div class="tip">Le card che mostrano un'icona ⚠️ aspect ratio segnalano immagini fuori dai range Instagram (0.8–1.91). Riadatta prima di pubblicare.</div>
+
+    <h2 id="post">6. Editor post</h2>
+    <p>Cuore della piattaforma: clicca su un post per aprire l'editor. Da qui gestisci tutto.</p>
+
+    <h3 id="post-caption">6.1 Caption</h3>
+    <p>Scrivi a mano oppure clicca <em>✨ Genera con AI</em>. La generazione tiene conto di: settore, system instruction, categoria, eventuale brief del post, eventuali allegati di riferimento. Puoi rigenerare e affinare iterando il brief.</p>
+
+    <h3 id="post-immagini">6.2 Immagini</h3>
+    <ul>
+      <li><em>Carica</em>: trascina un file o clicca; valida automaticamente le dimensioni IG.</li>
+      <li><em>Genera con AI</em>: descrivi cosa vuoi, scegli aspect ratio (1:1, 4:5, 9:16, 16:9).</li>
+      <li><em>Crop / ottimizza</em>: il sistema riduce automaticamente i file pesanti e applica gli aspect ratio richiesti.</li>
+    </ul>
+
+    <h3 id="post-video">6.3 Video e Reel</h3>
+    <p>Sono disponibili due modalità di video:</p>
+    <ul>
+      <li><strong>🎬 Reel AI (slideshow)</strong>: anima da N immagini con effetto Ken Burns + crossfade. Audio opzionale dalla libreria globale o dalla libreria del cliente. Output ottimizzato IG.</li>
+      <li><strong>🎥 Veo</strong>: generazione video AI da prompt testuale (a pagamento per chiamata).</li>
+    </ul>
+    <div class="warn">Per non pagare due volte una generazione Veo, il bottone si disabilita al primo click e si riattiva solo se annulli la modale di configurazione.</div>
+    <div class="info">Se Instagram rifiuta un Reel con errore generico, il sistema usa preset codec specifici (H.264 high@4.2, AAC 48kHz, no B-frame, brand mp42) per massimizzare la compatibilità.</div>
+
+    <h3 id="post-schedule">6.4 Scheduling</h3>
+    <p>Ogni post può avere data e ora programmate. Quando lo stato passa a <code>ready</code> e l'orario è raggiunto, il job di publish lo invia automaticamente a Facebook/Instagram.</p>
+    <p>Stati post (semplificato):</p>
+    <ol>
+      <li><code>draft</code> — bozza appena creata</li>
+      <li><code>caption_generated</code> / <code>image_generated</code> — in lavorazione</li>
+      <li><code>ready</code> — completo e pronto a partire</li>
+      <li><code>published</code> — inviato e pubblicato</li>
+      <li><code>failed</code> — pubblicazione fallita (vedi tab Audit per il motivo)</li>
+    </ol>
+
+    <h3 id="post-elimina">6.5 Eliminazione</h3>
+    <p>I post in <code>draft</code>, <code>caption_generated</code>, <code>image_generated</code>, <code>ready</code> o <code>failed</code> possono essere eliminati dall'editor (bottone <em>🗑 Elimina post</em>) o dalla vista mese.</p>
+    <div class="warn">I post in stato <code>published</code> <strong>non sono eliminabili</strong> dalla dashboard: serve l'admin (per ora coincide con te). Questo previene cancellazioni accidentali di contenuti già live e garantisce coerenza con quanto è pubblicato sui social.</div>
+
+    <h2 id="approvazione">7. Approvazione cliente</h2>
+    <p>Per il flusso "io creo, il cliente approva":</p>
+    <ol>
+      <li>Dalla vista mese, clicca <em>Genera link approvazione</em></li>
+      <li>Il sistema crea un token e una pagina pubblica <code>/dashboard/approve/&lt;token&gt;</code></li>
+      <li>Invia il link al cliente</li>
+      <li>Il cliente vede tutti i post del mese, può approvarli, richiedere modifiche o rifiutarli con commento</li>
+      <li>Le risposte arrivano sul post nell'editor; tu modifichi e poi pubblichi</li>
+    </ol>
+    <p>Stati di approvazione: <code>pending</code> → <code>approved</code> | <code>change_requested</code> | <code>rejected</code>.</p>
+
+    <h2 id="pubblicazione">8. Pubblicazione</h2>
+    <p>Due strade:</p>
+    <ul>
+      <li><strong>Manuale</strong>: bottone <em>Pubblica ora</em> nell'editor. Utile per test o post one-shot.</li>
+      <li><strong>Automatica</strong>: il job di scheduling controlla periodicamente i post <code>ready</code> con orario passato e li invia.</li>
+    </ul>
+    <p>Su errore lo stato diventa <code>failed</code> e il messaggio Meta è loggato nell'audit.</p>
+
+    <h2 id="insights">9. Insights</h2>
+    <p>Voce <strong>Insights</strong> nel menu: panoramica multi-cliente con KPI account-level (impression, reach, engagement) e top post degli ultimi N giorni. Cliccando su un cliente vai alla sua dashboard di dettaglio.</p>
+    <p>Puoi inoltre generare un <em>link pubblico insights</em> da inviare al cliente: pagina dedicata, sola lettura, con grafici e top post.</p>
+
+    <h2 id="archivio">10. Archivio</h2>
+    <p>Voce <strong>Archiviati</strong>: clienti non più attivi ma conservati per storico. Da qui puoi riattivarli o eliminarli definitivamente.</p>
+
+    <h2 id="audit">11. Audit & Log</h2>
+    <ul>
+      <li><strong>Audit</strong>: registro di tutte le azioni significative (chi, quando, cosa). Utile per ricostruire eventi: chi ha pubblicato un post, chi ha approvato, chi ha cancellato. Filtrabile per cliente, attore, azione, intervallo date.</li>
+      <li><strong>Log</strong>: console live degli eventi tecnici dell'applicazione (info / warn / error). Utile per troubleshooting.</li>
+    </ul>
+
+    <h2 id="impostazioni">12. Impostazioni</h2>
+    <p>Configurazioni globali della piattaforma: chiavi API (OpenAI, Meta App), parametri default per generazione, gestione utenti (in arrivo).</p>
+
+    <h2 id="cliente-guide">13. Guida per il cliente</h2>
+    <p>Sezione dedicata ai clienti finali. Per ora il cliente interagisce solo via link pubblici inviati dall'agenzia:</p>
+    <ul>
+      <li><strong>Questionario</strong> — link <code>/dashboard/q/&lt;token&gt;</code>: compila brand, tono, prodotti/servizi.</li>
+      <li><strong>Approvazione mensile</strong> — link <code>/dashboard/approve/&lt;token&gt;</code>: visualizza tutti i post del mese, approva o richiedi modifiche con commento.</li>
+      <li><strong>Insights</strong> — link <code>/dashboard/insights/&lt;token&gt;</code>: dashboard sola lettura con i risultati delle pubblicazioni.</li>
+    </ul>
+    <div class="info">In una versione futura il cliente avrà credenziali proprie per gestire autonomamente caption, immagini e scheduling del proprio spazio, con la possibilità di passare il post all'agenzia in revisione finale.</div>
+
+    <h2 id="faq">14. FAQ</h2>
+
+    <h3>Un Reel non si pubblica su Instagram. Cosa fare?</h3>
+    <p>Apri <em>Audit</em> e filtra per il post: il messaggio di errore Meta è loggato. Cause comuni: token Page scaduto, account IG non Business, video fuori specs (durata &lt; 3s o &gt; 90s, lato &gt; 1920px), audio bitrate &gt; 128kbps. Per i Reel slideshow l'app applica già preset IG-safe.</p>
+
+    <h3>Ho cancellato un'immagine dalla libreria, il post collegato continua a funzionare?</h3>
+    <p>Sì. Quando una libreria viene usata in un post, il file viene <strong>copiato</strong> nello spazio del post. Cancellare in libreria libera spazio sul disco senza rompere i post che la usavano.</p>
+
+    <h3>Come elimino un post pubblicato per errore?</h3>
+    <p>Per ora dalla dashboard non è possibile: contatta l'admin. La rimozione effettiva su Meta va fatta dall'app Facebook/Instagram (i contenuti pubblicati sono sotto il loro controllo).</p>
+
+    <h3>Posso lavorare su più clienti contemporaneamente?</h3>
+    <p>Sì, basta aprire più tab del browser. Le sessioni sono indipendenti per cliente.</p>
+
+    <h3>Cosa fa il bottone "💾 Libreria" sotto un video del post?</h3>
+    <p>Salva quel video nella libreria del cliente, in modo da poterlo riusare in post futuri senza rigenerarlo.</p>
+
+    <h3>Le immagini con aspect ratio strano vengono rifiutate?</h3>
+    <p>Instagram accetta da 0.8:1 (verticale 4:5) a 1.91:1 (orizzontale). L'app le segnala con un'icona ⚠️ in vista mese. Ricrop o sostituisci prima di mandare in approvazione.</p>
+
+  </article>
+
+</div>
+
+<%- include('layout-end') %>
