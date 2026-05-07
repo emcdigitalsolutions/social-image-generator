@@ -52,6 +52,7 @@
     <a href="#post-caption" class="sub">6.1 Caption</a>
     <a href="#post-immagini" class="sub">6.2 Immagini</a>
     <a href="#post-video" class="sub">6.3 Video e Reel</a>
+    <a href="#post-video" class="sub" style="padding-left:32px">— Sostituzione audio</a>
     <a href="#post-schedule" class="sub">6.4 Scheduling</a>
     <a href="#post-elimina" class="sub">6.5 Eliminazione</a>
     <a href="#approvazione">7. Approvazione cliente</a>
@@ -180,6 +181,21 @@
     </ul>
     <div class="warn">Per non pagare due volte una generazione Veo, il bottone si disabilita al primo click e si riattiva solo se annulli la modale di configurazione.</div>
     <div class="info">Se Instagram rifiuta un Reel con errore generico, il sistema usa preset codec specifici (H.264 high@4.2, AAC 48kHz, no B-frame, brand mp42) per massimizzare la compatibilità.</div>
+
+    <h4>Sostituzione audio del video</h4>
+    <p>Sotto ogni video del post c'è un bottone <strong>🎵 Audio</strong> per sostituire la traccia audio. Tipico caso d'uso: il cliente ti fornisce un video con audio originale che però vuoi "doppiare" con una traccia musicale.</p>
+    <ol>
+      <li>Click su <strong>🎵 Audio</strong> sul video del post</li>
+      <li>Scegli la traccia: libreria del cliente (audio caricati per quel cliente) o libreria globale (musica condivisa)</li>
+      <li><strong>Trim opzionale</strong>: imposta secondi di inizio e fine (es. 30→60 per scegliere solo il ritornello). Il pulsante <em>▶ Anteprima trim</em> riproduce solo la porzione selezionata</li>
+      <li>Scegli la modalità output:
+        <ul>
+          <li><strong>🔁 Sovrascrivi</strong>: il video originale viene sostituito (l'audio originale è perso)</li>
+          <li><strong>📋 Mantieni l'originale e crea un nuovo video</strong>: avrai due media nel post, originale + dub</li>
+        </ul>
+      </li>
+    </ol>
+    <div class="info">Se la traccia audio scelta è più corta del video, viene <strong>automaticamente loopata</strong> finché il video finisce. Il video non viene re-encodato (operazione veloce, &lt; 5s anche per file grandi).</div>
 
     <h3 id="post-schedule">6.4 Scheduling</h3>
     <p>Ogni post può avere data e ora programmate. Quando lo stato passa a <code>ready</code> e l'orario è raggiunto, il job di publish lo invia automaticamente a Facebook/Instagram.</p>

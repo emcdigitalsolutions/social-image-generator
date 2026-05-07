@@ -917,6 +917,119 @@ router.post('/:id/media/:mediaId/save-to-library', async (req, res) => {
   }
 });
 
+// Sostituisce la traccia audio di un video del post con un audio scelto
+// dalla libreria cliente o dalla libreria globale, opzionalmente con trim e
+// con loop automatico se l'audio è più corto del video.
+//
+// Body:
+//   audio_source: "client:<libraryItemId>" | "<filename in /music/>"
+//   start_sec: number (default 0)
+//   end_sec: number | null (null = fino a fine traccia)
+//   mode: "overwrite" (default) | "duplicate"
+router.post('/:id/media/:mediaId/replace-audio', async (req, res) => {
+  const clientLibrary = require('../../lib/client-library');
+  const audioReplace = require('../../lib/audio-replace');
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const m = postMedia.getMedia(req.params.mediaId);
+  if (!m || m.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+  if (m.kind !== 'video') return res.status(400).json({ error: 'Solo i video possono avere l\'audio sostituito' });
+
+  const raw = req.body && req.body.audio_source;
+  if (!raw || typeof raw !== 'string') return res.status(400).json({ error: 'audio_source richiesto' });
+
+  // Risolvi audio source con stesso pattern di /generate-ai-video.
+  let audioPath = null;
+  let audioLabel = '';
+  if (raw.startsWith('client:')) {
+    const itemId = raw.slice('client:'.length);
+    const item = clientLibrary.getLibraryItem(itemId);
+    if (item && item.kind === 'audio' && item.client_id === post.client_id) {
+      const candidate = path.join(clientLibrary.libraryDir(item.client_id, 'audio'), item.filename);
+      if (fs.existsSync(candidate)) { audioPath = candidate; audioLabel = item.original_name || item.filename; }
+    }
+  } else {
+    const af = raw.replace(/[^a-zA-Z0-9._-]/g, '');
+    const musicDir = path.join(__dirname, '..', '..', 'public', 'music');
+    const candidate = path.resolve(musicDir, af);
+    if (candidate.startsWith(path.resolve(musicDir) + path.sep) && fs.existsSync(candidate)) {
+      audioPath = candidate;
+      audioLabel = af;
+    }
+  }
+  if (!audioPath) return res.status(400).json({ error: 'Audio non trovato o non accessibile' });
+
+  const startSec = Number(req.body.start_sec) || 0;
+  const endSec = (req.body.end_sec === null || req.body.end_sec === undefined || req.body.end_sec === '')
+    ? null : Number(req.body.end_sec);
+  const mode = req.body.mode === 'duplicate' ? 'duplicate' : 'overwrite';
+
+  const srcVideo = path.join(postMedia.postDir(post.client_id, post.id), m.filename);
+  if (!fs.existsSync(srcVideo)) return res.status(404).json({ error: 'File video sorgente non trovato' });
+
+  const tmpOut = path.join(os.tmpdir(), `sig-audio-replace-${uuidv4()}.mp4`);
+  try {
+    await audioReplace.replaceVideoAudio({
+      videoPath: srcVideo,
+      audioPath,
+      startSec,
+      endSec,
+      outputPath: tmpOut
+    });
+
+    let result;
+    if (mode === 'overwrite') {
+      // Sovrascrivi il file fisico, mantieni la riga DB con stesso id/position.
+      fs.copyFileSync(tmpOut, srcVideo);
+      try { fs.unlinkSync(tmpOut); } catch (_) {}
+      const stat = fs.statSync(srcVideo);
+      db.prepare('UPDATE post_media SET bytes = ? WHERE id = ?').run(stat.size, m.id);
+      result = postMedia.getMedia(m.id);
+    } else {
+      // Crea nuovo media (next position) puntando all'originale via styled_from_id.
+      result = postMedia.attachGeneratedFile({
+        clientId: post.client_id,
+        postId: post.id,
+        absolutePath: tmpOut,
+        source: 'audio_dub',
+        styledFromId: m.id,
+        kind: 'video'
+      });
+      // attachGeneratedFile fa moveSync, quindi tmpOut non esiste più
+      // Copia anche width/height del media originale (no re-encode video → stesse dim)
+      if (m.width && m.height) {
+        db.prepare('UPDATE post_media SET width = ?, height = ? WHERE id = ?')
+          .run(m.width, m.height, result.id);
+        result = postMedia.getMedia(result.id);
+      }
+    }
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.audio_replaced',
+      entity_type: 'post_media',
+      entity_id: m.id,
+      details: {
+        post_id: post.id,
+        source_audio: audioLabel,
+        audio_source_raw: raw,
+        start_sec: startSec,
+        end_sec: endSec,
+        mode,
+        new_media_id: mode === 'duplicate' ? result.id : null
+      }
+    });
+
+    res.json({ media: result, mode });
+  } catch (err) {
+    try { if (fs.existsSync(tmpOut)) fs.unlinkSync(tmpOut); } catch (_) {}
+    console.error('[replace-audio] error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Reorder media items
 router.put('/:id/media/reorder', (req, res) => {
   const db = getDb();

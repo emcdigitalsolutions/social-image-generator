@@ -613,11 +613,15 @@
           ratioItemClass = ' ratio-warn';
         }
       }
-      const stylizeBtn = m.kind === 'image' && m.source !== 'styled'
-        ? '<button onclick="event.stopPropagation();stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>'
-        : (m.kind === 'video'
-          ? '<button onclick="event.stopPropagation();saveMediaToLibrary(\'' + m.id + '\')" title="Salva questo video nella libreria del cliente per riusarlo">\uD83D\uDCBE Libreria</button>'
-          : '<span></span>');
+      let stylizeBtn;
+      if (m.kind === 'image' && m.source !== 'styled') {
+        stylizeBtn = '<button onclick="event.stopPropagation();stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>';
+      } else if (m.kind === 'video') {
+        stylizeBtn = '<button onclick="event.stopPropagation();openReplaceAudioModal(\'' + m.id + '\')" title="Sostituisci la traccia audio del video">\uD83C\uDFB5 Audio</button>'
+          + '<button onclick="event.stopPropagation();saveMediaToLibrary(\'' + m.id + '\')" title="Salva questo video nella libreria del cliente per riusarlo">\uD83D\uDCBE Libreria</button>';
+      } else {
+        stylizeBtn = '<span></span>';
+      }
       const arrows = MEDIA.length > 1
         ? '<button class="btn-arrow" onclick="event.stopPropagation();moveMedia(\'' + m.id + '\', -1)" ' + (i === 0 ? 'disabled' : '') + ' title="Sposta a sinistra">\u2190</button>'
           + '<button class="btn-arrow" onclick="event.stopPropagation();moveMedia(\'' + m.id + '\', 1)" ' + (i === MEDIA.length - 1 ? 'disabled' : '') + ' title="Sposta a destra">\u2192</button>'
@@ -1367,6 +1371,202 @@
     });
   }
   window.openLibraryPicker = openLibraryPicker;
+
+  // Modale "Sostituisci audio del video": select audio (cliente + globale) +
+  // trim start/end + scelta sovrascrivi/duplica. POST /:id/media/:mid/replace-audio.
+  async function openReplaceAudioModal(mediaId) {
+    const escAttr = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    const fmtSec = (s) => {
+      if (!isFinite(s) || s < 0) return '0:00';
+      const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+      return m + ':' + String(sec).padStart(2, '0');
+    };
+
+    let clientAudio = [], globalTracks = [];
+    try {
+      const [a, b] = await Promise.all([
+        apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library?kind=audio').catch(() => ({ items: [] })),
+        apiFetch('/dashboard/api/music').catch(() => ({ tracks: [] }))
+      ]);
+      clientAudio = (a && a.items) || [];
+      globalTracks = (b && b.tracks) || [];
+    } catch (err) {
+      await showAlert('Errore caricamento audio: ' + err.message);
+      return;
+    }
+
+    if (!clientAudio.length && !globalTracks.length) {
+      await showAlert('Nessuna traccia audio disponibile.\n\nCarica un audio dalla scheda cliente (tab "Libreria Media") oppure dalla libreria musicale globale.');
+      return;
+    }
+
+    const clientOpts = clientAudio.length
+      ? '<optgroup label="\uD83D\uDCDA Libreria del cliente">' + clientAudio.map(a => `<option value="client:${escAttr(a.id)}" data-url="${escAttr(a.url)}">${escAttr(a.original_name || a.filename)} (${(a.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+      : '';
+    const globalOpts = globalTracks.length
+      ? '<optgroup label="\uD83C\uDF10 Libreria globale">' + globalTracks.map(t => `<option value="${escAttr(t.filename)}" data-url="/music/${escAttr(t.filename)}">${escAttr(t.filename)} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+      : '';
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:10px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:15px">\uD83C\uDFB5 Sostituisci audio del video</strong>
+          <button id="ra-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
+        </div>
+        <div style="padding:18px 20px">
+
+          <div style="margin-bottom:14px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px">1. Scegli traccia audio</label>
+            <select id="ra-select" style="width:100%;padding:8px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px">
+              <option value="">— Seleziona una traccia —</option>
+              ${clientOpts}${globalOpts}
+            </select>
+          </div>
+
+          <div id="ra-trim" style="display:none;margin-bottom:14px;padding:12px;background:var(--gray-50);border-radius:6px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:8px">2. Anteprima e trim (opzionale)</label>
+            <audio id="ra-audio" controls style="width:100%;margin-bottom:8px"></audio>
+            <div style="font-size:11px;color:var(--gray-500);margin-bottom:8px">Durata totale: <span id="ra-duration">—</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+              <label style="font-size:11px;color:var(--gray-600)">Inizio (s)
+                <input type="number" id="ra-start" value="0" min="0" step="0.1" style="width:100%;padding:6px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px;margin-top:2px">
+              </label>
+              <label style="font-size:11px;color:var(--gray-600)">Fine (s)
+                <input type="number" id="ra-end" value="" min="0" step="0.1" placeholder="fine traccia" style="width:100%;padding:6px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px;margin-top:2px">
+              </label>
+              <button id="ra-preview" type="button" class="btn btn-sm btn-secondary" style="white-space:nowrap">▶ Anteprima trim</button>
+            </div>
+            <div style="font-size:11px;color:var(--gray-500);margin-top:6px">L'audio si <strong>looppa</strong> automaticamente se più corto del video.</div>
+          </div>
+
+          <div id="ra-mode-section" style="display:none;margin-bottom:14px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px">3. Cosa fare con il video originale?</label>
+            <label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;margin-bottom:6px;cursor:pointer">
+              <input type="radio" name="ra-mode" value="overwrite" checked style="margin-top:2px">
+              <div>
+                <div style="font-size:13px;font-weight:600">\uD83D\uDD01 Sovrascrivi il video originale</div>
+                <div style="font-size:11px;color:var(--gray-500)">Mantieni un solo media. L'audio originale verrà perso.</div>
+              </div>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;cursor:pointer">
+              <input type="radio" name="ra-mode" value="duplicate" style="margin-top:2px">
+              <div>
+                <div style="font-size:13px;font-weight:600">\uD83D\uDCCB Mantieni l'originale e crea un nuovo video</div>
+                <div style="font-size:11px;color:var(--gray-500)">Avrai due media: l'originale + uno con il nuovo audio.</div>
+              </div>
+            </label>
+          </div>
+
+        </div>
+        <div style="padding:12px 20px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:8px">
+          <button id="ra-cancel" class="btn btn-sm btn-secondary">Annulla</button>
+          <button id="ra-apply" class="btn btn-sm btn-primary" disabled>Applica</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    overlay.querySelector('#ra-close').onclick = close;
+    overlay.querySelector('#ra-cancel').onclick = close;
+
+    const sel = overlay.querySelector('#ra-select');
+    const audio = overlay.querySelector('#ra-audio');
+    const trimBox = overlay.querySelector('#ra-trim');
+    const modeBox = overlay.querySelector('#ra-mode-section');
+    const startInp = overlay.querySelector('#ra-start');
+    const endInp = overlay.querySelector('#ra-end');
+    const durSpan = overlay.querySelector('#ra-duration');
+    const applyBtn = overlay.querySelector('#ra-apply');
+    const previewBtn = overlay.querySelector('#ra-preview');
+
+    let previewTimer = null;
+
+    sel.addEventListener('change', () => {
+      const opt = sel.options[sel.selectedIndex];
+      const url = opt && opt.dataset.url;
+      if (!url) {
+        trimBox.style.display = 'none';
+        modeBox.style.display = 'none';
+        applyBtn.disabled = true;
+        return;
+      }
+      audio.src = url;
+      audio.load();
+      trimBox.style.display = 'block';
+      modeBox.style.display = 'block';
+      applyBtn.disabled = false;
+      durSpan.textContent = '—';
+      startInp.value = '0';
+      endInp.value = '';
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+      const d = audio.duration;
+      if (isFinite(d) && d > 0) {
+        durSpan.textContent = fmtSec(d) + ' (' + d.toFixed(1) + 's)';
+        startInp.max = d.toFixed(1);
+        endInp.max = d.toFixed(1);
+        endInp.placeholder = d.toFixed(1);
+      }
+    });
+
+    previewBtn.addEventListener('click', () => {
+      if (previewTimer) { clearTimeout(previewTimer); previewTimer = null; }
+      const s = Math.max(0, parseFloat(startInp.value) || 0);
+      const e = parseFloat(endInp.value) || (audio.duration || 0);
+      if (e <= s) { showAlert('Fine deve essere maggiore di inizio'); return; }
+      audio.currentTime = s;
+      audio.play();
+      previewTimer = setTimeout(() => {
+        audio.pause();
+        previewTimer = null;
+      }, Math.round((e - s) * 1000));
+    });
+
+    applyBtn.addEventListener('click', async () => {
+      const audioSource = sel.value;
+      if (!audioSource) return;
+      const startSec = Math.max(0, parseFloat(startInp.value) || 0);
+      const endRaw = endInp.value;
+      const endSec = (endRaw === '' || endRaw == null) ? null : parseFloat(endRaw);
+      if (endSec != null && endSec <= startSec) { await showAlert('Fine deve essere maggiore di inizio'); return; }
+      const mode = (overlay.querySelector('input[name="ra-mode"]:checked') || {}).value || 'overwrite';
+
+      applyBtn.disabled = true;
+      applyBtn.innerHTML = '<span class="loading"></span> Elaborazione...';
+      try {
+        const r = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media/' + mediaId + '/replace-audio', {
+          method: 'POST',
+          body: { audio_source: audioSource, start_sec: startSec, end_sec: endSec, mode }
+        });
+        if (r.error) { await showAlert(r.error); applyBtn.disabled = false; applyBtn.textContent = 'Applica'; return; }
+        if (r.media) {
+          if (r.mode === 'duplicate') {
+            MEDIA.push(r.media);
+          } else {
+            const idx = MEDIA.findIndex(m => m.id === r.media.id);
+            if (idx >= 0) {
+              // Aggiorna URL con cache buster per forzare reload del player
+              r.media.url = r.media.url + (r.media.url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+              MEDIA[idx] = r.media;
+            }
+          }
+          renderMedia();
+        }
+        toast(r.mode === 'duplicate' ? 'Nuovo video creato con audio sostituito' : 'Audio sostituito');
+        close();
+      } catch (err) {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Applica';
+        await showAlert('Errore: ' + err.message);
+      }
+    });
+  }
+  window.openReplaceAudioModal = openReplaceAudioModal;
 
   async function generateImage() {
     const btn = document.getElementById('gen-image-btn');
