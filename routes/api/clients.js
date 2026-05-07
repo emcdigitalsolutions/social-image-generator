@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -17,8 +18,22 @@ router.use(authMiddleware);
 // Sub-router libreria media per cliente: /:id/library
 router.use('/:clientId/library', require('./library'));
 
+// Filesystem branding del cliente: public/images/<clientId>/branding/
+// Path scelto perché public/images/ è l'UNICO volume persistente in Coolify
+// (assets/ e templates/ vengono ricreati dall'image Docker a ogni deploy →
+//  i logo/tema custom caricati a runtime sparivano).
+function brandingDir(clientId) {
+  return path.join(__dirname, '..', '..', 'public', 'images', clientId, 'branding');
+}
+function ensureBrandingDir(clientId) {
+  const dir = brandingDir(clientId);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+// Multer scrive in tmp; sposto poi io nel branding folder corretto del cliente.
 const logoUpload = multer({
-  dest: path.join(__dirname, '..', '..', 'assets'),
+  dest: path.join(os.tmpdir(), 'sig-logo-upload'),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = ['image/svg+xml', 'image/jpeg', 'image/png'];
@@ -31,7 +46,7 @@ const logoUpload = multer({
 });
 
 const themeUpload = multer({
-  dest: path.join(__dirname, '..', '..', 'templates', 'themes'),
+  dest: path.join(os.tmpdir(), 'sig-theme-upload'),
   limits: { fileSize: 512 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'text/css' || file.originalname.endsWith('.css')) {
@@ -209,22 +224,31 @@ router.post('/:id/logo', logoUpload.single('logo'), (req, res) => {
 
   const db = getDb();
   const filename = `logo-${req.params.id}.svg`;
-  const dest = path.join(__dirname, '..', '..', 'assets', filename);
+  const dest = path.join(ensureBrandingDir(req.params.id), filename);
   const isSvg = req.file.mimetype === 'image/svg+xml' || req.file.originalname.endsWith('.svg');
 
-  if (isSvg) {
-    fs.renameSync(req.file.path, dest);
-  } else {
-    // Convert JPG/PNG to SVG wrapper with embedded base64
-    const imageData = fs.readFileSync(req.file.path);
-    const base64 = imageData.toString('base64');
-    const mimeType = req.file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
-    const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200" viewBox="0 0 200 200">
+  try {
+    if (isSvg) {
+      fs.renameSync(req.file.path, dest);
+    } else {
+      // Convert JPG/PNG to SVG wrapper with embedded base64
+      const imageData = fs.readFileSync(req.file.path);
+      const base64 = imageData.toString('base64');
+      const mimeType = req.file.mimetype === 'image/png' ? 'image/png' : 'image/jpeg';
+      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200" viewBox="0 0 200 200">
   <image width="200" height="200" href="data:${mimeType};base64,${base64}" />
 </svg>`;
-    fs.writeFileSync(dest, svgContent);
-    // Remove temp file
-    fs.unlinkSync(req.file.path);
+      fs.writeFileSync(dest, svgContent);
+      try { fs.unlinkSync(req.file.path); } catch (_) {}
+    }
+  } catch (err) {
+    // EXDEV (cross-device) può capitare con tmp su filesystem diverso
+    if (err.code === 'EXDEV') {
+      fs.copyFileSync(req.file.path, dest);
+      try { fs.unlinkSync(req.file.path); } catch (_) {}
+    } else {
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   db.prepare("UPDATE clients SET logo_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
@@ -234,7 +258,12 @@ router.post('/:id/logo', logoUpload.single('logo'), (req, res) => {
 // Serve logo preview (extracts raw image from SVG wrapper for raster logos)
 router.get('/:id/logo-preview', (req, res) => {
   const filename = `logo-${req.params.id}.svg`;
-  const filepath = path.join(__dirname, '..', '..', 'assets', filename);
+  // Prima cerca nel branding folder runtime; fallback su assets/ per i preset
+  // hardcoded (es. logo-emc.svg già nel build image).
+  let filepath = path.join(brandingDir(req.params.id), filename);
+  if (!fs.existsSync(filepath)) {
+    filepath = path.join(__dirname, '..', '..', 'assets', filename);
+  }
   if (!fs.existsSync(filepath)) {
     return res.status(404).json({ error: 'Logo non trovato' });
   }
@@ -301,7 +330,7 @@ router.post('/:id/import-logo', async (req, res) => {
 
     const db = getDb();
     const filename = `logo-${req.params.id}.svg`;
-    const dest = path.join(__dirname, '..', '..', 'assets', filename);
+    const dest = path.join(ensureBrandingDir(req.params.id), filename);
     const contentType = imageBuffer.contentType.toLowerCase();
     const buf = imageBuffer.buffer;
 
@@ -329,19 +358,26 @@ router.post('/:id/import-logo', async (req, res) => {
 // Upload/generate theme CSS
 router.post('/:id/theme', themeUpload.single('theme'), (req, res) => {
   const db = getDb();
+  const filename = `${req.params.id}.css`;
+  const dest = path.join(ensureBrandingDir(req.params.id), filename);
 
   if (req.file) {
-    const filename = `${req.params.id}.css`;
-    const dest = path.join(__dirname, '..', '..', 'templates', 'themes', filename);
-    fs.renameSync(req.file.path, dest);
+    try {
+      fs.renameSync(req.file.path, dest);
+    } catch (err) {
+      if (err.code === 'EXDEV') {
+        fs.copyFileSync(req.file.path, dest);
+        try { fs.unlinkSync(req.file.path); } catch (_) {}
+      } else {
+        return res.status(500).json({ error: err.message });
+      }
+    }
     db.prepare("UPDATE clients SET theme_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
     return res.json({ filename });
   }
 
   // Generate from body CSS content
   if (req.body.css) {
-    const filename = `${req.params.id}.css`;
-    const dest = path.join(__dirname, '..', '..', 'templates', 'themes', filename);
     fs.writeFileSync(dest, req.body.css);
     db.prepare("UPDATE clients SET theme_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
     return res.json({ filename });
@@ -365,7 +401,7 @@ router.post('/:id/generate-theme', async (req, res) => {
     const css = await generateThemeCSS(client, colors);
 
     const filename = `${req.params.id}.css`;
-    const dest = path.join(__dirname, '..', '..', 'templates', 'themes', filename);
+    const dest = path.join(ensureBrandingDir(req.params.id), filename);
     fs.writeFileSync(dest, css);
     db.prepare("UPDATE clients SET theme_filename = ?, updated_at = datetime('now') WHERE id = ?").run(filename, req.params.id);
 
