@@ -1146,6 +1146,141 @@ router.post('/:id/media/:mediaId/trim', async (req, res) => {
   }
 });
 
+// Anima un'immagine del post in un video Reel via Ken Burns slideshow
+// (1 sola immagine, durata configurabile, audio opzionale con trim+loop).
+// L'immagine originale resta nel post; il video viene aggiunto come nuovo media.
+//
+// Body:
+//   duration_sec: 3-8 (default 5)
+//   aspect_ratio: '9:16' | '1:1' | '4:5' | '16:9' (default 9:16)
+//   audio_source: "client:<id>" | "<filename in /music/>" | null
+//   audio_start_sec: number (default 0, ignored se no audio)
+//   audio_end_sec: number | null (null = fino a fine traccia)
+router.post('/:id/media/:mediaId/animate-image', async (req, res) => {
+  const clientLibrary = require('../../lib/client-library');
+  const { spawn } = require('child_process');
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+
+  const m = postMedia.getMedia(req.params.mediaId);
+  if (!m || m.post_id !== post.id) return res.status(404).json({ error: 'Media not found' });
+  if (m.kind !== 'image') return res.status(400).json({ error: 'Solo le immagini possono essere animate in Reel' });
+
+  const validRatios = ['1:1', '4:5', '9:16', '16:9'];
+  const aspectRatio = validRatios.includes(req.body && req.body.aspect_ratio) ? req.body.aspect_ratio : '9:16';
+  const duration = Math.max(3, Math.min(8, parseInt(req.body && req.body.duration_sec, 10) || 5));
+
+  const srcImage = path.join(postMedia.postDir(post.client_id, post.id), m.filename);
+  if (!fs.existsSync(srcImage)) return res.status(404).json({ error: 'File immagine sorgente non trovato' });
+
+  // Risolvi audio source (stesso pattern di /generate-ai-video e /replace-audio)
+  let audioPathRaw = null;
+  let audioLabel = '';
+  const rawAudio = req.body && req.body.audio_source;
+  if (rawAudio && typeof rawAudio === 'string') {
+    if (rawAudio.startsWith('client:')) {
+      const itemId = rawAudio.slice('client:'.length);
+      const item = clientLibrary.getLibraryItem(itemId);
+      if (item && item.kind === 'audio' && item.client_id === post.client_id) {
+        const candidate = path.join(clientLibrary.libraryDir(item.client_id, 'audio'), item.filename);
+        if (fs.existsSync(candidate)) { audioPathRaw = candidate; audioLabel = item.original_name || item.filename; }
+      }
+    } else {
+      const af = rawAudio.replace(/[^a-zA-Z0-9._-]/g, '');
+      const musicDir = path.join(__dirname, '..', '..', 'public', 'music');
+      const candidate = path.resolve(musicDir, af);
+      if (candidate.startsWith(path.resolve(musicDir) + path.sep) && fs.existsSync(candidate)) {
+        audioPathRaw = candidate;
+        audioLabel = af;
+      }
+    }
+    if (!audioPathRaw) console.warn('[animate-image] audio non valido:', rawAudio);
+  }
+
+  // Se è richiesto un trim audio, pre-trimmo in un file temporaneo.
+  // createSlideshow looppa l'audio passato con -stream_loop -1, quindi
+  // gli passiamo già il segmento desiderato.
+  const tmpFiles = [];
+  let audioPath = audioPathRaw;
+  if (audioPathRaw) {
+    const startSec = Math.max(0, Number(req.body.audio_start_sec) || 0);
+    const endVal = req.body.audio_end_sec;
+    const endSec = (endVal == null || endVal === '') ? null : Number(endVal);
+    if (startSec > 0 || endSec != null) {
+      const trimmedTmp = path.join(os.tmpdir(), `sig-anim-audio-${uuidv4()}${path.extname(audioPathRaw)}`);
+      const args = ['-y', '-i', audioPathRaw, '-ss', startSec.toFixed(3)];
+      if (endSec != null) args.push('-to', endSec.toFixed(3));
+      args.push('-c:a', 'copy', trimmedTmp);
+      try {
+        await new Promise((resolve, reject) => {
+          const p = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
+          let stderr = '';
+          p.stderr.on('data', (c) => { stderr += c.toString(); });
+          p.on('close', (code) => code === 0 ? resolve() : reject(new Error('audio trim ' + code + ': ' + stderr.split('\n').slice(-5).join('\n'))));
+          p.on('error', reject);
+        });
+        audioPath = trimmedTmp;
+        tmpFiles.push(trimmedTmp);
+      } catch (err) {
+        return res.status(500).json({ error: 'Trim audio fallito: ' + err.message });
+      }
+    }
+  }
+
+  const videoTmp = path.join(os.tmpdir(), `sig-anim-${uuidv4()}.mp4`);
+  tmpFiles.push(videoTmp);
+
+  try {
+    const slideshowResult = await videoSlideshow.createSlideshow([srcImage], {
+      aspectRatio,
+      clipDuration: duration,
+      outputPath: videoTmp,
+      audioPath
+    });
+
+    const newMedia = postMedia.attachGeneratedFile({
+      clientId: post.client_id,
+      postId: post.id,
+      absolutePath: videoTmp,
+      source: 'animated_from_image',
+      styledFromId: m.id,
+      kind: 'video'
+    });
+    // attachGeneratedFile fa moveSync: videoTmp è stato spostato
+    const idx = tmpFiles.indexOf(videoTmp);
+    if (idx >= 0) tmpFiles.splice(idx, 1);
+
+    db.prepare('UPDATE post_media SET width = ?, height = ? WHERE id = ?')
+      .run(slideshowResult.width, slideshowResult.height, newMedia.id);
+    const result = postMedia.getMedia(newMedia.id);
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.image_animated',
+      entity_type: 'post_media',
+      entity_id: m.id,
+      details: {
+        post_id: post.id,
+        source_image_id: m.id,
+        new_media_id: newMedia.id,
+        aspect_ratio: aspectRatio,
+        duration_sec: duration,
+        audio_source: audioLabel || null
+      }
+    });
+
+    res.json({ media: result, duration_sec: duration });
+  } catch (err) {
+    console.error('[animate-image] error:', err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    for (const f of tmpFiles) {
+      try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch (_) {}
+    }
+  }
+});
+
 // Reorder media items
 router.put('/:id/media/reorder', (req, res) => {
   const db = getDb();
