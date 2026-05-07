@@ -533,7 +533,14 @@
     if (kind === 'video') {
       root.innerHTML = items.map(it => `
         <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#000;position:relative">
-          <video src="${escAttr(it.url)}#t=0.5" controls preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:contain;display:block;background:#000"></video>
+          <div onclick="openLibraryVideoPreview('${escAttr(it.url)}', '${escAttr(it.original_name || it.filename)}')" style="position:relative;cursor:pointer;background:#000;aspect-ratio:9/16" title="Click per vedere l'anteprima">
+            <video src="${escAttr(it.url)}#t=0.5" muted preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;pointer-events:none"></video>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.15);transition:background 0.15s" onmouseover="this.style.background='rgba(0,0,0,0.35)'" onmouseout="this.style.background='rgba(0,0,0,0.15)'">
+              <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="#1f2937"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            </div>
+          </div>
           <div style="padding:6px 8px;background:#fff;border-top:1px solid var(--gray-200)">
             <div style="font-size:11px;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
             <div style="font-size:10px;color:var(--gray-500);display:flex;justify-content:space-between;align-items:center;margin-top:3px">
@@ -620,6 +627,30 @@
     }
   }
   window.deleteLibraryItem = deleteLibraryItem;
+
+  // Apre una lightbox con il player video grande (controls + autoplay).
+  // Più affidabile dell'inline preview nelle card piccole della grid.
+  function openLibraryVideoPreview(url, name) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    const escAttr = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    overlay.innerHTML = `
+      <div style="position:relative;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:13px">
+          <span style="font-weight:600;max-width:70vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escAttr(name)}</span>
+          <button id="lvp-close" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;line-height:1">×</button>
+        </div>
+        <video src="${escAttr(url)}" controls autoplay style="max-width:90vw;max-height:80vh;background:#000;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5)"></video>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    overlay.querySelector('#lvp-close').onclick = close;
+    const onKey = e => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+  }
+  window.openLibraryVideoPreview = openLibraryVideoPreview;
 
   // Lazy-load alla prima apertura del tab Libreria
   let libraryLoaded = false;
