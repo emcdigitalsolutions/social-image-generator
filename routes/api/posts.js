@@ -214,7 +214,9 @@ router.post('/:id/build-visual-prompt', async (req, res) => {
   const aspectRatio = validRatios.includes(req.body && req.body.aspect_ratio) ? req.body.aspect_ratio : '1:1';
 
   try {
-    const prompt = await visualPrompt.buildPrompt(client, post, aspectRatio);
+    // consumeRotation:false → la preview non avanza il last_visual_style_index;
+    // verrà avanzato al momento della generazione vera (/generate-ai-image).
+    const prompt = await visualPrompt.buildPrompt(client, post, aspectRatio, { consumeRotation: false });
     res.json({ prompt, aspect_ratio: aspectRatio });
   } catch (err) {
     console.error('[build-visual-prompt] error:', err.message);
@@ -280,7 +282,16 @@ router.post('/:id/generate-ai-image', async (req, res) => {
   const overridePrompt = (req.body && typeof req.body.prompt === 'string' && req.body.prompt.trim()) || null;
 
   try {
-    const finalPrompt = overridePrompt || await visualPrompt.buildPrompt(client, post, aspectRatio);
+    let finalPrompt;
+    if (overridePrompt) {
+      finalPrompt = overridePrompt;
+      // Override → buildPrompt non gira: avanzo la rotazione manualmente
+      // così la prossima preview/generazione non ripete lo stesso stile.
+      visualPrompt.advanceStyleRotation(client);
+    } else {
+      // buildPrompt consume la rotazione internamente (consumeRotation=true default)
+      finalPrompt = await visualPrompt.buildPrompt(client, post, aspectRatio);
+    }
     const { buffer, mime } = await geminiImage.generateForPost(apiKey, finalPrompt, aspectRatio);
 
     // Scrivi su tmp e attacca come post_media generato
