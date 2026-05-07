@@ -222,6 +222,42 @@ router.post('/:id/build-visual-prompt', async (req, res) => {
   }
 });
 
+// Traduce un prompt visivo (EN) in italiano per UX leggibile.
+// Il prompt resta in inglese per qualità immagine, ma sotto la textarea
+// l'utente vede "Cosa stai chiedendo all'AI" in italiano (sola lettura).
+router.post('/:id/translate-prompt', async (req, res) => {
+  const { callGemini } = require('../../lib/gemini');
+  const db = getDb();
+  const post = db.prepare('SELECT id, client_id FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const promptText = String((req.body && req.body.prompt) || '').slice(0, 4000).trim();
+  if (!promptText) return res.status(400).json({ error: 'prompt richiesto' });
+
+  const apiKey = getEffectiveGeminiKey(client);
+  if (!apiKey) return res.status(400).json({ error: 'Nessuna Gemini API key disponibile' });
+
+  const sysInstr = `Traduci in italiano corrente questo prompt visivo per un AI image generator.
+Output: SOLO la traduzione, una singola riga, senza prefissi tipo "Traduzione:" o virgolette.
+Mantieni i termini tecnici fotografici comprensibili a un non addetto (es. "shallow depth of field" → "messa a fuoco selettiva", "bokeh" → "bokeh", "editorial photography" → "fotografia editoriale").
+Non aggiungere spiegazioni, non parafrasare in modo eccessivo: l'obiettivo è che l'utente capisca cosa sta chiedendo all'AI.`;
+
+  try {
+    const { text } = await callGemini(apiKey, sysInstr, promptText, {
+      temperature: 0.2,
+      maxTokens: 500
+    });
+    const translation = (text || '').replace(/^["'`]|["'`]$/g, '').trim();
+    if (!translation) return res.status(500).json({ error: 'Traduzione vuota' });
+    res.json({ translation });
+  } catch (err) {
+    console.error('[translate-prompt] error:', err.message);
+    res.status(500).json({ error: 'Traduzione fallita', details: err.message });
+  }
+});
+
 // Generate AI image via Gemini Flash Image (Nano-Banana, gratuito).
 // Differente da /generate-image: niente template HTML, l'immagine è generata
 // dall'AI a partire dalla caption + brand. Aspect ratio configurabile.

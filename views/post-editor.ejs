@@ -1609,9 +1609,17 @@
             <button id="pe-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
           </div>
           <div style="padding:16px 20px;overflow-y:auto;flex:1">
-            <p style="font-size:12px;color:var(--gray-600);margin:0 0 8px">Modifica il prompt prima di generare. Suggerimenti: aggiungi dettagli su lighting, mood, palette colori, soggetti specifici. Mantieni "no text, no typography, no watermark" per evitare lettere malformate.</p>
-            <textarea id="pe-textarea" style="width:100%;min-height:240px;padding:10px;border:1px solid var(--gray-300);border-radius:6px;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box"></textarea>
+            <p style="font-size:12px;color:var(--gray-600);margin:0 0 8px">Modifica il prompt (in inglese, per qualità ottimale dell'AI). Suggerimenti: aggiungi dettagli su lighting, mood, palette colori, soggetti specifici. Mantieni "no text, no typography, no watermark" per evitare lettere malformate.</p>
+            <textarea id="pe-textarea" style="width:100%;min-height:200px;padding:10px;border:1px solid var(--gray-300);border-radius:6px;font-family:inherit;font-size:13px;line-height:1.5;resize:vertical;box-sizing:border-box"></textarea>
             <div style="margin-top:6px;font-size:11px;color:var(--gray-500)"><span id="pe-count">0</span> caratteri</div>
+
+            <div style="margin-top:14px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <strong style="font-size:11px;color:#0369a1;text-transform:uppercase;letter-spacing:0.05em">💬 Cosa stai chiedendo all'AI (italiano)</strong>
+                <button id="pe-retranslate" type="button" class="btn btn-sm" style="background:#bae6fd;color:#0c4a6e;font-size:11px;padding:3px 8px" title="Aggiorna la traduzione dopo aver modificato il prompt">🔄 Aggiorna</button>
+              </div>
+              <div id="pe-translation" style="font-size:13px;line-height:1.5;color:#0c4a6e;font-style:italic">— traduzione in corso —</div>
+            </div>
           </div>
           <div style="padding:14px 20px;border-top:1px solid var(--gray-200);display:flex;gap:8px;justify-content:flex-end">
             <button id="pe-cancel" class="btn btn-sm" style="background:var(--gray-200)">Annulla</button>
@@ -1623,16 +1631,66 @@
 
       const ta = overlay.querySelector('#pe-textarea');
       const counter = overlay.querySelector('#pe-count');
+      const trDiv = overlay.querySelector('#pe-translation');
+      const retransBtn = overlay.querySelector('#pe-retranslate');
       ta.value = initialPrompt;
       counter.textContent = ta.value.length;
       ta.addEventListener('input', () => { counter.textContent = ta.value.length; });
       ta.focus();
       ta.setSelectionRange(ta.value.length, ta.value.length);
 
+      // Cache traduzioni: stesso testo → no rifetch.
+      const trCache = new Map();
+      let lastTranslated = '';
+
+      async function refreshTranslation(force = false) {
+        const text = ta.value.trim();
+        if (!text) { trDiv.textContent = '—'; return; }
+        if (!force && text === lastTranslated) return;
+        if (trCache.has(text)) {
+          trDiv.textContent = trCache.get(text);
+          lastTranslated = text;
+          return;
+        }
+        retransBtn.disabled = true;
+        const prevHtml = retransBtn.innerHTML;
+        retransBtn.innerHTML = '<span class="loading"></span>';
+        trDiv.style.opacity = '0.6';
+        try {
+          const r = await apiFetch('/dashboard/api/posts/' + POST_ID + '/translate-prompt', {
+            method: 'POST',
+            body: { prompt: text }
+          });
+          if (r && r.translation) {
+            trCache.set(text, r.translation);
+            trDiv.textContent = r.translation;
+            lastTranslated = text;
+          } else {
+            trDiv.textContent = (r && r.error) ? '(' + r.error + ')' : '(traduzione non disponibile)';
+          }
+        } catch (err) {
+          trDiv.textContent = '(errore traduzione: ' + err.message + ')';
+        } finally {
+          retransBtn.disabled = false;
+          retransBtn.innerHTML = prevHtml;
+          trDiv.style.opacity = '1';
+        }
+      }
+
+      // Traduzione iniziale (non blocca l'apertura della modale).
+      refreshTranslation(true);
+      // Re-traduzione on-blur del textarea (l'utente ha finito di modificare).
+      ta.addEventListener('blur', () => refreshTranslation(false));
+      retransBtn.addEventListener('click', () => refreshTranslation(true));
+
       const close = (val) => { document.body.removeChild(overlay); resolve(val); };
       overlay.querySelector('#pe-close').onclick = () => close(null);
       overlay.querySelector('#pe-cancel').onclick = () => close(null);
-      overlay.querySelector('#pe-reset').onclick = () => { ta.value = initialPrompt; counter.textContent = ta.value.length; };
+      overlay.querySelector('#pe-reset').onclick = () => {
+        ta.value = initialPrompt;
+        counter.textContent = ta.value.length;
+        refreshTranslation(false);
+      };
       overlay.querySelector('#pe-confirm').onclick = () => {
         const v = ta.value.trim();
         if (!v) { ta.focus(); return; }
