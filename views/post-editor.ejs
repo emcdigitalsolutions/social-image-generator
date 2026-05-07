@@ -614,8 +614,12 @@
         }
       }
       let stylizeBtn;
-      if (m.kind === 'image' && m.source !== 'styled') {
-        stylizeBtn = '<button onclick="event.stopPropagation();stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>';
+      if (m.kind === 'image') {
+        stylizeBtn = '';
+        if (m.source !== 'styled') {
+          stylizeBtn += '<button onclick="event.stopPropagation();stylizeMedia(\'' + m.id + '\')" title="Applica overlay branded (template Puppeteer)">\u2728 Stilizza</button>';
+        }
+        stylizeBtn += '<button onclick="event.stopPropagation();openAnimateImageModal(\'' + m.id + '\')" title="Trasforma questa immagine in un video Reel (Ken Burns + audio opzionale)">\uD83C\uDFAC Reel</button>';
       } else if (m.kind === 'video') {
         stylizeBtn = '<button onclick="event.stopPropagation();openReplaceAudioModal(\'' + m.id + '\')" title="Sostituisci la traccia audio del video">\uD83C\uDFB5 Audio</button>'
           + '<button onclick="event.stopPropagation();saveMediaToLibrary(\'' + m.id + '\')" title="Salva questo video nella libreria del cliente per riusarlo">\uD83D\uDCBE Libreria</button>';
@@ -1674,6 +1678,198 @@
     });
   }
   window.openReplaceAudioModal = openReplaceAudioModal;
+
+  // Modale "Anima immagine in Reel": durata, aspect ratio, audio opzionale con trim.
+  // POST /:id/media/:mid/animate-image. Aggiunge un nuovo media video, l'immagine
+  // originale resta nel post.
+  async function openAnimateImageModal(mediaId) {
+    const escAttr = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    const fmtSec = (s) => {
+      if (!isFinite(s) || s < 0) return '0:00';
+      const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+      return m + ':' + String(sec).padStart(2, '0');
+    };
+
+    let clientAudio = [], globalTracks = [];
+    try {
+      const [a, b] = await Promise.all([
+        apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library?kind=audio').catch(() => ({ items: [] })),
+        apiFetch('/dashboard/api/music').catch(() => ({ tracks: [] }))
+      ]);
+      clientAudio = (a && a.items) || [];
+      globalTracks = (b && b.tracks) || [];
+    } catch (err) { /* prosegui senza audio */ }
+
+    const clientOpts = clientAudio.length
+      ? '<optgroup label="\uD83D\uDCDA Libreria del cliente">' + clientAudio.map(a => `<option value="client:${escAttr(a.id)}" data-url="${escAttr(a.url)}">${escAttr(a.original_name || a.filename)} (${(a.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+      : '';
+    const globalOpts = globalTracks.length
+      ? '<optgroup label="\uD83C\uDF10 Libreria globale">' + globalTracks.map(t => `<option value="${escAttr(t.filename)}" data-url="/music/${escAttr(t.filename)}">${escAttr(t.filename)} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+      : '';
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:10px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+        <div style="padding:14px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:15px">\uD83C\uDFAC Anima immagine in Reel</strong>
+          <button id="ai-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
+        </div>
+        <div style="padding:18px 20px">
+
+          <div style="font-size:12px;color:var(--gray-600);margin-bottom:14px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;line-height:1.5">
+            L'immagine viene animata con effetto <strong>Ken Burns</strong> (zoom dolce + leggero pan) per renderla guardabile in formato video. L'immagine originale resta nel post; il Reel viene aggiunto come nuovo media.
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:var(--gray-700);margin-bottom:4px">Durata (s)</label>
+              <input type="number" id="ai-duration" value="5" min="3" max="8" step="1" style="width:100%;padding:7px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px">
+              <div style="font-size:10px;color:var(--gray-500);margin-top:3px">3-8 secondi</div>
+            </div>
+            <div>
+              <label style="display:block;font-size:11px;font-weight:600;color:var(--gray-700);margin-bottom:4px">Aspect ratio</label>
+              <select id="ai-ratio" style="width:100%;padding:7px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px">
+                <option value="9:16" selected>9:16 (Reel / Story)</option>
+                <option value="1:1">1:1 (Quadrato)</option>
+                <option value="4:5">4:5 (Verticale feed)</option>
+                <option value="16:9">16:9 (Orizzontale)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px">
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--gray-700);margin-bottom:6px">Audio (opzionale)</label>
+            <select id="ai-audio-select" style="width:100%;padding:8px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px">
+              <option value="">— Nessun audio (silenzioso) —</option>
+              ${clientOpts}${globalOpts}
+            </select>
+          </div>
+
+          <div id="ai-trim-box" style="display:none;margin-bottom:12px;padding:12px;background:var(--gray-50);border-radius:6px">
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--gray-700);margin-bottom:8px">Trim audio (opzionale)</label>
+            <audio id="ai-audio-preview" controls style="width:100%;margin-bottom:8px"></audio>
+            <div style="font-size:11px;color:var(--gray-500);margin-bottom:8px">Durata totale: <span id="ai-audio-duration">—</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+              <label style="font-size:11px;color:var(--gray-600)">Inizio (s)
+                <input type="number" id="ai-audio-start" value="0" min="0" step="0.1" style="width:100%;padding:6px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px;margin-top:2px">
+              </label>
+              <label style="font-size:11px;color:var(--gray-600)">Fine (s)
+                <input type="number" id="ai-audio-end" value="" min="0" step="0.1" placeholder="fine traccia" style="width:100%;padding:6px;border:1px solid var(--gray-300);border-radius:4px;font-size:13px;margin-top:2px">
+              </label>
+              <button id="ai-audio-preview-btn" type="button" class="btn btn-sm btn-secondary" style="white-space:nowrap">▶ Anteprima</button>
+            </div>
+            <div style="font-size:11px;color:var(--gray-500);margin-top:6px">L'audio si <strong>looppa</strong> automaticamente per coprire la durata del video.</div>
+          </div>
+
+        </div>
+        <div style="padding:12px 20px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:8px">
+          <button id="ai-cancel" class="btn btn-sm btn-secondary">Annulla</button>
+          <button id="ai-apply" class="btn btn-sm btn-primary">\uD83C\uDFAC Genera Reel</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    overlay.querySelector('#ai-close').onclick = close;
+    overlay.querySelector('#ai-cancel').onclick = close;
+
+    const sel = overlay.querySelector('#ai-audio-select');
+    const audio = overlay.querySelector('#ai-audio-preview');
+    const trimBox = overlay.querySelector('#ai-trim-box');
+    const startInp = overlay.querySelector('#ai-audio-start');
+    const endInp = overlay.querySelector('#ai-audio-end');
+    const durSpan = overlay.querySelector('#ai-audio-duration');
+    const previewBtn = overlay.querySelector('#ai-audio-preview-btn');
+    const applyBtn = overlay.querySelector('#ai-apply');
+
+    let previewTimer = null;
+
+    sel.addEventListener('change', () => {
+      const opt = sel.options[sel.selectedIndex];
+      const url = opt && opt.dataset.url;
+      if (!url) {
+        trimBox.style.display = 'none';
+        durSpan.textContent = '—';
+        return;
+      }
+      audio.src = url;
+      audio.load();
+      trimBox.style.display = 'block';
+      durSpan.textContent = '—';
+      startInp.value = '0';
+      endInp.value = '';
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+      const d = audio.duration;
+      if (isFinite(d) && d > 0) {
+        durSpan.textContent = fmtSec(d) + ' (' + d.toFixed(1) + 's)';
+        startInp.max = d.toFixed(1);
+        endInp.max = d.toFixed(1);
+        endInp.placeholder = d.toFixed(1);
+      }
+    });
+
+    previewBtn.addEventListener('click', () => {
+      if (previewTimer) { clearTimeout(previewTimer); previewTimer = null; }
+      const s = Math.max(0, parseFloat(startInp.value) || 0);
+      const e = parseFloat(endInp.value) || (audio.duration || 0);
+      if (e <= s) { showAlert('Fine deve essere maggiore di inizio'); return; }
+      audio.currentTime = s;
+      audio.play();
+      previewTimer = setTimeout(() => { audio.pause(); previewTimer = null; }, Math.round((e - s) * 1000));
+    });
+
+    applyBtn.addEventListener('click', async () => {
+      const duration = Math.max(3, Math.min(8, parseInt(overlay.querySelector('#ai-duration').value, 10) || 5));
+      const aspectRatio = overlay.querySelector('#ai-ratio').value;
+      const audioSource = sel.value || null;
+      let audioStart = 0, audioEnd = null;
+      if (audioSource) {
+        audioStart = Math.max(0, parseFloat(startInp.value) || 0);
+        const endRaw = endInp.value;
+        audioEnd = (endRaw === '' || endRaw == null) ? null : parseFloat(endRaw);
+        if (audioEnd != null && audioEnd <= audioStart) { await showAlert('Fine audio deve essere maggiore di inizio'); return; }
+      }
+
+      applyBtn.disabled = true;
+      applyBtn.innerHTML = '<span class="loading"></span> Generazione (~5-15s)...';
+      try {
+        const r = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media/' + mediaId + '/animate-image', {
+          method: 'POST',
+          body: {
+            duration_sec: duration,
+            aspect_ratio: aspectRatio,
+            audio_source: audioSource,
+            audio_start_sec: audioStart,
+            audio_end_sec: audioEnd
+          }
+        });
+        if (r.error) { await showAlert(r.error); applyBtn.disabled = false; applyBtn.innerHTML = '\uD83C\uDFAC Genera Reel'; return; }
+        if (r.media) {
+          MEDIA.push(r.media);
+          renderMedia();
+          // Se il post non è già reel/video, switcha automaticamente a reel
+          if (MEDIA_TYPE !== 'reel' && MEDIA_TYPE !== 'video' && MEDIA_TYPE !== 'story' && aspectRatio === '9:16') {
+            try {
+              await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'PUT', body: { media_type: 'reel' } });
+              if (typeof setType === 'function') setType('reel');
+            } catch (_) {}
+          }
+        }
+        toast('Reel generato (' + r.duration_sec + 's)');
+        close();
+      } catch (err) {
+        applyBtn.disabled = false;
+        applyBtn.innerHTML = '\uD83C\uDFAC Genera Reel';
+        await showAlert('Errore: ' + err.message);
+      }
+    });
+  }
+  window.openAnimateImageModal = openAnimateImageModal;
 
   async function generateImage() {
     const btn = document.getElementById('gen-image-btn');
