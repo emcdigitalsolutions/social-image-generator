@@ -938,9 +938,9 @@
 
   // --- Branding status & scan ---
   function updateBrandingStatus() {
-    const hasLogo = document.getElementById('logo-status-value').innerHTML.includes('10003') ||
+    const hasLogo = document.getElementById('logo-status-value').innerHTML.includes('\u2713') ||
       document.getElementById('logo-preview-container').style.display !== 'none';
-    const hasTheme = document.getElementById('theme-status-value').innerHTML.includes('10003');
+    const hasTheme = document.getElementById('theme-status-value').innerHTML.includes('\u2713');
     const el = document.getElementById('branding-status');
     if (hasLogo && hasTheme) {
       el.innerHTML = '<span style="color:#16a34a;font-weight:600">&#10003; Logo e Tema pronti</span>';
