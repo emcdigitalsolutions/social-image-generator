@@ -577,10 +577,39 @@ router.post('/:id/generate-ai-video', async (req, res) => {
       }
     });
 
+    // Opzionale: copia in libreria del cliente per riuso futuro.
+    let libraryItem = null;
+    if (req.body && req.body.save_to_library) {
+      try {
+        const clientLibrary = require('../../lib/client-library');
+        const srcVideo = path.join(postMedia.postDir(post.client_id, post.id), media.filename);
+        if (fs.existsSync(srcVideo)) {
+          const tmpCopy = path.join(os.tmpdir(), `sig-libauto-${uuidv4()}${path.extname(media.filename)}`);
+          fs.copyFileSync(srcVideo, tmpCopy);
+          libraryItem = await clientLibrary.addFromUpload({
+            clientId: post.client_id,
+            tmpPath: tmpCopy,
+            originalName: media.filename,
+            mimetype: 'video/mp4'
+          });
+          audit.logFromReq(req, {
+            client_id: post.client_id,
+            action: 'library.saved_from_post',
+            entity_type: 'library_item',
+            entity_id: libraryItem.id,
+            details: { post_id: post.id, source_media_id: media.id, auto: true }
+          });
+        }
+      } catch (e) {
+        console.warn('[generate-ai-video] save_to_library failed:', e.message);
+      }
+    }
+
     res.json({
       media, aspect_ratio: aspectRatio, num_clips: numClips,
       clip_duration: clipDuration, duration_sec: result.durationSec, prompts,
-      audio: audioPath ? path.basename(audioPath) : null
+      audio: audioPath ? path.basename(audioPath) : null,
+      library_item: libraryItem
     });
   } catch (err) {
     console.error('[generate-ai-video] error:', err.message);

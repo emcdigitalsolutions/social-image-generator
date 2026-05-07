@@ -2199,6 +2199,11 @@
               </div>
             </fieldset>
 
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--gray-700);margin-bottom:10px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:5px;cursor:pointer">
+              <input type="checkbox" id="vc-save-library" style="margin-top:2px">
+              <span><strong>💾 Salva anche in libreria del cliente</strong><br><span style="font-size:11px;color:var(--gray-500)">Una copia del Reel finisce in Libreria Media così puoi riusarlo in altri post. Il video resta comunque allegato a questo post.</span></span>
+            </label>
+
             <div id="vc-summary" style="font-size:11px;color:var(--gray-500);padding:8px 10px;background:var(--gray-50);border-radius:5px"></div>
           </div>
           <div style="padding:14px 20px;border-top:1px solid var(--gray-200);display:flex;gap:8px;justify-content:flex-end">
@@ -2325,7 +2330,8 @@
           aspect_ratio: overlay.querySelector('#vc-aspect').value,
           num_clips: parseInt(overlay.querySelector('#vc-num').value, 10),
           clip_duration: parseInt(overlay.querySelector('#vc-dur').value, 10),
-          audio_filename: audioFilename
+          audio_filename: audioFilename,
+          save_to_library: overlay.querySelector('#vc-save-library').checked
         });
       };
       overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
@@ -2366,7 +2372,8 @@
       renderMedia();
       const dur = typeof res.duration_sec === 'number' ? res.duration_sec.toFixed(1) : '?';
       const audioInfo = res.audio ? ' + 🎵 ' + res.audio : '';
-      toast('Reel AI generato (' + dur + 's, ' + cfg.num_clips + ' clip' + audioInfo + ')');
+      const libInfo = res.library_item ? ' · 💾 in libreria' : '';
+      toast('Reel AI generato (' + dur + 's, ' + cfg.num_clips + ' clip' + audioInfo + libInfo + ')');
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     } finally {
