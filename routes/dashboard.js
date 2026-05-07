@@ -307,7 +307,24 @@ router.get('/posts/:id', (req, res) => {
     monthUrl = `/dashboard/clients/${post.client_id}/plan/${post.editorial_plan_id}/month/${post.month_number}`;
   }
 
-  res.render('post-editor', { title: 'Editor Post', client, post, media, user: req.user, prevPostId, nextPostId, monthUrl });
+  // Categorie del piano: code → name. Permette al post-editor di mostrare il
+  // nome leggibile invece del codice, e di offrire un select dropdown.
+  let categories = [];
+  if (post.editorial_plan_id) {
+    const plan = db.prepare('SELECT plan_data FROM editorial_plans WHERE id = ?').get(post.editorial_plan_id);
+    if (plan && plan.plan_data) {
+      try {
+        const parsed = JSON.parse(plan.plan_data);
+        if (Array.isArray(parsed.categories)) {
+          categories = parsed.categories
+            .filter(c => c && c.code)
+            .map(c => ({ code: c.code, name: c.name || c.code }));
+        }
+      } catch (_) { /* plan_data malformato — fallback array vuoto */ }
+    }
+  }
+
+  res.render('post-editor', { title: 'Editor Post', client, post, media, user: req.user, prevPostId, nextPostId, monthUrl, categories });
 });
 
 // Insights overview admin: panoramica multi-cliente con KPI sintetici

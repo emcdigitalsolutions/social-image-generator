@@ -246,9 +246,31 @@
   const POST_IDS = POSTS.map(p => p.id);
   // Mappa code → nome leggibile categoria (da plan.plan_data.categories)
   const CATEGORIES_MAP = <%- JSON.stringify(categoriesMap || {}) %>;
+  // Lista ordinata categorie per dropdown selezione (code + name)
+  const CATEGORIES_LIST = <%- JSON.stringify(
+    (plan.plan_data && Array.isArray(plan.plan_data.categories))
+      ? plan.plan_data.categories.filter(c => c && c.code).map(c => ({ code: c.code, name: c.name || c.code }))
+      : []
+  ) %>;
   function categoryName(code) {
     if (!code) return 'Post';
     return CATEGORIES_MAP[code] || code;
+  }
+  // Costruisce le <option> per un select categoria. Se currentCode è presente
+  // ma non esiste più nel piano, lo aggiunge come "(orfana)" selezionato.
+  function categorySelectOptions(currentCode) {
+    const escAttr = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    let html = '<option value="">— Senza categoria —</option>';
+    let foundCurrent = false;
+    CATEGORIES_LIST.forEach(c => {
+      const sel = c.code === currentCode ? 'selected' : '';
+      if (sel) foundCurrent = true;
+      html += `<option value="${escAttr(c.code)}" ${sel}>${escAttr(c.name)}</option>`;
+    });
+    if (currentCode && !foundCurrent) {
+      html += `<option value="${escAttr(currentCode)}" selected>${escAttr(currentCode)} (orfana)</option>`;
+    }
+    return html;
   }
 
   // Filtro stato corrente
@@ -943,8 +965,8 @@
         <div class="modal-sub">Settimana ${weekNumber} · puoi avere più post nello stesso giorno (es. mattina + sera).</div>
 
         <div class="modal-row" style="flex-direction:column;align-items:stretch;gap:4px">
-          <label style="font-size:12px;font-weight:600">Categoria <span style="color:var(--gray-400);font-weight:400">(es. C7, "Eventi", facoltativo)</span></label>
-          <input type="text" id="np-cat" placeholder="es. C5 oppure Eventi" style="padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">
+          <label style="font-size:12px;font-weight:600">Categoria <span style="color:var(--gray-400);font-weight:400">(facoltativa)</span></label>
+          <select id="np-cat" style="padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">${categorySelectOptions('')}</select>
         </div>
 
         <div class="modal-row" style="flex-direction:column;align-items:stretch;gap:4px">
@@ -1032,19 +1054,68 @@
     }
   }
 
-  async function addPost(weekNumber) {
-    // Mini-prompt sequenziale: categoria, sub-topic, data, ora, tipo
-    const cat = prompt('Categoria del post (es. C7, "Eventi", lascia vuoto se non sai):', '');
-    if (cat === null) return;
-    const sub = prompt('Sub-topic / tema specifico:', '');
-    if (sub === null) return;
-    const dateStr = prompt('Data pubblicazione (YYYY-MM-DD, lascia vuoto se non sai):', '');
-    if (dateStr === null) return;
-    const timeStr = dateStr ? prompt('Ora pubblicazione (HH:MM, lascia vuoto se non sai):', '10:00') : '';
-    if (timeStr === null) return;
-    const mt = prompt('Tipo media (single_image / carousel / reel / story):', 'single_image');
-    if (mt === null) return;
+  // Aggiungi post da bottone "+ Nuovo post" della settimana. Modal con form
+  // strutturato (select categoria, sub-topic, data/ora, tipo media) — sostituisce
+  // i vecchi prompt() sequenziali che mostravano solo il codice.
+  function addPost(weekNumber) {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-backdrop';
+    wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
+    wrap.innerHTML = `
+      <div class="modal-card" onclick="event.stopPropagation()" style="max-width:560px">
+        <h3>➕ Nuovo post — Settimana ${weekNumber}</h3>
+        <div class="modal-sub">Compila i dettagli essenziali; potrai affinarli nell'editor.</div>
 
+        <div class="modal-row" style="flex-direction:column;align-items:stretch;gap:4px">
+          <label style="font-size:12px;font-weight:600">Categoria <span style="color:var(--gray-400);font-weight:400">(facoltativa)</span></label>
+          <select id="ap-cat" style="padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">${categorySelectOptions('')}</select>
+        </div>
+
+        <div class="modal-row" style="flex-direction:column;align-items:stretch;gap:4px">
+          <label style="font-size:12px;font-weight:600">Sub-topic / tema specifico ✨ <span style="color:var(--gray-400);font-weight:400">(facoltativo, usato dall'AI)</span></label>
+          <textarea id="ap-sub" rows="2" placeholder="es. Promozione speciale weekend" style="padding:8px 10px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        </div>
+
+        <div class="modal-row" style="gap:14px">
+          <div style="flex:1">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Data pubblicazione</label>
+            <input type="date" id="ap-date" style="width:100%;padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">
+          </div>
+          <div style="flex:1">
+            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px">Ora</label>
+            <input type="time" id="ap-time" value="14:00" style="width:100%;padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">
+          </div>
+        </div>
+
+        <div class="modal-row" style="flex-direction:column;align-items:stretch;gap:4px">
+          <label style="font-size:12px;font-weight:600">Tipo media</label>
+          <select id="ap-mt" style="padding:7px 9px;border:1px solid var(--gray-200);border-radius:5px;font-size:13px">
+            <option value="single_image">🖼 Singola immagine</option>
+            <option value="carousel">🎠 Carousel</option>
+            <option value="reel">🎬 Reel</option>
+            <option value="story">✨ Storia (cliente)</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Annulla</button>
+          <button class="btn btn-sm btn-primary" id="ap-create-btn" onclick="submitAddPost(${weekNumber})">Crea post</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+    setTimeout(() => { const sel = document.getElementById('ap-cat'); if (sel) sel.focus(); }, 30);
+  }
+
+  async function submitAddPost(weekNumber) {
+    const btn = document.getElementById('ap-create-btn');
+    const cat  = document.getElementById('ap-cat').value;
+    const sub  = document.getElementById('ap-sub').value.trim();
+    const date = document.getElementById('ap-date').value;
+    const time = document.getElementById('ap-time').value;
+    const mt   = document.getElementById('ap-mt').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Creazione...';
     try {
       const res = await apiFetch('/dashboard/api/posts', {
         method: 'POST',
@@ -1056,15 +1127,18 @@
           category: cat || null,
           sub_topic: sub || null,
           media_type: mt || 'single_image',
-          scheduled_date: dateStr || null,
-          scheduled_time: timeStr || null
+          scheduled_date: date || null,
+          scheduled_time: time || null
         }
       });
-      if (res.error) { await showAlert(res.error); return; }
+      if (res.error) { await showAlert(res.error); btn.disabled = false; btn.textContent = 'Crea post'; return; }
       toast('Post creato');
+      btn.closest('.modal-backdrop').remove();
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Crea post';
     }
   }
 

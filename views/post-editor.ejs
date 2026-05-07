@@ -1,4 +1,12 @@
 <%- include('layout', { title, user }) %>
+<%
+  // Mappa code → name delle categorie del piano + display friendly del codice
+  // del post corrente. Usato in più punti del template per mostrare il nome
+  // leggibile invece del codice tipo "C1".
+  const categoryNameMap = {};
+  (typeof categories !== 'undefined' ? categories : []).forEach(c => { categoryNameMap[c.code] = c.name; });
+  const categoryDisplay = post.category ? (categoryNameMap[post.category] || post.category) : '';
+%>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
@@ -297,7 +305,7 @@
   <% } %>
   / Post
   <% if (post.category || post.sub_topic) { %>
-    <span style="color:var(--gray-400)"> &mdash; <%= post.category || '' %><%= post.sub_topic ? (post.category ? ' · ' : '') + post.sub_topic.substring(0,40) : '' %></span>
+    <span style="color:var(--gray-400)"> &mdash; <%= categoryDisplay %><%= post.sub_topic ? (post.category ? ' · ' : '') + post.sub_topic.substring(0,40) : '' %></span>
   <% } %>
 </div>
 
@@ -322,7 +330,7 @@
 
 <div class="page-header">
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <h1 style="margin:0"><%= post.category || 'Editor Post' %></h1>
+    <h1 style="margin:0"><%= categoryDisplay || 'Editor Post' %></h1>
     <span class="badge badge-<%= post.status %>" id="status-badge"><%= post.status %></span>
     <span id="post-date-display" style="font-size:13px;color:var(--gray-600);background:var(--gray-100);padding:4px 10px;border-radius:6px;font-weight:500"></span>
     <% if (post.approval_status === 'change_requested') { %>
@@ -377,7 +385,22 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group">
           <label>Categoria</label>
-          <input type="text" id="post-category" value="<%= post.category || '' %>">
+          <%
+            // Mappa code → name per display + flag "categoria orfana" se il
+            // post ha un code non più presente nel piano (categoria rimossa).
+            const _catMap = {};
+            (categories || []).forEach(c => { _catMap[c.code] = c.name; });
+            const _orphan = post.category && !_catMap[post.category];
+          %>
+          <select id="post-category">
+            <option value="">— Senza categoria —</option>
+            <% (categories || []).forEach(c => { %>
+              <option value="<%= c.code %>" <%= post.category === c.code ? 'selected' : '' %>><%= c.name %></option>
+            <% }) %>
+            <% if (_orphan) { %>
+              <option value="<%= post.category %>" selected><%= post.category %> (orfana)</option>
+            <% } %>
+          </select>
         </div>
         <div class="form-group">
           <label>Sub-topic</label>
