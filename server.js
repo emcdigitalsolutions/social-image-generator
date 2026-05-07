@@ -105,11 +105,13 @@ app.use('/music', express.static(path.join(__dirname, 'public', 'music'), {
 }));
 
 // Libreria media per cliente (video + audio riusabili).
-// Path: /library/<client_id>/<kind>/<filename>
-// acceptRanges:false allineato a /images: alcuni proxy/CDN mangiano i Range
-// header → response 206 con Content-Range malformato → player browser non
-// riesce a leggere i metadati (durata = 0:00 / 0:00). Forziamo 200 OK pieno.
-app.use('/library', express.static(path.join(__dirname, 'public', 'library'), {
+// URL pubblico: /library/<client_id>/<kind>/<filename>
+// Filesystem REALE: public/images/library/... (sotto /images perché è
+//   l'unico volume Coolify persistente; public/library nudo veniva
+//   azzerato ad ogni restart container).
+// acceptRanges:false: alcuni proxy/CDN mangiano i Range header → 206 con
+//   Content-Range malformato → player browser non parte (durata 0:00).
+app.use('/library', express.static(path.join(__dirname, 'public', 'images', 'library'), {
   maxAge: '1h',
   etag: true,
   lastModified: true,
