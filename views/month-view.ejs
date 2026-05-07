@@ -810,35 +810,95 @@
     renderViews();
   }
 
+  // Bulk client-side: iteriamo sui post chiamando un endpoint per ognuno.
+  // Una single request a /bulk-generate con N=20 post durerebbe 2-5 minuti
+  // → cade nel timeout HTTP del proxy Coolify (~60s). Con N piccole richieste
+  // separate ognuna è < 10s, niente timeout, e mostriamo il progresso.
   async function bulkGenerate(action) {
     if (!POST_IDS.length) return;
-    if (!await showConfirm('Generare ' + action + ' per ' + POST_IDS.length + ' post?')) return;
+    if (!await showConfirm('Generare ' + action + ' per ' + POST_IDS.length + ' post?\n\nLa procedura processa i post uno per uno: per 20 post servono circa 1-3 minuti. Lascia la pagina aperta.')) return;
 
-    const btn = event.target;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loading"></span> In corso...';
+    // Progress modal a tutta finestra
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    wrap.innerHTML = `
+      <div style="background:#fff;border-radius:10px;max-width:520px;width:100%;padding:20px 22px;box-shadow:0 20px 50px rgba(0,0,0,.3)">
+        <h3 style="margin:0 0 12px;font-size:15px">Generazione in corso (${action})</h3>
+        <div id="bg-status" style="font-size:13px;color:var(--gray-600);margin-bottom:8px">Preparazione…</div>
+        <div style="width:100%;height:8px;background:var(--gray-100);border-radius:4px;overflow:hidden;margin-bottom:10px">
+          <div id="bg-bar" style="height:100%;background:#16a34a;width:0%;transition:width .25s"></div>
+        </div>
+        <div id="bg-counter" style="font-size:11px;color:var(--gray-500);margin-bottom:8px">0 / ${POST_IDS.length}</div>
+        <div id="bg-log" style="font-size:11px;color:var(--gray-500);max-height:160px;overflow-y:auto;background:var(--gray-50);padding:8px 10px;border-radius:5px;font-family:monospace;display:none"></div>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+    const status = wrap.querySelector('#bg-status');
+    const bar = wrap.querySelector('#bg-bar');
+    const counter = wrap.querySelector('#bg-counter');
+    const log = wrap.querySelector('#bg-log');
 
-    try {
-      const res = await apiFetch('/dashboard/api/posts/bulk-generate', {
-        method: 'POST',
-        body: { post_ids: POST_IDS, action }
-      });
-      const s = res.summary || {};
-      const lines = ['Completato (' + POST_IDS.length + ' post):'];
-      if (s.captions_ok)    lines.push('\u2705 ' + s.captions_ok + ' caption generate');
-      if (s.images_ok)      lines.push('\u2705 ' + s.images_ok + ' immagini generate');
-      if (s.skipped_image)  lines.push('\u2796 ' + s.skipped_image + ' immagini saltate (carousel/reel/story richiedono upload manuale)');
-      if (s.errors)         lines.push('\u274c ' + s.errors + ' errori');
-      // Lista degli errori specifici
-      const errs = res.results.filter(r => r.error);
-      if (errs.length) lines.push('\nDettaglio errori:\n' + errs.map(e => '\u2022 ' + (e.id || '') + ': ' + e.error).join('\n'));
-      await showAlert(lines.join('\n'));
-      window.location.reload();
-    } catch (err) {
-      await showAlert('Errore: ' + err.message);
-    } finally {
-      btn.disabled = false;
+    let captionsOk = 0, imagesOk = 0, skippedImage = 0, errors = 0;
+    const errLines = [];
+
+    for (let i = 0; i < POST_IDS.length; i++) {
+      const postId = POST_IDS[i];
+      const progress = Math.round(((i) / POST_IDS.length) * 100);
+      bar.style.width = progress + '%';
+      counter.textContent = (i) + ' / ' + POST_IDS.length;
+      status.textContent = 'Post ' + (i + 1) + ' / ' + POST_IDS.length + ' (' + postId.substring(0, 8) + '…)';
+
+      const post = POSTS.find(p => p.id === postId);
+      const mediaType = (post && post.media_type) || 'single_image';
+
+      // Caption
+      if (action === 'caption' || action === 'both') {
+        try {
+          const r = await apiFetch('/dashboard/api/posts/' + postId + '/generate-caption', { method: 'POST' });
+          if (r && !r.error) captionsOk++;
+          else { errors++; errLines.push(postId.substring(0, 8) + ': caption — ' + (r && r.error || 'unknown')); }
+        } catch (err) {
+          errors++;
+          errLines.push(postId.substring(0, 8) + ': caption — ' + err.message);
+        }
+      }
+
+      // Image
+      if (action === 'image' || action === 'both') {
+        if (mediaType !== 'single_image') {
+          skippedImage++;
+        } else {
+          try {
+            const r = await apiFetch('/dashboard/api/posts/' + postId + '/generate-image', { method: 'POST' });
+            if (r && !r.error) imagesOk++;
+            else { errors++; errLines.push(postId.substring(0, 8) + ': image — ' + (r && r.error || 'unknown')); }
+          } catch (err) {
+            errors++;
+            errLines.push(postId.substring(0, 8) + ': image — ' + err.message);
+          }
+        }
+      }
+
+      if (errLines.length) {
+        log.style.display = 'block';
+        log.textContent = errLines.slice(-10).join('\n');
+      }
     }
+
+    bar.style.width = '100%';
+    counter.textContent = POST_IDS.length + ' / ' + POST_IDS.length;
+    status.textContent = 'Completato';
+
+    setTimeout(() => {
+      wrap.remove();
+      const lines = ['Completato (' + POST_IDS.length + ' post):'];
+      if (captionsOk)    lines.push('\u2705 ' + captionsOk + ' caption generate');
+      if (imagesOk)      lines.push('\u2705 ' + imagesOk + ' immagini generate');
+      if (skippedImage)  lines.push('\u2796 ' + skippedImage + ' immagini saltate (carousel/reel/story richiedono upload manuale)');
+      if (errors)        lines.push('\u274c ' + errors + ' errori');
+      if (errLines.length) lines.push('\nDettaglio errori:\n' + errLines.slice(0, 10).join('\n'));
+      showAlert(lines.join('\n')).then(() => window.location.reload());
+    }, 600);
   }
 
   async function confirmMonth() {
