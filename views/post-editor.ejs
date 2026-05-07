@@ -324,6 +324,7 @@
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <h1 style="margin:0"><%= post.category || 'Editor Post' %></h1>
     <span class="badge badge-<%= post.status %>" id="status-badge"><%= post.status %></span>
+    <span id="post-date-display" style="font-size:13px;color:var(--gray-600);background:var(--gray-100);padding:4px 10px;border-radius:6px;font-weight:500"></span>
     <% if (post.approval_status === 'change_requested') { %>
       <span class="badge" style="background:#fef3c7;color:#92400e;font-weight:700">✏️ Modifiche richieste</span>
     <% } else if (post.approval_status === 'rejected') { %>
@@ -1399,6 +1400,37 @@
     });
     toast('Dettagli salvati');
   }
+
+  // Mostra/aggiorna in alto la data programmata (read-only, formato italiano).
+  // Si aggiorna automaticamente quando l'utente modifica i campi data/ora.
+  (function setupPostDateDisplay() {
+    const display = document.getElementById('post-date-display');
+    const dateInp = document.getElementById('post-date');
+    const timeInp = document.getElementById('post-time');
+    if (!display || !dateInp) return;
+    const days = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
+    const months = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+    function update() {
+      const d = dateInp.value;
+      const t = (timeInp && timeInp.value) || '';
+      if (!d) {
+        display.textContent = '📅 Senza data';
+        display.style.color = 'var(--gray-400)';
+        return;
+      }
+      // d in formato YYYY-MM-DD; uso parts manuali per evitare timezone shift
+      const [y, m, dd] = d.split('-').map(Number);
+      const dt = new Date(y, m - 1, dd);
+      const dayName = days[dt.getDay()];
+      const monthName = months[m - 1];
+      const timeStr = t ? ' · ' + t.slice(0, 5) : '';
+      display.textContent = '📅 ' + dayName + ' ' + dd + ' ' + monthName + ' ' + y + timeStr;
+      display.style.color = 'var(--gray-700)';
+    }
+    update();
+    dateInp.addEventListener('change', update);
+    if (timeInp) timeInp.addEventListener('change', update);
+  })();
 
   // Apre un picker dalla libreria video del cliente. Click "Usa" → POST a
   // /:id/library-attach che copia il file nel post (indipendente dalla libreria).
