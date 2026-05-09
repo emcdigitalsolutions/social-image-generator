@@ -560,6 +560,7 @@
 <script>
   const POST_ID    = '<%= post.id %>';
   const CLIENT_ID  = '<%= client.id %>';
+  const MONTH_URL  = '<%= (typeof monthUrl !== "undefined" && monthUrl) ? monthUrl : "" %>';
   const POST       = <%- JSON.stringify(post) %>;
   const HAS_IG     = <%= client.ig_user_id ? 'true' : 'false' %>;
   let   MEDIA      = <%- JSON.stringify(media || []) %>;
@@ -1212,15 +1213,14 @@
     try {
       const res = await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'DELETE' });
       if (res.error) { await showAlert(res.error); return; }
-      toast('Post eliminato');
-      // Torna alla vista mese del piano editoriale del post
-      const planId = POST.editorial_plan_id;
-      const month = POST.month_number;
-      if (planId && month) {
-        window.location.href = '/dashboard/plans/' + planId + '/month/' + month;
-      } else {
-        window.location.href = '/dashboard/clients/' + CLIENT_ID;
-      }
+      // Flash toast che la pagina di destinazione mostrerà al load
+      try { sessionStorage.setItem('flash_toast', 'Post eliminato'); } catch (_) {}
+      // Torna alla vista mese del piano editoriale del post.
+      // Usa monthUrl server-rendered (rotta corretta /dashboard/clients/:id/plan/:planId/month/:month).
+      const target = (typeof MONTH_URL !== 'undefined' && MONTH_URL)
+        ? MONTH_URL
+        : '/dashboard/clients/' + CLIENT_ID;
+      window.location.href = target;
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     }

@@ -18,6 +18,21 @@
         document.body.classList.remove('sidebar-open');
       }
     });
+    // Flash toast cross-pagina: chi reindirizza imposta sessionStorage 'flash_toast'
+    // (oppure JSON con {msg,type}); la pagina di destinazione lo consuma all'onload.
+    (function consumeFlashToast() {
+      try {
+        const raw = sessionStorage.getItem('flash_toast');
+        if (!raw) return;
+        sessionStorage.removeItem('flash_toast');
+        let msg = raw, type = 'success';
+        if (raw.startsWith('{')) {
+          const parsed = JSON.parse(raw);
+          msg = parsed.msg || ''; type = parsed.type || 'success';
+        }
+        if (msg && typeof toast === 'function') toast(msg, type);
+      } catch (_) { /* ignore */ }
+    })();
   </script>
 </body>
 </html>
