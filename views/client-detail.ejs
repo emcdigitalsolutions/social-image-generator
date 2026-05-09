@@ -703,43 +703,57 @@
     const orig = btn.textContent;
     btn.textContent = 'Caricando…';
     progress.style.display = 'block';
-    progress.textContent = 'Upload di ' + files.length + ' file in corso…';
 
-    const fd = new FormData();
-    files.forEach(f => fd.append('files', f));
+    // Chunking: max 5 file per richiesta per evitare timeout proxy (~60s).
+    // Ogni chunk viene caricato sequenzialmente, gli errori sono accumulati ma
+    // non bloccano i chunk successivi. Progress live "X di N caricati".
+    const CHUNK_SIZE = 5;
+    const total = files.length;
+    let okCount = 0;
+    const allErrors = [];
 
-    try {
-      const r = await fetch('/dashboard/api/clients/' + CLIENT_ID + '/library/upload', {
-        method: 'POST',
-        body: fd
-      });
-      const data = await r.json();
-      const ok = (data.items || []).length;
-      const errs = data.errors || [];
-      if (!r.ok && !ok) {
-        await showAlert(data.error || 'Upload fallito');
-        return;
+    for (let i = 0; i < total; i += CHUNK_SIZE) {
+      const chunk = files.slice(i, i + CHUNK_SIZE);
+      const chunkNum = Math.floor(i / CHUNK_SIZE) + 1;
+      const totalChunks = Math.ceil(total / CHUNK_SIZE);
+      progress.textContent = 'Batch ' + chunkNum + '/' + totalChunks + ' · ' + okCount + ' di ' + total + ' caricati' + (allErrors.length ? ' · ' + allErrors.length + ' errori' : '');
+
+      const fd = new FormData();
+      chunk.forEach(f => fd.append('files', f));
+      try {
+        const r = await fetch('/dashboard/api/clients/' + CLIENT_ID + '/library/upload', {
+          method: 'POST', body: fd
+        });
+        const data = await r.json().catch(() => ({}));
+        if (r.ok || (data.items && data.items.length)) {
+          okCount += (data.items || []).length;
+          if (data.errors && data.errors.length) allErrors.push(...data.errors);
+        } else {
+          chunk.forEach(f => allErrors.push({ filename: f.name, error: data.error || ('HTTP ' + r.status) }));
+        }
+      } catch (err) {
+        chunk.forEach(f => allErrors.push({ filename: f.name, error: 'Errore rete: ' + err.message }));
       }
-      input.value = '';
-      if (errs.length) {
-        const detail = errs.map(e => '• ' + e.filename + ': ' + e.error).join('\n');
-        await showAlert(ok + ' file caricati, ' + errs.length + ' falliti:\n\n' + detail);
-      } else {
-        const singular = { video: 'Video aggiunto', audio: 'Audio aggiunto', image: 'Immagine aggiunta' };
-        const plural   = { video: 'video aggiunti', audio: 'audio aggiunti', image: 'immagini aggiunte' };
-        toast(ok === 1
-          ? (singular[kind] || (kind + ' aggiunto')) + ' in libreria'
-          : ok + ' ' + (plural[kind] || (kind + ' aggiunti')) + ' in libreria');
-      }
-      loadLibrary();
-    } catch (err) {
-      await showAlert('Errore upload: ' + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = orig;
-      progress.style.display = 'none';
-      progress.textContent = '';
+      progress.textContent = 'Batch ' + chunkNum + '/' + totalChunks + ' · ' + okCount + ' di ' + total + ' caricati' + (allErrors.length ? ' · ' + allErrors.length + ' errori' : '');
     }
+
+    input.value = '';
+    if (allErrors.length) {
+      const sample = allErrors.slice(0, 10).map(e => '• ' + e.filename + ': ' + e.error).join('\n');
+      const more = allErrors.length > 10 ? ('\n... e altri ' + (allErrors.length - 10) + ' errori') : '';
+      await showAlert(okCount + ' file caricati, ' + allErrors.length + ' falliti:\n\n' + sample + more);
+    } else {
+      const singular = { video: 'Video aggiunto', audio: 'Audio aggiunto', image: 'Immagine aggiunta' };
+      const plural   = { video: 'video aggiunti', audio: 'audio aggiunti', image: 'immagini aggiunte' };
+      toast(okCount === 1
+        ? (singular[kind] || (kind + ' aggiunto')) + ' in libreria'
+        : okCount + ' ' + (plural[kind] || (kind + ' aggiunti')) + ' in libreria');
+    }
+    btn.disabled = false;
+    btn.textContent = orig;
+    progress.style.display = 'none';
+    progress.textContent = '';
+    loadLibrary();
   }
   window.uploadLibraryFile = uploadLibraryFile;
 

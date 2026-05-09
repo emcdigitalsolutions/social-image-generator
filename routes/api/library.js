@@ -58,7 +58,7 @@ router.get('/', (req, res) => {
 // per compat). Risposta: { items: [...], errors: [...] } in caso multiplo;
 // se viene caricato 1 solo file restituisce ANCHE l'item al top-level (compat).
 router.post('/upload', upload.fields([
-  { name: 'files', maxCount: 20 },
+  { name: 'files', maxCount: 100 },
   { name: 'file',  maxCount: 1 }
 ]), async (req, res) => {
   const cleanupAll = () => {
