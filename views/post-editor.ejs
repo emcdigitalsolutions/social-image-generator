@@ -497,6 +497,10 @@
         <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="bulkDeleteMedia()">&times; Rimuovi selezionati</button>
       </div>
       <div id="media-grid" class="media-grid"></div>
+      <div id="carousel-warning" style="display:none;margin-top:12px;padding:12px 14px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;color:#92400e;font-size:13px;line-height:1.45">
+        <strong>&#9888; Carousel incompleto</strong><br>
+        Un post di tipo <strong>Carousel</strong> richiede almeno <strong>2 media</strong>. Con un solo media il post <strong>non verrà pubblicato</strong> finché non aggiungi almeno un'altra immagine (oppure cambia tipo a "Singola").
+      </div>
     </div>
 
     <div class="card" style="margin-bottom:16px">
@@ -595,7 +599,14 @@
       }
     }
     refreshPublishState();
+    updateCarouselWarning();
     if (typeof renderPreview === 'function') renderPreview();
+  }
+
+  function updateCarouselWarning() {
+    const el = document.getElementById('carousel-warning');
+    if (!el) return;
+    el.style.display = (MEDIA_TYPE === 'carousel' && MEDIA.length < 2) ? 'block' : 'none';
   }
 
   async function onShareToFeedChange() {
@@ -668,6 +679,7 @@
     }).join('');
     updateSelectionToolbar();
     refreshPublishState();
+    updateCarouselWarning();
     if (typeof renderPreview === 'function') renderPreview();
   }
 
@@ -1445,6 +1457,9 @@
     });
     toast('Caption salvata');
     refreshPublishState();
+    if (MEDIA_TYPE === 'carousel' && MEDIA.length < 2) {
+      await showAlert('\u26A0 Attenzione: il post è di tipo Carousel ma contiene solo ' + MEDIA.length + ' media. Il post NON verrà pubblicato finché non aggiungi almeno 2 immagini (oppure cambia tipo a "Singola").');
+    }
   }
 
   async function markReady() {
@@ -1453,6 +1468,8 @@
     const hasLegacyImage = !!POST.image_url;
     if (!caption) { await showAlert('Serve una caption prima di segnare il post come pronto.'); return; }
     if (mediaCount === 0 && !hasLegacyImage) { await showAlert('Serve almeno un media (immagine o video) prima di segnare il post come pronto.'); return; }
+    const coherenceErr = validateMediaCoherence();
+    if (coherenceErr) { await showAlert(coherenceErr + '. Il post non verrà pubblicato finché non risolvi questo problema.'); return; }
     // Validazione aspect ratio Instagram (solo se cliente ha IG configurato, assunto se HAS_IG è true)
     if (typeof HAS_IG !== 'undefined' && HAS_IG && typeof MEDIA !== 'undefined') {
       const badImage = (MEDIA || []).find(m => m.kind === 'image' && m.width && m.height && (m.width / m.height < 0.8 || m.width / m.height > 1.91));
@@ -1523,6 +1540,9 @@
       }
     });
     toast('Dettagli salvati');
+    if (MEDIA_TYPE === 'carousel' && MEDIA.length < 2) {
+      await showAlert('\u26A0 Attenzione: il post è di tipo Carousel ma contiene solo ' + MEDIA.length + ' media. Il post NON verrà pubblicato finché non aggiungi almeno 2 immagini (oppure cambia tipo a "Singola").');
+    }
   }
 
   // Mostra/aggiorna in alto la data programmata (read-only, formato italiano).
