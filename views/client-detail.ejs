@@ -198,6 +198,21 @@
     </p>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <!-- IMMAGINI -->
+      <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:12px;grid-column:1/-1">
+        <legend style="font-size:13px;font-weight:600;padding:0 6px">🖼️ Immagini</legend>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <input type="file" id="lib-image-input" accept="image/jpeg,image/png,image/webp" multiple style="flex:1;font-size:12px">
+          <button class="btn btn-sm btn-primary" onclick="uploadLibraryFile('image')" id="lib-image-btn">Carica</button>
+        </div>
+        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">JPG/PNG/WEBP · max 50MB upload — i file oltre 8MB vengono ridotti automaticamente</div>
+        <div id="lib-image-progress" style="display:none;font-size:11px;color:var(--gray-600);margin-bottom:10px"></div>
+        <div id="lib-image-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;min-height:60px">
+          <div class="lib-empty" style="grid-column:1/-1;color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessuna immagine —</div>
+        </div>
+        <div id="lib-image-pagination" style="margin-top:10px"></div>
+      </fieldset>
+
       <!-- VIDEO -->
       <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:12px">
         <legend style="font-size:13px;font-weight:600;padding:0 6px">🎥 Video</legend>
@@ -479,9 +494,9 @@
 
   // Paginazione client-side della libreria.
   // PAGE_SIZE differente per video (grid 2D) vs audio (lista 1D).
-  const LIB_PAGE_SIZE = { video: 12, audio: 10 };
-  const libCache = { video: [], audio: [] };
-  const libPage  = { video: 1, audio: 1 };
+  const LIB_PAGE_SIZE = { video: 12, audio: 10, image: 12 };
+  const libCache = { video: [], audio: [], image: [] };
+  const libPage  = { video: 1, audio: 1, image: 1 };
 
   async function loadLibrary() {
     try {
@@ -489,11 +504,14 @@
       const items = (data && data.items) || [];
       libCache.video = items.filter(i => i.kind === 'video');
       libCache.audio = items.filter(i => i.kind === 'audio');
+      libCache.image = items.filter(i => i.kind === 'image');
       // Reset alla prima pagina ogni volta che ricarico (es. dopo upload/delete)
       libPage.video = 1;
       libPage.audio = 1;
+      libPage.image = 1;
       renderLibPage('video');
       renderLibPage('audio');
+      renderLibPage('image');
     } catch (err) {
       console.warn('[library] load failed:', err.message);
     }
@@ -543,9 +561,27 @@
     const root = document.getElementById('lib-' + kind + '-list');
     if (!root) return;
     if (!items.length) {
-      root.innerHTML = '<div class="lib-empty" style="' + (kind === 'video'
-        ? 'grid-column:1/-1;'
-        : '') + 'color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessun ' + kind + ' —</div>';
+      const empty = kind === 'video' ? 'Nessun video' : kind === 'audio' ? 'Nessun audio' : 'Nessuna immagine';
+      root.innerHTML = '<div class="lib-empty" style="' + (kind === 'audio'
+        ? ''
+        : 'grid-column:1/-1;') + 'color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— ' + empty + ' —</div>';
+      return;
+    }
+    if (kind === 'image') {
+      root.innerHTML = items.map(it => `
+        <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#f3f4f6">
+          <div onclick="openLibraryImagePreview('${escAttr(it.url)}', '${escAttr(it.original_name || it.filename)}')" style="cursor:pointer;background:#f3f4f6;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden" title="Click per anteprima ingrandita">
+            <img src="${escAttr(it.url)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
+          </div>
+          <div style="padding:6px 8px;background:#fff;border-top:1px solid var(--gray-200)">
+            <div style="font-size:11px;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
+            <div style="font-size:10px;color:var(--gray-500);display:flex;justify-content:space-between;align-items:center;margin-top:3px">
+              <span>${fmtBytes(it.bytes)}${it.width && it.height ? ' · ' + it.width + '×' + it.height : ''}</span>
+              <button onclick="deleteLibraryItem('${escAttr(it.id)}', '${escAttr(it.original_name || it.filename)}')" title="Elimina dalla libreria" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1">🗑</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
       return;
     }
     if (kind === 'video') {
@@ -617,9 +653,11 @@
         const detail = errs.map(e => '• ' + e.filename + ': ' + e.error).join('\n');
         await showAlert(ok + ' file caricati, ' + errs.length + ' falliti:\n\n' + detail);
       } else {
+        const singular = { video: 'Video aggiunto', audio: 'Audio aggiunto', image: 'Immagine aggiunta' };
+        const plural   = { video: 'video aggiunti', audio: 'audio aggiunti', image: 'immagini aggiunte' };
         toast(ok === 1
-          ? (kind === 'video' ? 'Video aggiunto in libreria' : 'Audio aggiunto in libreria')
-          : ok + ' ' + kind + ' aggiunti in libreria');
+          ? (singular[kind] || (kind + ' aggiunto')) + ' in libreria'
+          : ok + ' ' + (plural[kind] || (kind + ' aggiunti')) + ' in libreria');
       }
       loadLibrary();
     } catch (err) {
@@ -669,6 +707,29 @@
     document.addEventListener('keydown', onKey);
   }
   window.openLibraryVideoPreview = openLibraryVideoPreview;
+
+  // Lightbox immagine grande della libreria.
+  function openLibraryImagePreview(url, name) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    const escAttr = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    overlay.innerHTML = `
+      <div style="position:relative;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:13px">
+          <span style="font-weight:600;max-width:70vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escAttr(name)}</span>
+          <button id="lip-close" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;width:32px;height:32px;border-radius:50%;cursor:pointer;line-height:1">×</button>
+        </div>
+        <img src="${escAttr(url)}" alt="" style="max-width:90vw;max-height:80vh;background:#000;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.5);object-fit:contain">
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    overlay.querySelector('#lip-close').onclick = close;
+    const onKey = e => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+  }
+  window.openLibraryImagePreview = openLibraryImagePreview;
 
   // Lazy-load alla prima apertura del tab Libreria
   let libraryLoaded = false;

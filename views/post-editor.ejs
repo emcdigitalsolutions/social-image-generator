@@ -468,7 +468,8 @@
           <button class="btn btn-sm btn-primary" onclick="generateAIVideo()" id="gen-aivid-btn" title="Genera un Reel slideshow Ken Burns: 3 immagini AI animate con zoom/pan e crossfade" style="background:#7c3aed">🎬 Reel AI</button>
           <button class="btn btn-sm btn-primary" onclick="generateVeoVideo()" id="gen-veo-btn" title="Genera un video AI premium con Veo 3 (full-motion + audio nativo). Richiede billing attivo. Costo: ~$3-6 per 8s." style="background:linear-gradient(135deg,#f59e0b,#dc2626);border:none">💎 Veo Premium</button>
           <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn" title="Renderizza un'immagine dal template HTML selezionato (poster con testo)"><span style="margin-right:3px">🖼️</span>Da template</button>
-          <button class="btn btn-sm btn-secondary" onclick="openLibraryPicker()" id="library-picker-btn" title="Scegli un video già presente nella libreria di questo cliente"><span style="margin-right:3px">📚</span>Da libreria</button>
+          <button class="btn btn-sm btn-secondary" onclick="openLibraryPicker('video')" id="library-picker-btn" title="Scegli un video già presente nella libreria di questo cliente"><span style="margin-right:3px">📚</span>Video da libreria</button>
+          <button class="btn btn-sm btn-secondary" onclick="openLibraryPicker('image')" id="library-picker-img-btn" title="Scegli un'immagine già presente nella libreria di questo cliente"><span style="margin-right:3px">📚</span>Immagine da libreria</button>
         </div>
       </div>
 
@@ -1578,41 +1579,48 @@
 
   // Apre un picker dalla libreria video del cliente. Click "Usa" → POST a
   // /:id/library-attach che copia il file nel post (indipendente dalla libreria).
-  async function openLibraryPicker() {
-    const btn = document.getElementById('library-picker-btn');
-    btn.disabled = true;
+  async function openLibraryPicker(kind) {
+    kind = (kind === 'image') ? 'image' : 'video';
+    const isImg = kind === 'image';
+    const btn = document.getElementById(isImg ? 'library-picker-img-btn' : 'library-picker-btn');
+    if (btn) btn.disabled = true;
     let items = [];
     try {
-      const data = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library?kind=video');
+      const data = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library?kind=' + kind);
       items = (data && data.items) || [];
     } catch (err) {
-      btn.disabled = false;
+      if (btn) btn.disabled = false;
       await showAlert('Errore caricamento libreria: ' + err.message);
       return;
     }
-    btn.disabled = false;
+    if (btn) btn.disabled = false;
 
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
     const escAttr = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
     const fmtBytes = n => !n ? '—' : n < 1024*1024 ? (n/1024).toFixed(0)+' KB' : (n/1048576).toFixed(1)+' MB';
+    const thumb = (it) => isImg
+      ? `<img src="${escAttr(it.url)}" alt="" loading="lazy" style="width:100%;aspect-ratio:1/1;object-fit:cover;background:#f3f4f6;display:block">`
+      : `<video src="${escAttr(it.url)}#t=0.5" muted preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:cover;background:#000"></video>`;
+    const emptyMsg = isImg ? 'Libreria immagini vuota' : 'Libreria video vuota';
+    const titleMsg = isImg ? '📚 Scegli immagine dalla libreria' : '📚 Scegli video dalla libreria';
     const grid = items.length
       ? items.map(it => `
-          <div data-id="${escAttr(it.id)}" style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#000;cursor:pointer;display:flex;flex-direction:column">
-            <video src="${escAttr(it.url)}#t=0.5" muted preload="metadata" style="width:100%;aspect-ratio:9/16;object-fit:cover;background:#000"></video>
+          <div data-id="${escAttr(it.id)}" style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#fff;cursor:pointer;display:flex;flex-direction:column">
+            ${thumb(it)}
             <div style="padding:6px 8px;background:#fff;border-top:1px solid var(--gray-200);font-size:11px">
               <div style="font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
-              <div style="color:var(--gray-500);font-size:10px;margin-top:2px">${fmtBytes(it.bytes)}</div>
+              <div style="color:var(--gray-500);font-size:10px;margin-top:2px">${fmtBytes(it.bytes)}${isImg && it.width && it.height ? ' · ' + it.width + '×' + it.height : ''}</div>
               <button class="lib-pick-btn btn btn-sm btn-primary" data-id="${escAttr(it.id)}" style="width:100%;margin-top:6px;font-size:11px;padding:4px 6px">Usa questo</button>
             </div>
           </div>
         `).join('')
-      : '<div style="grid-column:1/-1;text-align:center;color:var(--gray-500);font-size:13px;padding:40px 0">— Libreria video vuota —<br><a href="/dashboard/clients/' + CLIENT_ID + '#libreria" target="_blank" style="font-size:12px">Apri scheda cliente per caricare video →</a></div>';
+      : '<div style="grid-column:1/-1;text-align:center;color:var(--gray-500);font-size:13px;padding:40px 0">— ' + emptyMsg + ' —<br><a href="/dashboard/clients/' + CLIENT_ID + '#libreria" target="_blank" style="font-size:12px">Apri scheda cliente per caricare →</a></div>';
 
     overlay.innerHTML = `
       <div style="background:#fff;border-radius:10px;max-width:760px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.3)">
         <div style="padding:14px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
-          <strong style="font-size:15px">📚 Scegli video dalla libreria</strong>
+          <strong style="font-size:15px">${titleMsg}</strong>
           <button id="lib-pick-close" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray-500);line-height:1">×</button>
         </div>
         <div style="padding:14px 20px;overflow-y:auto">
@@ -1639,15 +1647,15 @@
           if (r.media) {
             MEDIA.push(r.media);
             renderMedia();
-            // auto-switch tipo a reel se è il primo video
-            if (MEDIA_TYPE !== 'reel' && MEDIA_TYPE !== 'video' && MEDIA_TYPE !== 'story') {
+            // auto-switch tipo a reel se è il primo video (solo per kind=video)
+            if (!isImg && MEDIA_TYPE !== 'reel' && MEDIA_TYPE !== 'video' && MEDIA_TYPE !== 'story') {
               try {
                 await apiFetch('/dashboard/api/posts/' + POST_ID, { method: 'PUT', body: { media_type: 'reel' } });
                 if (typeof setType === 'function') setType('reel');
               } catch (_) {}
             }
           }
-          toast('Video aggiunto dalla libreria');
+          toast(isImg ? 'Immagine aggiunta dalla libreria' : 'Video aggiunto dalla libreria');
           close();
         } catch (err) {
           b.disabled = false;

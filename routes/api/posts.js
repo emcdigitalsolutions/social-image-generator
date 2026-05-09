@@ -917,13 +917,13 @@ router.post('/:id/library-attach', async (req, res) => {
   if (!item || item.client_id !== post.client_id) {
     return res.status(404).json({ error: 'Item libreria non trovato per questo cliente' });
   }
-  if (item.kind !== 'video') {
-    return res.status(400).json({ error: 'Solo video possono essere agganciati ai post (gli audio si selezionano nel modal Reel AI)' });
+  if (item.kind !== 'video' && item.kind !== 'image') {
+    return res.status(400).json({ error: 'Solo video o immagini possono essere agganciati ai post (gli audio si selezionano nel modal Reel AI)' });
   }
 
   try {
     // Copia il file in una cartella temporanea poi lascia che attachGeneratedFile
-    // lo sposti nella post dir come "library-<uuid>.mp4".
+    // lo sposti nella post dir come "library-<uuid>.<ext>".
     const tmpDest = path.join(os.tmpdir(), `sig-libattach-${uuidv4()}${path.extname(item.filename)}`);
     clientLibrary.copyToPostDir({
       libraryItem: item,
@@ -935,7 +935,7 @@ router.post('/:id/library-attach', async (req, res) => {
       postId: post.id,
       absolutePath: tmpDest,
       source: 'library',
-      kind: 'video'
+      kind: item.kind
     });
     audit.logFromReq(req, {
       client_id: post.client_id,

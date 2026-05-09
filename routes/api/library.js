@@ -28,8 +28,10 @@ const upload = multer({
   limits: { fileSize: clientLibrary.MAX_VIDEO_BYTES },
   fileFilter: (req, file, cb) => {
     const ext = (path.extname(file.originalname) || '').toLowerCase();
-    if (clientLibrary.AUDIO_EXTS.has(ext) || clientLibrary.VIDEO_EXTS.has(ext)) cb(null, true);
-    else cb(new Error('Formato non supportato. Audio: MP3/WAV/M4A/OGG. Video: MP4/MOV.'));
+    if (clientLibrary.AUDIO_EXTS.has(ext)
+     || clientLibrary.VIDEO_EXTS.has(ext)
+     || clientLibrary.IMAGE_EXTS.has(ext)) cb(null, true);
+    else cb(new Error('Formato non supportato. Audio: MP3/WAV/M4A/OGG · Video: MP4/MOV · Immagini: JPG/PNG/WEBP.'));
   }
 });
 
@@ -46,7 +48,8 @@ function ensureClient(req, res) {
 // Lista libreria del cliente (opz. filtro ?kind=audio|video)
 router.get('/', (req, res) => {
   if (!ensureClient(req, res)) return;
-  const kind = req.query.kind === 'audio' || req.query.kind === 'video' ? req.query.kind : null;
+  const k = req.query.kind;
+  const kind = (k === 'audio' || k === 'video' || k === 'image') ? k : null;
   const items = clientLibrary.listLibrary(req.params.clientId, kind);
   res.json({ items });
 });
