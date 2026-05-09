@@ -735,6 +735,8 @@
         chunk.forEach(f => allErrors.push({ filename: f.name, error: 'Errore rete: ' + err.message }));
       }
       progress.textContent = 'Batch ' + chunkNum + '/' + totalChunks + ' · ' + okCount + ' di ' + total + ' caricati' + (allErrors.length ? ' · ' + allErrors.length + ' errori' : '');
+      // Refresh lista dopo ogni batch così l'utente vede i file comparire live
+      try { await loadLibrary(); } catch (_) {}
     }
 
     input.value = '';
