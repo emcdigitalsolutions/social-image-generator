@@ -187,59 +187,103 @@
 
 <!-- Tab: Libreria Media -->
 <div class="tab-content" id="tab-libreria">
+  <style>
+    .lib-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .lib-fieldset { border:1px solid var(--gray-200); border-radius:6px; padding:12px; }
+    .lib-fieldset.full { grid-column:1/-1; }
+    .lib-uploader-row { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+    .lib-file-input { flex:1; font-size:12px; min-width:140px; }
+    .lib-uploader-row .btn { flex-shrink:0; }
+    .lib-hint { font-size:10px; color:var(--gray-500); margin-bottom:10px; line-height:1.4; }
+    .lib-progress { display:none; font-size:11px; color:var(--gray-600); margin-bottom:10px; }
+    .lib-card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; min-height:60px; }
+    #lib-audio-list { display:flex; flex-direction:column; gap:8px; min-height:60px; }
+    .lib-empty { color:var(--gray-400); font-size:12px; text-align:center; padding:18px 0; }
+    .lib-card-grid .lib-empty { grid-column:1/-1; }
+
+    /* Mobile (≤700px): tutto a 1 colonna, card più piccole, controlli touch-friendly */
+    @media (max-width: 700px) {
+      .lib-grid { grid-template-columns:1fr; gap:12px; }
+      .lib-fieldset { padding:10px; }
+      .lib-fieldset.full { grid-column:auto; }
+      .lib-card-grid { grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; }
+      .lib-uploader-row { flex-direction:column; align-items:stretch; }
+      .lib-uploader-row .btn { width:100%; min-height:38px; font-size:13px; }
+      .lib-file-input { width:100%; font-size:13px; padding:6px 0; }
+      /* Audio item: la riga di header (badge+nome+bytes+azioni) deve wrappare */
+      #lib-audio-list > div > div:first-child { flex-wrap:wrap; row-gap:4px; }
+      /* Tap target minimo 36x36 per icone 🌍 🔒 🗑 nei card */
+      .lib-card-grid button[onclick*="toggleShare"],
+      .lib-card-grid button[onclick*="deleteLibraryItem"],
+      #lib-audio-list button[onclick*="toggleShare"],
+      #lib-audio-list button[onclick*="deleteLibraryItem"] {
+        min-width:36px; min-height:36px; font-size:18px !important; padding:4px !important;
+      }
+      /* Pagination: stack verticale info + buttons */
+      #lib-image-pagination > div, #lib-video-pagination > div, #lib-audio-pagination > div {
+        flex-direction:column; align-items:stretch !important; gap:6px !important;
+      }
+      #lib-image-pagination > div > div, #lib-video-pagination > div > div, #lib-audio-pagination > div > div {
+        justify-content:space-between !important;
+      }
+      #lib-image-pagination button, #lib-video-pagination button, #lib-audio-pagination button {
+        flex:1; min-height:36px; font-size:13px !important; padding:6px 10px !important;
+      }
+    }
+  </style>
   <div class="card" style="margin-bottom:16px">
     <div class="card-header">
       <h3>📚 Libreria Media</h3>
     </div>
     <p style="font-size:13px;color:var(--gray-600);margin:0 0 14px">
-      Video e audio riusabili per questo cliente. Quando crei un nuovo post puoi
+      Video, audio e immagini riusabili per questo cliente. Quando crei un nuovo post puoi
       selezionarli senza ri-caricarli. Cancellando un file qui non viene rimosso
       dai post che lo stavano già usando (ognuno mantiene la propria copia).
     </p>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="lib-grid">
       <!-- IMMAGINI -->
-      <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:12px;grid-column:1/-1">
+      <fieldset class="lib-fieldset full">
         <legend style="font-size:13px;font-weight:600;padding:0 6px">🖼️ Immagini</legend>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-          <input type="file" id="lib-image-input" accept="image/jpeg,image/png,image/webp" multiple style="flex:1;font-size:12px">
+        <div class="lib-uploader-row">
+          <input type="file" id="lib-image-input" accept="image/jpeg,image/png,image/webp" multiple class="lib-file-input">
           <button class="btn btn-sm btn-primary" onclick="uploadLibraryFile('image')" id="lib-image-btn">Carica</button>
         </div>
-        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">JPG/PNG/WEBP · max 50MB upload — i file oltre 8MB vengono ridotti automaticamente</div>
-        <div id="lib-image-progress" style="display:none;font-size:11px;color:var(--gray-600);margin-bottom:10px"></div>
-        <div id="lib-image-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;min-height:60px">
-          <div class="lib-empty" style="grid-column:1/-1;color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessuna immagine —</div>
+        <div class="lib-hint">JPG/PNG/WEBP · max 50MB upload — i file oltre 8MB vengono ridotti automaticamente</div>
+        <div id="lib-image-progress" class="lib-progress"></div>
+        <div id="lib-image-list" class="lib-card-grid">
+          <div class="lib-empty">— Nessuna immagine —</div>
         </div>
         <div id="lib-image-pagination" style="margin-top:10px"></div>
       </fieldset>
 
       <!-- VIDEO -->
-      <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:12px">
+      <fieldset class="lib-fieldset">
         <legend style="font-size:13px;font-weight:600;padding:0 6px">🎥 Video</legend>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-          <input type="file" id="lib-video-input" accept="video/mp4,video/quicktime" multiple style="flex:1;font-size:12px">
+        <div class="lib-uploader-row">
+          <input type="file" id="lib-video-input" accept="video/mp4,video/quicktime" multiple class="lib-file-input">
           <button class="btn btn-sm btn-primary" onclick="uploadLibraryFile('video')" id="lib-video-btn">Carica</button>
         </div>
-        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">MP4/MOV · max 100MB · selezione multipla supportata</div>
-        <div id="lib-video-progress" style="display:none;font-size:11px;color:var(--gray-600);margin-bottom:10px"></div>
-        <div id="lib-video-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;min-height:60px">
-          <div class="lib-empty" style="grid-column:1/-1;color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessun video —</div>
+        <div class="lib-hint">MP4/MOV · max 100MB · selezione multipla supportata</div>
+        <div id="lib-video-progress" class="lib-progress"></div>
+        <div id="lib-video-list" class="lib-card-grid">
+          <div class="lib-empty">— Nessun video —</div>
         </div>
         <div id="lib-video-pagination" style="margin-top:10px"></div>
       </fieldset>
 
       <!-- AUDIO -->
-      <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:12px">
+      <fieldset class="lib-fieldset">
         <legend style="font-size:13px;font-weight:600;padding:0 6px">🎵 Audio</legend>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-          <input type="file" id="lib-audio-input" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/ogg" multiple style="flex:1;font-size:12px;min-width:120px">
+        <div class="lib-uploader-row">
+          <input type="file" id="lib-audio-input" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/ogg" multiple class="lib-file-input">
           <button class="btn btn-sm btn-primary" onclick="uploadLibraryFile('audio')" id="lib-audio-btn">Carica</button>
           <button class="btn btn-sm btn-secondary" onclick="promoteAllAudio()" id="lib-audio-promote-btn" title="Rende tutti gli audio caricati su questo cliente disponibili anche per gli altri clienti (libreria condivisa)">🌍 Condividi tutti</button>
         </div>
-        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">MP3/WAV/M4A/OGG · max 15MB · solo musica royalty-free · vedi sotto i file <strong>🌍 condivisi</strong> da altri clienti</div>
-        <div id="lib-audio-progress" style="display:none;font-size:11px;color:var(--gray-600);margin-bottom:10px"></div>
-        <div id="lib-audio-list" style="display:flex;flex-direction:column;gap:8px;min-height:60px">
-          <div class="lib-empty" style="color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessun audio —</div>
+        <div class="lib-hint">MP3/WAV/M4A/OGG · max 15MB · solo musica royalty-free · vedi sotto i file <strong>🌍 condivisi</strong> da altri clienti</div>
+        <div id="lib-audio-progress" class="lib-progress"></div>
+        <div id="lib-audio-list">
+          <div class="lib-empty">— Nessun audio —</div>
         </div>
         <div id="lib-audio-pagination" style="margin-top:10px"></div>
       </fieldset>
