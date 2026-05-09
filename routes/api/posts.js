@@ -508,8 +508,8 @@ router.post('/:id/generate-ai-video', async (req, res) => {
       const clientLibrary = require('../../lib/client-library');
       const itemId = raw.slice('client:'.length);
       const item = clientLibrary.getLibraryItem(itemId);
-      // Sicurezza: l'audio deve appartenere allo stesso cliente del post.
-      if (item && item.kind === 'audio' && item.client_id === post.client_id) {
+      // Sicurezza: audio del cliente OPPURE marcato come condiviso (is_shared=1).
+      if (item && item.kind === 'audio' && (item.client_id === post.client_id || item.is_shared)) {
         const candidate = path.join(clientLibrary.libraryDir(item.client_id, 'audio'), item.filename);
         if (fs.existsSync(candidate)) audioPath = candidate;
       }
@@ -914,7 +914,7 @@ router.post('/:id/library-attach', async (req, res) => {
   if (!itemId) return res.status(400).json({ error: 'library_item_id richiesto' });
 
   const item = clientLibrary.getLibraryItem(itemId);
-  if (!item || item.client_id !== post.client_id) {
+  if (!item || (item.client_id !== post.client_id && !item.is_shared)) {
     return res.status(404).json({ error: 'Item libreria non trovato per questo cliente' });
   }
   if (item.kind !== 'video' && item.kind !== 'image') {
@@ -1022,7 +1022,7 @@ router.post('/:id/media/:mediaId/replace-audio', async (req, res) => {
   if (raw.startsWith('client:')) {
     const itemId = raw.slice('client:'.length);
     const item = clientLibrary.getLibraryItem(itemId);
-    if (item && item.kind === 'audio' && item.client_id === post.client_id) {
+    if (item && item.kind === 'audio' && (item.client_id === post.client_id || item.is_shared)) {
       const candidate = path.join(clientLibrary.libraryDir(item.client_id, 'audio'), item.filename);
       if (fs.existsSync(candidate)) { audioPath = candidate; audioLabel = item.original_name || item.filename; }
     }
@@ -1222,7 +1222,7 @@ router.post('/:id/media/:mediaId/animate-image', async (req, res) => {
     if (rawAudio.startsWith('client:')) {
       const itemId = rawAudio.slice('client:'.length);
       const item = clientLibrary.getLibraryItem(itemId);
-      if (item && item.kind === 'audio' && item.client_id === post.client_id) {
+      if (item && item.kind === 'audio' && (item.client_id === post.client_id || item.is_shared)) {
         const candidate = path.join(clientLibrary.libraryDir(item.client_id, 'audio'), item.filename);
         if (fs.existsSync(candidate)) { audioPathRaw = candidate; audioLabel = item.original_name || item.filename; }
       }

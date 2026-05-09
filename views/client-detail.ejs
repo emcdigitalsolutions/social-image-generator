@@ -231,11 +231,12 @@
       <!-- AUDIO -->
       <fieldset style="border:1px solid var(--gray-200);border-radius:6px;padding:12px">
         <legend style="font-size:13px;font-weight:600;padding:0 6px">🎵 Audio</legend>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-          <input type="file" id="lib-audio-input" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/ogg" multiple style="flex:1;font-size:12px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <input type="file" id="lib-audio-input" accept="audio/mpeg,audio/wav,audio/mp4,audio/x-m4a,audio/ogg" multiple style="flex:1;font-size:12px;min-width:120px">
           <button class="btn btn-sm btn-primary" onclick="uploadLibraryFile('audio')" id="lib-audio-btn">Carica</button>
+          <button class="btn btn-sm btn-secondary" onclick="promoteAllAudio()" id="lib-audio-promote-btn" title="Rende tutti gli audio caricati su questo cliente disponibili anche per gli altri clienti (libreria condivisa)">🌍 Condividi tutti</button>
         </div>
-        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">MP3/WAV/M4A/OGG · max 15MB · selezione multipla supportata · solo musica royalty-free</div>
+        <div style="font-size:10px;color:var(--gray-500);margin-bottom:10px">MP3/WAV/M4A/OGG · max 15MB · solo musica royalty-free · vedi sotto i file <strong>🌍 condivisi</strong> da altri clienti</div>
         <div id="lib-audio-progress" style="display:none;font-size:11px;color:var(--gray-600);margin-bottom:10px"></div>
         <div id="lib-audio-list" style="display:flex;flex-direction:column;gap:8px;min-height:60px">
           <div class="lib-empty" style="color:var(--gray-400);font-size:12px;text-align:center;padding:18px 0">— Nessun audio —</div>
@@ -568,8 +569,17 @@
       return;
     }
     if (kind === 'image') {
-      root.innerHTML = items.map(it => `
-        <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#f3f4f6">
+      root.innerHTML = items.map(it => {
+        const isOwner = it.client_id === CLIENT_ID;
+        const sharedBadge = it.is_shared ? '<span title="Condiviso con tutti i clienti" style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;letter-spacing:0.3px">🌍 SHARED</span>' : '';
+        const ownerBadge = !isOwner ? '<span title="Caricato da un altro cliente" style="background:#6366f1;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px">DA ALTRO</span>' : '';
+        const shareBtn = isOwner
+          ? `<button onclick="toggleShare('${escAttr(it.id)}', ${it.is_shared ? 'false' : 'true'})" title="${it.is_shared ? 'Rendi privato (solo questo cliente)' : 'Rendi condiviso con tutti i clienti'}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;line-height:1">${it.is_shared ? '🔒' : '🌍'}</button>` : '';
+        const delBtn = isOwner
+          ? `<button onclick="deleteLibraryItem('${escAttr(it.id)}', '${escAttr(it.original_name || it.filename)}')" title="Elimina dalla libreria" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1">🗑</button>` : '';
+        return `
+        <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#f3f4f6;position:relative">
+          <div style="position:absolute;top:4px;left:4px;display:flex;gap:4px;z-index:2">${sharedBadge}${ownerBadge}</div>
           <div onclick="openLibraryImagePreview('${escAttr(it.url)}', '${escAttr(it.original_name || it.filename)}')" style="cursor:pointer;background:#f3f4f6;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;overflow:hidden" title="Click per anteprima ingrandita">
             <img src="${escAttr(it.url)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
           </div>
@@ -577,16 +587,25 @@
             <div style="font-size:11px;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
             <div style="font-size:10px;color:var(--gray-500);display:flex;justify-content:space-between;align-items:center;margin-top:3px">
               <span>${fmtBytes(it.bytes)}${it.width && it.height ? ' · ' + it.width + '×' + it.height : ''}</span>
-              <button onclick="deleteLibraryItem('${escAttr(it.id)}', '${escAttr(it.original_name || it.filename)}')" title="Elimina dalla libreria" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1">🗑</button>
+              <span style="display:flex;gap:2px">${shareBtn}${delBtn}</span>
             </div>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
       return;
     }
     if (kind === 'video') {
-      root.innerHTML = items.map(it => `
+      root.innerHTML = items.map(it => {
+        const isOwner = it.client_id === CLIENT_ID;
+        const sharedBadge = it.is_shared ? '<span title="Condiviso con tutti i clienti" style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;letter-spacing:0.3px">🌍</span>' : '';
+        const ownerBadge = !isOwner ? '<span title="Caricato da un altro cliente" style="background:#6366f1;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px">DA ALTRO</span>' : '';
+        const shareBtn = isOwner
+          ? `<button onclick="toggleShare('${escAttr(it.id)}', ${it.is_shared ? 'false' : 'true'})" title="${it.is_shared ? 'Rendi privato' : 'Rendi condiviso con tutti i clienti'}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;line-height:1">${it.is_shared ? '🔒' : '🌍'}</button>` : '';
+        const delBtn = isOwner
+          ? `<button onclick="deleteLibraryItem('${escAttr(it.id)}', '${escAttr(it.original_name || it.filename)}')" title="Elimina dalla libreria" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1">🗑</button>` : '';
+        return `
         <div style="border:1px solid var(--gray-200);border-radius:6px;overflow:hidden;background:#000;position:relative">
+          <div style="position:absolute;top:4px;left:4px;display:flex;gap:4px;z-index:2">${sharedBadge}${ownerBadge}</div>
           <div onclick="openLibraryVideoPreview('${escAttr(it.url)}', '${escAttr(it.original_name || it.filename)}')" style="position:relative;cursor:pointer;background:#000;aspect-ratio:9/16" title="Click per vedere l'anteprima">
             <video src="${escAttr(it.url)}#t=0.5" muted preload="metadata" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;pointer-events:none"></video>
             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.15);transition:background 0.15s" onmouseover="this.style.background='rgba(0,0,0,0.35)'" onmouseout="this.style.background='rgba(0,0,0,0.15)'">
@@ -599,22 +618,31 @@
             <div style="font-size:11px;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</div>
             <div style="font-size:10px;color:var(--gray-500);display:flex;justify-content:space-between;align-items:center;margin-top:3px">
               <span>${fmtBytes(it.bytes)}</span>
-              <button onclick="deleteLibraryItem('${escAttr(it.id)}', '${escAttr(it.original_name || it.filename)}')" title="Elimina dalla libreria" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1">🗑</button>
+              <span style="display:flex;gap:2px">${shareBtn}${delBtn}</span>
             </div>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     } else {
-      root.innerHTML = items.map(it => `
+      root.innerHTML = items.map(it => {
+        const isOwner = it.client_id === CLIENT_ID;
+        const sharedBadge = it.is_shared ? '<span title="Condiviso con tutti i clienti" style="background:#10b981;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;letter-spacing:0.3px;flex-shrink:0">🌍</span>' : '';
+        const ownerBadge = !isOwner ? '<span title="Caricato da un altro cliente" style="background:#6366f1;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;flex-shrink:0">DA ALTRO</span>' : '';
+        const shareBtn = isOwner
+          ? `<button onclick="toggleShare('${escAttr(it.id)}', ${it.is_shared ? 'false' : 'true'})" title="${it.is_shared ? 'Rendi privato' : 'Rendi condiviso con tutti i clienti'}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 2px;line-height:1">${it.is_shared ? '🔒' : '🌍'}</button>` : '';
+        const delBtn = isOwner
+          ? `<button onclick="deleteLibraryItem('${escAttr(it.id)}', '${escAttr(it.original_name || it.filename)}')" title="Elimina dalla libreria" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1">🗑</button>` : '';
+        return `
         <div style="border:1px solid var(--gray-200);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-            <span style="font-size:12px;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</span>
+            ${sharedBadge}${ownerBadge}
+            <span style="font-size:12px;font-weight:600;color:var(--gray-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1" title="${escAttr(it.original_name || it.filename)}">${escAttr(it.original_name || it.filename)}</span>
             <span style="font-size:10px;color:var(--gray-500);flex-shrink:0">${fmtBytes(it.bytes)}</span>
-            <button onclick="deleteLibraryItem('${escAttr(it.id)}', '${escAttr(it.original_name || it.filename)}')" title="Elimina dalla libreria" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1">🗑</button>
+            ${shareBtn}${delBtn}
           </div>
           <audio src="${escAttr(it.url)}" controls preload="none" style="width:100%;height:30px"></audio>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     }
   }
 
@@ -683,6 +711,53 @@
     }
   }
   window.deleteLibraryItem = deleteLibraryItem;
+
+  // Toggla flag is_shared di un item. Solo il proprietario può chiamarlo.
+  async function toggleShare(itemId, makeShared) {
+    if (makeShared) {
+      if (!await showConfirm('Rendere questo file disponibile a TUTTI i clienti? Apparirà nella libreria di ogni cliente come "🌍 condiviso". Potrai sempre toglierlo cliccando l\'icona 🔒.')) return;
+    }
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library/' + itemId + '/share', {
+        method: 'PATCH',
+        body: { shared: makeShared }
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast(makeShared ? 'File ora condiviso con tutti i clienti' : 'File ora privato');
+      loadLibrary();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+  window.toggleShare = toggleShare;
+
+  // Promuove a is_shared=1 tutti gli audio del cliente attuale.
+  async function promoteAllAudio() {
+    const ownAudio = (libCache.audio || []).filter(it => it.client_id === CLIENT_ID && !it.is_shared);
+    if (!ownAudio.length) {
+      await showAlert('Non ci sono audio non-condivisi di questo cliente da promuovere.');
+      return;
+    }
+    if (!await showConfirm('Rendere tutti gli ' + ownAudio.length + ' audio caricati su questo cliente disponibili a TUTTI i clienti? Apparir\u00E0 nella libreria di ogni cliente come "🌍 condiviso".')) return;
+    const btn = document.getElementById('lib-audio-promote-btn');
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = 'Condividendo…';
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library/promote-all', {
+        method: 'POST', body: { kind: 'audio' }
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast(res.promoted + ' audio ora condivisi con tutti i clienti');
+      loadLibrary();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  }
+  window.promoteAllAudio = promoteAllAudio;
 
   // Apre una lightbox con il player video grande (controls + autoplay).
   // Più affidabile dell'inline preview nelle card piccole della grid.

@@ -114,7 +114,7 @@ router.delete('/:itemId', (req, res) => {
   const item = db.prepare(
     'SELECT * FROM client_media_library WHERE id = ? AND client_id = ?'
   ).get(req.params.itemId, req.params.clientId);
-  if (!item) return res.status(404).json({ error: 'Item non trovato' });
+  if (!item) return res.status(404).json({ error: 'Item non trovato (solo il cliente proprietario può eliminarlo)' });
 
   const ok = clientLibrary.deleteLibraryItem(req.params.itemId);
   if (!ok) return res.status(500).json({ error: 'Cancellazione fallita' });
@@ -124,9 +124,50 @@ router.delete('/:itemId', (req, res) => {
     action: 'library.deleted',
     entity_type: 'library_item',
     entity_id: req.params.itemId,
-    details: { kind: item.kind, original_name: item.original_name }
+    details: { kind: item.kind, original_name: item.original_name, was_shared: !!item.is_shared }
   });
   res.json({ success: true });
+});
+
+// Toggla flag is_shared di un item. Solo il cliente proprietario può cambiarlo.
+// Body: { shared: true|false }
+router.patch('/:itemId/share', (req, res) => {
+  if (!ensureClient(req, res)) return;
+  const db = getDb();
+  const item = db.prepare(
+    'SELECT * FROM client_media_library WHERE id = ? AND client_id = ?'
+  ).get(req.params.itemId, req.params.clientId);
+  if (!item) return res.status(404).json({ error: 'Item non trovato (solo il cliente proprietario può condividerlo)' });
+
+  const shared = !!(req.body && req.body.shared);
+  const updated = clientLibrary.setShared(req.params.itemId, shared);
+  audit.logFromReq(req, {
+    client_id: req.params.clientId,
+    action: shared ? 'library.shared' : 'library.unshared',
+    entity_type: 'library_item',
+    entity_id: req.params.itemId,
+    details: { kind: item.kind, original_name: item.original_name }
+  });
+  res.json({ item: updated });
+});
+
+// One-shot: promuove a is_shared=1 tutti gli item del cliente di un certo kind.
+// Body: { kind: 'audio'|'video'|'image' }  default 'audio'
+router.post('/promote-all', (req, res) => {
+  if (!ensureClient(req, res)) return;
+  const kind = req.body && (req.body.kind === 'video' || req.body.kind === 'image') ? req.body.kind : 'audio';
+  const db = getDb();
+  const r = db.prepare(
+    'UPDATE client_media_library SET is_shared = 1 WHERE client_id = ? AND kind = ? AND is_shared = 0'
+  ).run(req.params.clientId, kind);
+  audit.logFromReq(req, {
+    client_id: req.params.clientId,
+    action: 'library.bulk_shared',
+    entity_type: 'client_media_library',
+    entity_id: req.params.clientId,
+    details: { kind, promoted: r.changes }
+  });
+  res.json({ promoted: r.changes });
 });
 
 module.exports = router;
