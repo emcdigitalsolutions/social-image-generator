@@ -339,12 +339,16 @@
       <span class="badge" style="background:#fee2e2;color:#991b1b;font-weight:700">✗ Rifiutato dal cliente</span>
     <% } else if (post.approval_status === 'approved') { %>
       <span class="badge" style="background:#dcfce7;color:#14532d;font-weight:700">✓ Approvato</span>
+    <% } else if (post.approval_status === 'pending') { %>
+      <span class="badge" style="background:#e0e7ff;color:#3730a3;font-weight:700">⏳ In attesa approvazione</span>
     <% } %>
   </div>
   <div style="display:flex;gap:6px;flex-wrap:wrap">
     <% if (post.approval_status === 'change_requested' || post.approval_status === 'rejected') { %>
       <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="markApplied('pending')" title="Le modifiche sono state applicate: rimette il post in 'pending' così il cliente può rivalutarlo al prossimo accesso al link di approvazione">✓ Modifiche applicate (rivaluta cliente)</button>
       <button class="btn btn-sm btn-secondary" onclick="markApplied('approved')" title="Segna direttamente come approvato (chiude la richiesta di modifica senza aspettare il cliente)">✓ Approva (admin)</button>
+    <% } else if (post.approval_status === 'pending') { %>
+      <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="markApplied('approved')" title="Approva direttamente questo post (utile per post creati dopo l'approvazione mensile, che altrimenti resterebbero bloccati). Il publish guard non lo bloccherà più.">✓ Approva (admin)</button>
     <% } %>
     <% if (post.status !== 'ready' && post.status !== 'published') { %>
       <button class="btn btn-secondary btn-sm" onclick="markReady()" title="Cambia lo stato in 'ready': il post verrà pubblicato automaticamente alla scheduled_date se lo schedule del mese è attivo.">&#9654; Segna pronto</button>
@@ -1507,10 +1511,15 @@
 
   // Chiude una richiesta di modifica cliente: può rimandare al cliente (pending)
   // o approvare direttamente (approved) come admin.
+  // Usato anche per approvare admin-side post creati dopo l'approvazione mensile
+  // (caso d'uso: nuovo post in mese già approved → cliente non lo rivedrà più).
   async function markApplied(newStatus) {
+    const wasPending = (POST.approval_status === 'pending');
     const label = newStatus === 'approved' ? 'Approvare direttamente (admin)' : 'Rimandare al cliente (pending)';
     const note = newStatus === 'approved'
-      ? 'Il post verrà marcato come APPROVATO definitivamente, la richiesta di modifica viene chiusa senza ripassare dal cliente.'
+      ? (wasPending
+          ? 'Il post verrà marcato come APPROVATO. Utile per post creati dopo l\u2019approvazione mensile: senza approvazione il publish guard lo bloccherebbe.'
+          : 'Il post verrà marcato come APPROVATO definitivamente, la richiesta di modifica viene chiusa senza ripassare dal cliente.')
       : 'Il post tornerà in stato PENDING: Giuseppe Di Rosa (o altro cliente) lo rivedrà al prossimo accesso al link di approvazione e potrà approvarlo.';
     if (!await showConfirm(label + '?\n\n' + note)) return;
     const comment = newStatus === 'pending'
