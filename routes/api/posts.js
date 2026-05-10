@@ -690,6 +690,19 @@ router.post('/:id/publish', async (req, res) => {
     if (!channels.length) channels = ['fb', 'ig']; // fallback retrocompatibile
   }
 
+  // Re-entrancy guard: condiviso con lo scheduler tramite `inFlightPosts`.
+  // Senza questo:
+  //  - admin clicca "Pubblica" → publishPost gira 30-90s (es. video IG con polling)
+  //  - tick scheduler (ogni 60s) trova lo stesso post in 'ready' e lo pubblica di nuovo
+  //  → doppia pubblicazione su FB/IG.
+  // Già il blocco status='published' al termine impedisce ulteriori tentativi,
+  // ma durante il publish manuale lo status DB è ancora 'ready'.
+  const { inFlightPosts } = require('../../lib/scheduler');
+  if (inFlightPosts.has(post.id)) {
+    return res.status(409).json({ error: 'Pubblicazione già in corso per questo post — attendi qualche secondo e ricarica la pagina.' });
+  }
+  inFlightPosts.add(post.id);
+
   try {
     const result = await publishPost(client, { ...post, media_type: mediaType }, media, { channels });
 
@@ -748,6 +761,8 @@ router.post('/:id/publish', async (req, res) => {
     notifyPublishFailed(post, client, 'Exception: ' + err.message)
       .catch(e => console.error('[notifier] publish exception notify error:', e.message));
     res.status(500).json({ error: 'Publishing failed', details: err.message });
+  } finally {
+    inFlightPosts.delete(post.id);
   }
 });
 
