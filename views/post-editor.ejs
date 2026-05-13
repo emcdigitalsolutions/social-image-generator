@@ -363,6 +363,42 @@
   </div>
 </div>
 
+<% if (Array.isArray(comments) && comments.length) { %>
+  <%
+    const clientComments = comments.filter(c => c.author === 'client');
+    const adminComments  = comments.filter(c => c.author === 'admin');
+    const hasReviewState = post.approval_status === 'change_requested' || post.approval_status === 'rejected';
+    const boxBg     = hasReviewState ? '#fef3c7' : '#f3f4f6';
+    const boxBorder = hasReviewState ? '#f59e0b' : 'var(--gray-300)';
+    const titleCol  = hasReviewState ? '#92400e' : 'var(--gray-700)';
+  %>
+  <div style="margin-bottom:16px;padding:14px 16px;background:<%= boxBg %>;border:1px solid <%= boxBorder %>;border-left:4px solid <%= boxBorder %>;border-radius:8px">
+    <div style="font-weight:700;color:<%= titleCol %>;margin-bottom:10px;font-size:14px">
+      <% if (hasReviewState) { %>✏️ Richieste del cliente<% } else { %>💬 Commenti<% } %>
+      <% if (clientComments.length) { %>
+        <span style="font-weight:500;font-size:12px;opacity:.85">· <%= clientComments.length %> dal cliente</span>
+      <% } %>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <% comments.forEach(function(c){
+           const isClient = c.author === 'client';
+           const bg     = isClient ? '#fff' : '#eef2ff';
+           const border = isClient ? '#fbbf24' : '#a5b4fc';
+           const label  = isClient ? '👤 Cliente' : '🛠 Admin';
+           const labelCol = isClient ? '#92400e' : '#3730a3';
+      %>
+        <div style="background:<%= bg %>;border:1px solid <%= border %>;border-radius:6px;padding:10px 12px">
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;margin-bottom:6px">
+            <span style="font-weight:700;color:<%= labelCol %>"><%= label %></span>
+            <span style="color:var(--gray-500)"><%= new Date(c.created_at + 'Z').toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) %></span>
+          </div>
+          <div style="font-size:14px;color:var(--gray-800);white-space:pre-wrap;word-break:break-word"><%= c.text %></div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+<% } %>
+
 <div class="post-editor-layout">
   <!-- Left: Caption + Dettagli -->
   <div>

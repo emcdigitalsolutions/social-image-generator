@@ -324,7 +324,16 @@ router.get('/posts/:id', (req, res) => {
     }
   }
 
-  res.render('post-editor', { title: 'Editor Post', client, post, media, user: req.user, prevPostId, nextPostId, monthUrl, categories });
+  // Commenti (cliente + admin) ordinati cronologicamente. Servono al post-editor
+  // per mostrare le richieste di modifica del cliente — senza questi l'admin
+  // vedeva solo il badge "Modifiche richieste" ma non sapeva cosa modificare.
+  const comments = db.prepare(`
+    SELECT id, author, text, created_at FROM post_comments
+    WHERE post_id = ?
+    ORDER BY created_at ASC
+  `).all(post.id);
+
+  res.render('post-editor', { title: 'Editor Post', client, post, media, comments, user: req.user, prevPostId, nextPostId, monthUrl, categories });
 });
 
 // Insights overview admin: panoramica multi-cliente con KPI sintetici
