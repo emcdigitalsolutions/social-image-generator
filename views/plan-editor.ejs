@@ -198,14 +198,16 @@
     <p style="font-size:12px;color:var(--gray-500);margin:0 0 12px">Click su un mese per aprire la vista calendario/lista. La barra colorata mostra a colpo d'occhio lo stato dei post.</p>
 <div class="month-grid">
   <% const totalMonths = plan.plan_data.months.length; %>
+  <% const { resolveCalendarMonth: __resolveCM } = require('../lib/month-labels'); %>
   <% for (let m = 1; m <= totalMonths; m++) {
     const s = (typeof monthStats !== 'undefined' && monthStats[m]) || { total: 0, draft_count: 0, wip_count: 0, ready_count: 0, published_count: 0, failed_count: 0 };
     const t = s.total || 0;
     const pct = (n) => t > 0 ? (n / t * 100).toFixed(0) + '%' : '0%';
+    const __calM = __resolveCM(m, plan.start_year_month);
   %>
     <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>/month/<%= m %>" class="month-card <%= t === 0 ? 'empty' : '' %>">
       <div class="mc-title">
-        <span>Mese <%= m %></span>
+        <span>Mese <%= m %><% if (__calM) { %> <span style="color:var(--gray-500);font-weight:500;font-size:.85em">· <%= __calM.label %></span><% } %></span>
         <span class="mc-total"><%= t %> post</span>
       </div>
       <% if (t > 0) { %>
@@ -280,6 +282,20 @@
   const CLIENT_ID = '<%= client.id %>';
   const PLAN_DATA = <%- plan.plan_data ? JSON.stringify(plan.plan_data) : 'null' %>;
   const PLAN_RAW  = <%- JSON.stringify(plan.ai_raw || '') %>;
+  const PLAN_START_YM = <%- JSON.stringify(plan.start_year_month || null) %>;
+  const MONTHS_IT_LABELS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  // Restituisce "Settembre 2026" oppure "" se PLAN_START_YM è null/invalido.
+  function calMonthLabel(monthNumber) {
+    if (!PLAN_START_YM) return '';
+    const m = String(PLAN_START_YM).match(/^(\d{4})-(\d{2})$/);
+    if (!m) return '';
+    const sy = parseInt(m[1], 10), sm = parseInt(m[2], 10);
+    if (sm < 1 || sm > 12) return '';
+    const z = (sm - 1) + (monthNumber - 1);
+    const year = sy + Math.floor(z / 12);
+    const month = (z % 12) + 1;
+    return MONTHS_IT_LABELS[month - 1] + ' ' + year;
+  }
 
   function getToken() {
     return localStorage.getItem('dashboard_token') || (document.cookie.split(';').find(c => c.trim().startsWith('dashboard_token=')) || '').split('=')[1] || '';
@@ -509,9 +525,11 @@
     let html = '';
     for (let m = 1; m <= totalMonths; m++) {
       const a = byMonth[m];
+      const calLbl = calMonthLabel(m);
+      const calSuffix = calLbl ? ' <span style="color:var(--gray-500);font-weight:500;font-size:.85em">· ' + calLbl + '</span>' : '';
       if (!a) {
         html += '<div class="approval-row">'
-          + '<div class="ap-meta"><strong>Mese ' + m + '</strong> &middot; <span style="color:var(--gray-500)">nessun link generato</span></div>'
+          + '<div class="ap-meta"><strong>Mese ' + m + '</strong>' + calSuffix + ' &middot; <span style="color:var(--gray-500)">nessun link generato</span></div>'
           + '<div class="ap-actions"><button class="btn btn-sm btn-primary" onclick="createApproval(' + m + ')">Genera link</button></div>'
           + '</div>';
       } else {
@@ -524,7 +542,7 @@
           + (s.pending ? '<span><strong>' + s.pending + '</strong> in attesa</span>' : '');
         html += '<div class="approval-row">'
           + '<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:280px">'
-          +   '<div class="ap-meta"><strong>Mese ' + m + '</strong> '
+          +   '<div class="ap-meta"><strong>Mese ' + m + '</strong>' + calSuffix + ' '
           +     '<span class="ap-status ' + a.status + '">' + statusLabelAp(a.status) + '</span>'
           +     (a.expires_at ? ' <span style="color:var(--gray-500);font-size:11px">scade ' + a.expires_at.slice(0,10) + '</span>' : '')
           +   '</div>'
@@ -568,7 +586,7 @@
       } else if (res.email && res.email.reason === 'no-contact-email') {
         toast('Link creato. Aggiungi contact_email al cliente per email automatica.');
       } else {
-        toast('Link creato per Mese ' + month);
+        toast('Link creato per Mese ' + month + (calMonthLabel(month) ? ' · ' + calMonthLabel(month) : ''));
       }
       await loadApprovals();
     } catch (err) {

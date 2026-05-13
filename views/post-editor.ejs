@@ -328,10 +328,19 @@
 </div>
 <% } %>
 
+<%
+  const { resolveCalendarMonth } = require('../lib/month-labels');
+  const calMonth = resolveCalendarMonth(post.month_number, planStartYM);
+%>
 <div class="page-header">
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <h1 style="margin:0"><%= categoryDisplay || 'Editor Post' %></h1>
     <span class="badge badge-<%= post.status %>" id="status-badge"><%= post.status %></span>
+    <% if (post.month_number) { %>
+      <span style="font-size:12px;color:var(--gray-600);background:#e0e7ff;padding:4px 10px;border-radius:6px;font-weight:600" title="Mese del piano editoriale<%= calMonth ? ' · ' + calMonth.label : '' %>">
+        📅 Mese <%= post.month_number %><% if (calMonth) { %> · <%= calMonth.label %><% } %>
+      </span>
+    <% } %>
     <span id="post-date-display" style="font-size:13px;color:var(--gray-600);background:var(--gray-100);padding:4px 10px;border-radius:6px;font-weight:500"></span>
     <% if (post.approval_status === 'change_requested') { %>
       <span class="badge" style="background:#fef3c7;color:#92400e;font-weight:700">✏️ Modifiche richieste</span>

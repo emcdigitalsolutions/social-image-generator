@@ -152,6 +152,7 @@
           <option value="6" selected>6 mesi</option>
           <option value="12">12 mesi</option>
         </select>
+        <input type="month" id="plan-start-month" title="Mese di partenza del piano (Mese 1). L'AI userà questa data per generare contenuti stagionali (Ferragosto, Natale, ecc.). Default: mese corrente." style="padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;font-size:13px;font-family:inherit">
         <button class="btn btn-primary btn-sm" onclick="generatePlan()" id="gen-plan-btn"><span style="margin-right:3px">✨</span>Genera Piano con AI</button>
         <button class="btn btn-secondary btn-sm" onclick="applyTemplateToClient()" title="Crea piano da un template salvato (più veloce della generazione AI)">&#9881; Da template</button>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-plan-file').click()" title="Carica un piano editoriale preparato offline (JSON)">&uarr; Importa JSON</button>
@@ -1452,12 +1453,18 @@
   async function generatePlan() {
     const btn = document.getElementById('gen-plan-btn');
     const months = parseInt(document.getElementById('plan-months-select').value) || 6;
+    // Default = mese corrente in formato YYYY-MM se il campo è vuoto.
+    let startYM = (document.getElementById('plan-start-month').value || '').trim();
+    if (!startYM) {
+      const now = new Date();
+      startYM = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> Generazione in corso...';
     try {
       const res = await apiFetch('/dashboard/api/plans/generate', {
         method: 'POST',
-        body: { client_id: CLIENT_ID, months }
+        body: { client_id: CLIENT_ID, months, start_year_month: startYM }
       });
       if (res.error) { await showAlert(res.error); return; }
       window.location.href = '/dashboard/clients/' + CLIENT_ID + '/plan/' + res.id;
@@ -1749,6 +1756,13 @@
     const inp = document.querySelector('input[name="contact_email"]');
     const span = document.getElementById('contact-email-display');
     if (inp && span) span.textContent = inp.value || 'non impostata';
+
+    // Pre-popola il selettore "mese di partenza piano" col mese corrente
+    const startInp = document.getElementById('plan-start-month');
+    if (startInp && !startInp.value) {
+      const now = new Date();
+      startInp.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
   });
 
   async function triggerInsightsSnapshot() {

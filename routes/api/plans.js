@@ -93,7 +93,7 @@ router.post('/import', (req, res) => {
 // Generate plan from questionnaire
 router.post('/generate', async (req, res) => {
   const db = getDb();
-  const { client_id, questionnaire_id, months } = req.body;
+  const { client_id, questionnaire_id, months, start_year_month } = req.body;
 
   if (!client_id) return res.status(400).json({ error: 'client_id required' });
 
@@ -117,15 +117,19 @@ router.post('/generate', async (req, res) => {
 
   try {
     const planMonths = parseInt(months) || client.editorial_months || 6;
-    const result = await generateEditorialPlan(client, responses, planMonths);
+    // start_year_month formato 'YYYY-MM'. Se non valido lo ignoriamo e finisce a NULL.
+    const startYM = (typeof start_year_month === 'string' && /^\d{4}-\d{2}$/.test(start_year_month))
+      ? start_year_month
+      : null;
+    const result = await generateEditorialPlan(client, responses, planMonths, undefined, startYM);
 
     const id = uuidv4();
     const title = result.planData?.title || `Piano Editoriale - ${client.display_name}`;
 
     db.prepare(`
-      INSERT INTO editorial_plans (id, client_id, title, status, plan_data, ai_raw)
-      VALUES (?, ?, ?, 'draft', ?, ?)
-    `).run(id, client_id, title, result.planData ? JSON.stringify(result.planData) : null, result.raw);
+      INSERT INTO editorial_plans (id, client_id, title, status, plan_data, ai_raw, start_year_month)
+      VALUES (?, ?, ?, 'draft', ?, ?, ?)
+    `).run(id, client_id, title, result.planData ? JSON.stringify(result.planData) : null, result.raw, startYM);
 
     // Create posts from plan data if available
     rebuildDraftPostsFromPlanData(db, client_id, id, result.planData);
@@ -137,7 +141,7 @@ router.post('/generate', async (req, res) => {
       action: 'plan.generated',
       entity_type: 'editorial_plan',
       entity_id: id,
-      details: { title, months: planMonths, provider: client.ai_provider || 'gemini' }
+      details: { title, months: planMonths, start_year_month: startYM, provider: client.ai_provider || 'gemini' }
     });
     res.status(201).json(plan);
   } catch (err) {

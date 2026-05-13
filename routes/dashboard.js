@@ -23,7 +23,7 @@ router.get('/approve/:token', (req, res) => {
   if (approval.expires_at && new Date(approval.expires_at) < new Date()) {
     return res.status(410).render('approval-error', { title: 'Link scaduto', message: 'Questo link di approvazione &egrave; scaduto. Contatta il tuo gestore social per riceverne uno nuovo.' });
   }
-  const plan = db.prepare('SELECT id, title, client_id FROM editorial_plans WHERE id = ?').get(approval.editorial_plan_id);
+  const plan = db.prepare('SELECT id, title, client_id, start_year_month FROM editorial_plans WHERE id = ?').get(approval.editorial_plan_id);
   const client = db.prepare('SELECT id, display_name, brand_name FROM clients WHERE id = ?').get(plan.client_id);
   res.render('approval-public', {
     title: `Approvazione mese ${approval.month_number} — ${client.display_name}`,
@@ -309,18 +309,23 @@ router.get('/posts/:id', (req, res) => {
 
   // Categorie del piano: code → name. Permette al post-editor di mostrare il
   // nome leggibile invece del codice, e di offrire un select dropdown.
+  // Carichiamo anche start_year_month per mostrare il mese calendario.
   let categories = [];
+  let planStartYM = null;
   if (post.editorial_plan_id) {
-    const plan = db.prepare('SELECT plan_data FROM editorial_plans WHERE id = ?').get(post.editorial_plan_id);
-    if (plan && plan.plan_data) {
-      try {
-        const parsed = JSON.parse(plan.plan_data);
-        if (Array.isArray(parsed.categories)) {
-          categories = parsed.categories
-            .filter(c => c && c.code)
-            .map(c => ({ code: c.code, name: c.name || c.code }));
-        }
-      } catch (_) { /* plan_data malformato — fallback array vuoto */ }
+    const plan = db.prepare('SELECT plan_data, start_year_month FROM editorial_plans WHERE id = ?').get(post.editorial_plan_id);
+    if (plan) {
+      planStartYM = plan.start_year_month || null;
+      if (plan.plan_data) {
+        try {
+          const parsed = JSON.parse(plan.plan_data);
+          if (Array.isArray(parsed.categories)) {
+            categories = parsed.categories
+              .filter(c => c && c.code)
+              .map(c => ({ code: c.code, name: c.name || c.code }));
+          }
+        } catch (_) { /* plan_data malformato — fallback array vuoto */ }
+      }
     }
   }
 
@@ -333,7 +338,7 @@ router.get('/posts/:id', (req, res) => {
     ORDER BY created_at ASC
   `).all(post.id);
 
-  res.render('post-editor', { title: 'Editor Post', client, post, media, comments, user: req.user, prevPostId, nextPostId, monthUrl, categories });
+  res.render('post-editor', { title: 'Editor Post', client, post, media, comments, user: req.user, prevPostId, nextPostId, monthUrl, categories, planStartYM });
 });
 
 // Insights overview admin: panoramica multi-cliente con KPI sintetici
