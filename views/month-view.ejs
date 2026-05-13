@@ -175,6 +175,13 @@
   </div>
 </div>
 
+<% if (!plan.start_year_month) { %>
+  <div style="margin-bottom:12px;padding:10px 14px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px">
+    <span>📅 <strong>Mese calendario non impostato</strong> per questo piano (Mese 1 = ?). Imposta il mese di partenza per orientarti meglio.</span>
+    <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>" class="btn btn-sm btn-primary" style="padding:3px 10px;font-size:12px;text-decoration:none">Vai al piano per impostarlo →</a>
+  </div>
+<% } %>
+
 <div class="month-buttons" style="margin-bottom:16px">
   <% const totalMonths = (plan.plan_data && plan.plan_data.months) ? plan.plan_data.months.length : (client.editorial_months || 6); %>
   <% for (let m = 1; m <= totalMonths; m++) {

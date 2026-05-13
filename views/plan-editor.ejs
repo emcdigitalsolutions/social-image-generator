@@ -148,6 +148,18 @@
   <div>
     <h1 title="<%= plan.title || 'Piano Editoriale' %>"><%= plan.title || 'Piano Editoriale' %></h1>
     <span class="badge badge-<%= plan.status %>" style="align-self:flex-start"><%= plan.status %></span>
+    <div id="start-ym-row" style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--gray-600)">📅 <strong>Mese 1 (Inizio piano):</strong></span>
+      <% if (plan.start_year_month) {
+           const __calStart = resolveCalendarMonth(1, plan.start_year_month);
+      %>
+        <span id="start-ym-label" style="font-size:13px;color:var(--gray-800);background:#e0e7ff;padding:3px 10px;border-radius:6px;font-weight:600"><%= __calStart ? __calStart.label : plan.start_year_month %></span>
+        <button class="btn btn-sm btn-secondary" onclick="editStartYearMonth()" style="padding:3px 10px;font-size:12px" title="Cambia il mese di partenza del piano">✎ Modifica</button>
+      <% } else { %>
+        <span id="start-ym-label" style="font-size:12px;color:var(--red);font-weight:600">non impostato</span>
+        <button class="btn btn-sm btn-primary" onclick="editStartYearMonth()" style="padding:3px 10px;font-size:12px" title="Imposta il mese calendario di Mese 1 (es. Agosto 2026). Utile per orientarsi sui piani vecchi.">📅 Imposta</button>
+      <% } %>
+    </div>
   </div>
   <div class="plan-actions">
     <button class="btn btn-secondary" onclick="renamePlan()" title="Cambia il nome del piano editoriale">&#9998; Rinomina</button>
@@ -656,6 +668,28 @@
   }
 
   // ─────────────────────── Rinomina / Duplica / Export JSON ───────────────────────
+
+  async function editStartYearMonth() {
+    const current = PLAN_START_YM || '';
+    const next = prompt('Mese di partenza del piano (formato YYYY-MM, es. 2026-08 per Agosto 2026). Lascia vuoto per rimuovere.', current);
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (trimmed && !/^\d{4}-\d{2}$/.test(trimmed)) {
+      await showAlert('Formato non valido. Usa YYYY-MM (es. 2026-08).');
+      return;
+    }
+    try {
+      const res = await apiFetch('/dashboard/api/plans/' + PLAN_ID, {
+        method: 'PUT',
+        body: { start_year_month: trimmed || null }
+      });
+      if (res.error) throw new Error(res.error);
+      toast(trimmed ? 'Mese di partenza impostato' : 'Mese di partenza rimosso');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
 
   async function renamePlan() {
     const current = <%- JSON.stringify(plan.title || '') %>;

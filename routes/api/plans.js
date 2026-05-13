@@ -170,7 +170,7 @@ router.get('/:id', (req, res) => {
 // Update plan
 router.put('/:id', (req, res) => {
   const db = getDb();
-  const { title, plan_data, status } = req.body;
+  const { title, plan_data, status, start_year_month } = req.body;
 
   const updates = [];
   const values = [];
@@ -178,6 +178,13 @@ router.put('/:id', (req, res) => {
   if (title !== undefined) { updates.push('title = ?'); values.push(title); }
   if (plan_data !== undefined) { updates.push('plan_data = ?'); values.push(JSON.stringify(plan_data)); }
   if (status !== undefined) { updates.push('status = ?'); values.push(status); }
+  if (start_year_month !== undefined) {
+    // Accetta 'YYYY-MM' oppure null/'' per resettare.
+    const v = (typeof start_year_month === 'string' && /^\d{4}-\d{2}$/.test(start_year_month))
+      ? start_year_month
+      : null;
+    updates.push('start_year_month = ?'); values.push(v);
+  }
 
   updates.push("updated_at = datetime('now')");
   values.push(req.params.id);
