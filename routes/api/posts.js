@@ -1671,39 +1671,87 @@ router.post('/bulk-time', (req, res) => {
   res.json({ updated: result.changes });
 });
 
-// Distribuisce le date dei post di un mese in base a:
-//  - start_date: data di partenza (il lunedì della sua settimana segna la settimana 1)
-//  - weekdays:   array di interi 1-7 (1=lun ... 7=dom) — i giorni settimanali "consentiti"
-//  - plan_id, month: scopa i post al solo mese corrente
-//  - only_unscheduled: se true, aggiorna solo i post senza scheduled_date
-// Logica:
-//  per ogni post, in base a (week_number, position):
-//    weekday = weekdays_sorted[position % len(weekdays_sorted)]
-//    date = startMonday + (week_number - 1) * 7 giorni + (weekday - 1) giorni
+// Distribuisce le date dei post di un mese. Due modalità:
+//  mode='weeks' (legacy): 4 settimane consecutive da start_date — può andare a
+//    cavallo di due mesi calendario.
+//  mode='calendar_month' (consigliato): distribuisce i post sui giorni del mese
+//    CALENDARIO corrispondente (editorial_plans.start_year_month + month-1) che
+//    cadono nei weekday consentiti. Garantisce che il "Mese N del piano" coincida
+//    con un singolo mese calendario.
+//
+//  Body comune:
+//    - plan_id, month: scopa i post al mese corrente del piano
+//    - weekdays: array di interi 1-7 (1=lun ... 7=dom)
+//    - only_unscheduled: se true, aggiorna solo i post senza scheduled_date
+//    - mode: 'weeks' | 'calendar_month' (default 'weeks' per retro-compat)
+//  Mode-specific:
+//    - mode='weeks': start_date YYYY-MM-DD richiesto
+//    - mode='calendar_month': nessun start_date (deriva da plan.start_year_month)
 router.post('/bulk-distribute-dates', (req, res) => {
   const db = getDb();
-  const { plan_id, month, start_date, weekdays, only_unscheduled } = req.body;
+  const { plan_id, month, start_date, weekdays, only_unscheduled, mode } = req.body;
   if (!plan_id || !Number.isInteger(parseInt(month))) return res.status(400).json({ error: 'plan_id e month richiesti' });
-  if (!start_date || !/^\d{4}-\d{2}-\d{2}$/.test(start_date)) return res.status(400).json({ error: 'start_date deve essere YYYY-MM-DD' });
   if (!Array.isArray(weekdays) || !weekdays.length) return res.status(400).json({ error: 'weekdays richiesto (almeno un giorno)' });
   const sortedWd = [...new Set(weekdays.map(n => parseInt(n, 10)))].filter(n => Number.isInteger(n) && n >= 1 && n <= 7).sort((a, b) => a - b);
   if (!sortedWd.length) return res.status(400).json({ error: 'weekdays: interi 1-7 (1=lun)' });
 
-  const start = new Date(start_date + 'T00:00:00');
-  if (isNaN(start.getTime())) return res.status(400).json({ error: 'start_date invalida' });
-  // Lunedì della settimana che contiene start_date
-  const startDow = start.getDay() === 0 ? 7 : start.getDay(); // 1..7
-  const startMonday = new Date(start); startMonday.setDate(start.getDate() - (startDow - 1));
+  const monthNum = parseInt(month);
+  const useCalendar = mode === 'calendar_month';
 
   const posts = db.prepare(`
     SELECT id, week_number, position, scheduled_date FROM posts
     WHERE editorial_plan_id = ? AND month_number = ?
     ORDER BY week_number ASC, position ASC, created_at ASC
-  `).all(plan_id, parseInt(month));
+  `).all(plan_id, monthNum);
 
-  // Numera position per settimana: alcuni post potrebbero avere position=0 tutti
-  // (legacy). Rigeneriamo un indice sequenziale per (week).
-  const indexInWeek = new Map(); // post.id -> idx
+  const fmt = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const upd = db.prepare(`UPDATE posts SET scheduled_date = ?, updated_at = datetime('now') WHERE id = ?`);
+  let updated = 0;
+
+  if (useCalendar) {
+    // Carica il piano per leggere start_year_month
+    const plan = db.prepare('SELECT start_year_month FROM editorial_plans WHERE id = ?').get(plan_id);
+    if (!plan || !plan.start_year_month) {
+      return res.status(400).json({ error: 'Modalità "Mese calendario" richiede start_year_month sul piano. Imposta il mese di partenza dal plan-editor.' });
+    }
+    const { resolveCalendarMonth } = require('../../lib/month-labels');
+    const cal = resolveCalendarMonth(monthNum, plan.start_year_month);
+    if (!cal) return res.status(400).json({ error: 'Impossibile risolvere il mese calendario' });
+
+    // Elenca i giorni del mese che cadono nei weekday consentiti
+    const lastDay = new Date(cal.year, cal.month, 0).getDate();
+    const candidates = [];
+    for (let d = 1; d <= lastDay; d++) {
+      const date = new Date(cal.year, cal.month - 1, d);
+      const dow = date.getDay() === 0 ? 7 : date.getDay(); // 1=lun..7=dom
+      if (sortedWd.includes(dow)) candidates.push(date);
+    }
+    if (!candidates.length) {
+      return res.status(400).json({ error: `Nessun giorno valido in ${cal.label} con i weekday selezionati.` });
+    }
+    // Distribuisci i post sui candidati, evenly spaced
+    const target = posts.filter(p => !only_unscheduled || !p.scheduled_date);
+    const N = target.length;
+    const tx = db.transaction(() => {
+      for (let i = 0; i < N; i++) {
+        const idx = N === 1 ? 0 : Math.round(i * (candidates.length - 1) / Math.max(N - 1, 1));
+        const d = candidates[Math.min(idx, candidates.length - 1)];
+        upd.run(fmt(d), target[i].id);
+        updated++;
+      }
+    });
+    tx();
+    return res.json({ updated, total: posts.length, mode: 'calendar_month', calendar_month: cal.label, candidates_count: candidates.length });
+  }
+
+  // Modalità 'weeks' (legacy)
+  if (!start_date || !/^\d{4}-\d{2}-\d{2}$/.test(start_date)) return res.status(400).json({ error: 'start_date deve essere YYYY-MM-DD' });
+  const start = new Date(start_date + 'T00:00:00');
+  if (isNaN(start.getTime())) return res.status(400).json({ error: 'start_date invalida' });
+  const startDow = start.getDay() === 0 ? 7 : start.getDay();
+  const startMonday = new Date(start); startMonday.setDate(start.getDate() - (startDow - 1));
+
+  const indexInWeek = new Map();
   const counters = {};
   for (const p of posts) {
     const w = p.week_number || 1;
@@ -1711,14 +1759,11 @@ router.post('/bulk-distribute-dates', (req, res) => {
     indexInWeek.set(p.id, counters[w]++);
   }
 
-  const fmt = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  const upd = db.prepare(`UPDATE posts SET scheduled_date = ?, updated_at = datetime('now') WHERE id = ?`);
-  let updated = 0;
   const tx = db.transaction(() => {
     for (const p of posts) {
       if (only_unscheduled && p.scheduled_date) continue;
       const idx = indexInWeek.get(p.id) || 0;
-      const weekday = sortedWd[idx % sortedWd.length]; // 1..7
+      const weekday = sortedWd[idx % sortedWd.length];
       const week = (p.week_number || 1) - 1;
       const d = new Date(startMonday);
       d.setDate(d.getDate() + week * 7 + (weekday - 1));
@@ -1727,7 +1772,7 @@ router.post('/bulk-distribute-dates', (req, res) => {
     }
   });
   tx();
-  res.json({ updated, total: posts.length });
+  res.json({ updated, total: posts.length, mode: 'weeks' });
 });
 
 // Segna in stato 'ready' tutti i post indicati che soddisfano le pre-condizioni:

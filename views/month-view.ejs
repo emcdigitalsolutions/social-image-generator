@@ -257,6 +257,8 @@
   const PLAN_ID = '<%= plan.id %>';
   const CLIENT_ID = '<%= client.id %>';
   const MONTH = <%= month %>;
+  const PLAN_START_YM = <%- JSON.stringify(plan.start_year_month || null) %>;
+  const CAL_MONTH_LABEL = <%- JSON.stringify((calCurrent && calCurrent.label) || null) %>;
   const POSTS = <%- JSON.stringify(posts) %>;
   const POST_IDS = POSTS.map(p => p.id);
   // Mappa code → nome leggibile categoria (da plan.plan_data.categories)
@@ -1318,8 +1320,14 @@
     ).join('');
 
     const today = new Date();
-    // Default start: primo giorno del mese corrente (se MONTH 1 = primo mese del piano)
     const defaultStart = fmtLocalDate(today);
+
+    // Modalità di default: calendar_month se il piano ha start_year_month, altrimenti weeks (legacy)
+    const hasCalendar = !!PLAN_START_YM;
+    const defaultMode = hasCalendar ? 'calendar_month' : 'weeks';
+    const calLabelLine = hasCalendar && CAL_MONTH_LABEL
+      ? `<div style="font-size:12px;color:var(--gray-600);margin-top:4px">📅 Mese calendario: <strong>${CAL_MONTH_LABEL}</strong></div>`
+      : '';
 
     const wrap = document.createElement('div');
     wrap.className = 'modal-backdrop';
@@ -1329,10 +1337,28 @@
         <h3>\u{1f4c5} Distribuisci date nel mese</h3>
         <div class="modal-sub">
           Ci sono <strong>${POSTS.length}</strong> post in ${Object.keys(byWeek).length} settimane (media ${avgPerWeek}/settimana, max ${maxPerWeek}/settimana).
-          Scegli la data di partenza e i giorni della settimana su cui distribuirli.
         </div>
 
-        <div class="modal-row">
+        <div style="font-size:13px;font-weight:600;margin:12px 0 6px">Modalità distribuzione</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;font-size:13px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+            <input type="radio" name="dm-mode" value="calendar_month" ${defaultMode === 'calendar_month' ? 'checked' : ''} ${hasCalendar ? '' : 'disabled'} onchange="toggleDistributeMode()">
+            <span>
+              <strong>Mese calendario</strong> ${hasCalendar ? '(consigliato)' : '<em>— richiede mese di partenza impostato sul piano</em>'}
+              <div style="font-size:11px;color:var(--gray-500);font-weight:400">I post finiscono solo nei giorni del mese calendario. Nessun cavallo tra mesi.</div>
+              ${calLabelLine}
+            </span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+            <input type="radio" name="dm-mode" value="weeks" ${defaultMode === 'weeks' ? 'checked' : ''} onchange="toggleDistributeMode()">
+            <span>
+              <strong>4 settimane consecutive</strong> (legacy)
+              <div style="font-size:11px;color:var(--gray-500);font-weight:400">Distribuisce a partire da una data fissa: l'ultima settimana può sforare nel mese successivo.</div>
+            </span>
+          </label>
+        </div>
+
+        <div class="modal-row" id="dm-start-row">
           <label for="dm-start"><strong>Data di partenza:</strong></label>
           <input type="date" id="dm-start" value="${defaultStart}">
           <span style="font-size:12px;color:var(--gray-500)">Il lunedì di questa settimana segna la <em>Settimana 1</em></span>
@@ -1344,10 +1370,6 @@
 
         <div class="modal-row">
           <label><input type="checkbox" id="dm-only-empty" checked> Applica solo ai post senza data già impostata</label>
-        </div>
-
-        <div style="font-size:11px;color:var(--gray-500);margin-top:4px">
-          Esempio: 3 post/settimana con "Mar Gio Sab" → 1° post di ogni sett. sul Mar, 2° sul Gio, 3° sul Sab.
         </div>
 
         <div class="modal-actions">
@@ -1366,21 +1388,34 @@
         chip.classList.toggle('active', cb.checked);
       });
     });
+    // Inizializza visibilità riga start_date in base al default
+    toggleDistributeMode();
+  }
+
+  function toggleDistributeMode() {
+    const sel = document.querySelector('input[name="dm-mode"]:checked');
+    if (!sel) return;
+    const startRow = document.getElementById('dm-start-row');
+    if (startRow) startRow.style.display = sel.value === 'calendar_month' ? 'none' : '';
   }
 
   async function applyBulkDistributeDates() {
-    const startDate = document.getElementById('dm-start').value;
-    if (!startDate) { showAlert('Specifica una data di partenza'); return; }
+    const modeEl = document.querySelector('input[name="dm-mode"]:checked');
+    const mode = modeEl ? modeEl.value : 'weeks';
     const onlyEmpty = document.getElementById('dm-only-empty').checked;
     const weekdays = Array.from(document.querySelectorAll('#dm-weekdays input:checked')).map(i => parseInt(i.value, 10));
     if (!weekdays.length) { showAlert('Seleziona almeno un giorno della settimana.'); return; }
+    const body = { plan_id: PLAN_ID, month: MONTH, weekdays, only_unscheduled: onlyEmpty, mode };
+    if (mode === 'weeks') {
+      const startDate = document.getElementById('dm-start').value;
+      if (!startDate) { showAlert('Specifica una data di partenza'); return; }
+      body.start_date = startDate;
+    }
     try {
-      const res = await apiFetch('/dashboard/api/posts/bulk-distribute-dates', {
-        method: 'POST',
-        body: { plan_id: PLAN_ID, month: MONTH, start_date: startDate, weekdays, only_unscheduled: onlyEmpty }
-      });
+      const res = await apiFetch('/dashboard/api/posts/bulk-distribute-dates', { method: 'POST', body });
       if (res.error) { await showAlert(res.error); return; }
-      toast(res.updated + ' post distribuiti su ' + weekdays.length + ' giorni settimanali');
+      const suffix = res.calendar_month ? ` (${res.calendar_month})` : '';
+      toast(res.updated + ' post distribuiti su ' + weekdays.length + ' giorni settimanali' + suffix);
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
