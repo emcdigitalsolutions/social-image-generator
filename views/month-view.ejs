@@ -154,10 +154,7 @@
   .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
 </style>
 
-<%
-  const { resolveCalendarMonth, fullMonthLabel } = require('../lib/month-labels');
-  const calCurrent = resolveCalendarMonth(month, plan.start_year_month);
-%>
+<% const calCurrent = resolveCalendarMonth(month, plan.start_year_month); %>
 <div class="breadcrumb">
   <a href="/dashboard">Clienti</a> /
   <a href="/dashboard/clients/<%= client.id %>"><%= client.display_name %></a> /
@@ -182,7 +179,7 @@
   <% const totalMonths = (plan.plan_data && plan.plan_data.months) ? plan.plan_data.months.length : (client.editorial_months || 6); %>
   <% for (let m = 1; m <= totalMonths; m++) {
        const calM = resolveCalendarMonth(m, plan.start_year_month);
-  %>
+     %>
     <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>/month/<%= m %>"
        class="month-btn <%= m === month ? 'active' : '' %>"
        title="<%= calM ? calM.label : ('Mese ' + m) %>">Mese <%= m %><% if (calM) { %> <span style="opacity:.65;font-size:.85em">· <%= calM.short %></span><% } %></a>

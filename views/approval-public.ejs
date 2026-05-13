@@ -198,10 +198,7 @@
       <path d="M22 28 L44 50 L22 72 M38 28 L60 50 L38 72 M54 28 L76 50 L54 72"
             stroke="url(#tb-chev)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </svg>
-    <%
-      const { resolveCalendarMonth: __resolveCMpub } = require('../lib/month-labels');
-      const __calApr = __resolveCMpub(approval.month_number, plan && plan.start_year_month);
-    %>
+    <% const __calApr = resolveCalendarMonth(approval.month_number, plan && plan.start_year_month); %>
     <div>
       <h1><%= client.display_name %></h1>
       <div class="meta">Piano editoriale &middot; Mese <%= approval.month_number %><% if (__calApr) { %> · <%= __calApr.label %><% } %></div>

@@ -198,12 +198,11 @@
     <p style="font-size:12px;color:var(--gray-500);margin:0 0 12px">Click su un mese per aprire la vista calendario/lista. La barra colorata mostra a colpo d'occhio lo stato dei post.</p>
 <div class="month-grid">
   <% const totalMonths = plan.plan_data.months.length; %>
-  <% const { resolveCalendarMonth: __resolveCM } = require('../lib/month-labels'); %>
   <% for (let m = 1; m <= totalMonths; m++) {
     const s = (typeof monthStats !== 'undefined' && monthStats[m]) || { total: 0, draft_count: 0, wip_count: 0, ready_count: 0, published_count: 0, failed_count: 0 };
     const t = s.total || 0;
     const pct = (n) => t > 0 ? (n / t * 100).toFixed(0) + '%' : '0%';
-    const __calM = __resolveCM(m, plan.start_year_month);
+    const __calM = resolveCalendarMonth(m, plan.start_year_month);
   %>
     <a href="/dashboard/clients/<%= client.id %>/plan/<%= plan.id %>/month/<%= m %>" class="month-card <%= t === 0 ? 'empty' : '' %>">
       <div class="mc-title">

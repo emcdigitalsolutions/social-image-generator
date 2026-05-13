@@ -33,6 +33,10 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 // ── View engine ──
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+// Helper globali disponibili in tutte le view EJS senza require()
+const { resolveCalendarMonth: __resolveCalendarMonth, fullMonthLabel: __fullMonthLabel } = require('./lib/month-labels');
+app.locals.resolveCalendarMonth = __resolveCalendarMonth;
+app.locals.fullMonthLabel = __fullMonthLabel;
 
 // ── Middleware ──
 // limit 10mb: serve per import piani editoriali lunghi (es. 6 mesi × 28 post con caption)

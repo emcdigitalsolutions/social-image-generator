@@ -328,10 +328,7 @@
 </div>
 <% } %>
 
-<%
-  const { resolveCalendarMonth } = require('../lib/month-labels');
-  const calMonth = resolveCalendarMonth(post.month_number, planStartYM);
-%>
+<% const calMonth = resolveCalendarMonth(post.month_number, planStartYM); %>
 <div class="page-header">
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <h1 style="margin:0"><%= categoryDisplay || 'Editor Post' %></h1>
