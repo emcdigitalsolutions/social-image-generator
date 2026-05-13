@@ -1372,9 +1372,12 @@
           <label><input type="checkbox" id="dm-only-empty" checked> Applica solo ai post senza data già impostata</label>
         </div>
 
-        <div class="modal-actions">
-          <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Annulla</button>
-          <button class="btn btn-sm btn-primary" onclick="applyBulkDistributeDates()">Distribuisci</button>
+        <div class="modal-actions" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5" onclick="clearDistributedDates()" title="Cancella tutte le scheduled_date dei post del mese (eccetto quelli già pubblicati). Utile per ridistribuire da zero.">🗑 Cancella date del mese</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-secondary" onclick="this.closest('.modal-backdrop').remove()">Annulla</button>
+            <button class="btn btn-sm btn-primary" onclick="applyBulkDistributeDates()">Distribuisci</button>
+          </div>
         </div>
       </div>`;
     document.body.appendChild(wrap);
@@ -1397,6 +1400,21 @@
     if (!sel) return;
     const startRow = document.getElementById('dm-start-row');
     if (startRow) startRow.style.display = sel.value === 'calendar_month' ? 'none' : '';
+  }
+
+  async function clearDistributedDates() {
+    if (!await showConfirm('Cancellare tutte le date di pubblicazione dei post di questo mese? I post pubblicati restano invariati.')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/posts/bulk-clear-dates', {
+        method: 'POST',
+        body: { plan_id: PLAN_ID, month: MONTH }
+      });
+      if (res.error) { await showAlert(res.error); return; }
+      toast(res.cleared + ' date cancellate');
+      window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
   }
 
   async function applyBulkDistributeDates() {

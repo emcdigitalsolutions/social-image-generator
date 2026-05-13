@@ -1671,6 +1671,23 @@ router.post('/bulk-time', (req, res) => {
   res.json({ updated: result.changes });
 });
 
+// Resetta scheduled_date a NULL per tutti i post di un mese del piano.
+// Utile per ridistribuire da zero dopo un errore di distribuzione.
+// Non tocca i post 'published' (sono già stati pubblicati e la data è storica).
+router.post('/bulk-clear-dates', (req, res) => {
+  const db = getDb();
+  const { plan_id, month } = req.body;
+  if (!plan_id || !Number.isInteger(parseInt(month))) {
+    return res.status(400).json({ error: 'plan_id e month richiesti' });
+  }
+  const r = db.prepare(`
+    UPDATE posts SET scheduled_date = NULL, updated_at = datetime('now')
+    WHERE editorial_plan_id = ? AND month_number = ?
+      AND status != 'published' AND scheduled_date IS NOT NULL
+  `).run(plan_id, parseInt(month));
+  res.json({ cleared: r.changes });
+});
+
 // Distribuisce le date dei post di un mese. Due modalità:
 //  mode='weeks' (legacy): 4 settimane consecutive da start_date — può andare a
 //    cavallo di due mesi calendario.
