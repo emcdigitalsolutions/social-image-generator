@@ -194,10 +194,10 @@
 </div>
 
 <div class="actions-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <button class="btn btn-secondary btn-sm" onclick="openDateModal()" title="Distribuisce in massa le date di pubblicazione sui giorni della settimana scelti. Da qui puoi anche cancellare e ridistribuire le date del mese.">&#x1f4c5; Distribuisci date</button>
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('caption')" title="Genera la caption AI per tutti i post draft del mese">✨ Genera tutte le caption</button>
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('image')" title="Renderizza l'immagine per tutti i post che hanno una caption">✨ Genera tutte le immagini</button>
   <button class="btn btn-secondary btn-sm" onclick="bulkGenerate('both')" title="Genera caption + immagine per tutti i post del mese">✨ Genera caption + immagini</button>
-  <button class="btn btn-secondary btn-sm" onclick="openDateModal()" title="Imposta in massa la data di pubblicazione (preset o custom)">&#x1f4c5; Data default</button>
   <button class="btn btn-secondary btn-sm" onclick="openTimeModal()" title="Imposta in massa l'orario di pubblicazione (best time per FB / IG)">&#x1f550; Orario default</button>
   <% if (!schedule || !schedule.is_active) { %>
     <button class="btn btn-primary btn-sm" onclick="goLiveMonth()" title="Avvia tutto in sequenza: segna pronti i post validi, approva come admin, attiva l'auto-publish.">&#9654; Avvia pubblicazione mese</button>
