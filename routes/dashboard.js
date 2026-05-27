@@ -138,26 +138,48 @@ router.get('/clients/:id', (req, res) => {
   const sectors = Object.entries(SETTORI).map(([k, v]) => ({ key: k, label: v.label }));
 
   // Shortcut "mese in corso": prende il piano più rilevante (active > confirmed > draft,
-  // più recente) e calcola il month_number dei post programmati nel mese solare corrente.
-  // Se non c'è nulla nel mese solare, fallback al primo mese con post non tutti published.
+  // più recente) e deriva il month_number dalla differenza calendariale tra il mese
+  // solare corrente e plan.start_year_month. Fallback: scheduled_date nel mese solare,
+  // poi primo mese con post non-published rimanenti.
   let currentMonthShortcut = null;
   const activePlan = db.prepare(`
-    SELECT id FROM editorial_plans WHERE client_id = ?
+    SELECT id, start_year_month FROM editorial_plans WHERE client_id = ?
     ORDER BY
       CASE status WHEN 'active' THEN 0 WHEN 'confirmed' THEN 1 WHEN 'draft' THEN 2 ELSE 3 END,
       datetime(updated_at) DESC
     LIMIT 1
   `).get(req.params.id);
   if (activePlan) {
-    const row = db.prepare(`
-      SELECT month_number, COUNT(*) AS n FROM posts
-      WHERE editorial_plan_id = ?
-        AND substr(scheduled_date, 1, 7) = strftime('%Y-%m', 'now', 'localtime')
-      GROUP BY month_number ORDER BY n DESC LIMIT 1
-    `).get(activePlan.id);
-    let m = row && row.month_number;
+    let m = null;
+
+    // 1. Preferito: calcolo dal start_year_month del piano
+    const startYM = (activePlan.start_year_month || '').match(/^(\d{4})-(\d{2})$/);
+    if (startYM) {
+      const startYear = parseInt(startYM[1], 10);
+      const startMonth = parseInt(startYM[2], 10);
+      const now = new Date();
+      const diff = (now.getFullYear() - startYear) * 12 + (now.getMonth() + 1 - startMonth) + 1;
+      const maxRow = db.prepare(`
+        SELECT MAX(month_number) AS max_m FROM posts
+        WHERE editorial_plan_id = ? AND month_number IS NOT NULL
+      `).get(activePlan.id);
+      const maxM = (maxRow && maxRow.max_m) || 1;
+      m = Math.max(1, Math.min(diff, maxM));
+    }
+
+    // 2. Fallback: post con scheduled_date nel mese solare corrente
     if (!m) {
-      // Fallback: primo mese con post non-published rimanenti
+      const row = db.prepare(`
+        SELECT month_number, COUNT(*) AS n FROM posts
+        WHERE editorial_plan_id = ?
+          AND substr(scheduled_date, 1, 7) = strftime('%Y-%m', 'now', 'localtime')
+        GROUP BY month_number ORDER BY n DESC LIMIT 1
+      `).get(activePlan.id);
+      m = row && row.month_number;
+    }
+
+    // 3. Fallback finale: primo mese con post non-published rimanenti
+    if (!m) {
       const fb = db.prepare(`
         SELECT month_number FROM posts
         WHERE editorial_plan_id = ? AND status != 'published' AND month_number IS NOT NULL
@@ -165,6 +187,7 @@ router.get('/clients/:id', (req, res) => {
       `).get(activePlan.id);
       m = fb && fb.month_number;
     }
+
     if (m) {
       currentMonthShortcut = `/dashboard/clients/${req.params.id}/plan/${activePlan.id}/month/${m}`;
     }
