@@ -125,13 +125,19 @@ router.put('/:id', (req, res) => {
     'system_instruction', 'anthropic_api_key', 'gemini_api_key', 'ai_provider',
     'status', 'logo_filename', 'theme_filename', 'brand_colors',
     'subscription_plan', 'subscription_price', 'subscription_notes',
-    'editorial_months'];
+    'editorial_months', 'monthly_report_enabled'];
 
   // brand_colors arriva come array dal frontend; serializzo a JSON string
   if (Array.isArray(req.body.brand_colors)) {
     req.body.brand_colors = JSON.stringify(req.body.brand_colors.filter(c =>
       typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)
     ));
+  }
+
+  // monthly_report_enabled è un toggle: normalizza qualunque rappresentazione a 0/1
+  if (req.body.monthly_report_enabled !== undefined) {
+    const v = req.body.monthly_report_enabled;
+    req.body.monthly_report_enabled = (v === 1 || v === '1' || v === true || v === 'true' || v === 'on') ? 1 : 0;
   }
 
   const updates = [];

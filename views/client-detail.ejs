@@ -91,6 +91,13 @@
         <label>Note commerciali</label>
         <textarea name="subscription_notes" rows="2" placeholder="es. canone 80&euro;/anno, social 150&euro;+IVA"><%= client.subscription_notes || '' %></textarea>
       </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600">
+          <input type="checkbox" name="monthly_report_enabled" value="1" <%= client.monthly_report_enabled ? 'checked' : '' %> style="width:16px;height:16px">
+          Invia automaticamente il report performance a fine mese
+        </label>
+        <small style="color:var(--gray-500)">Se attivo, l'ultimo giorno di ogni mese il cliente riceve via email il PDF del report (con EMC in copia). Se disattivo, nessun invio automatico.</small>
+      </div>
       <div style="display:flex;gap:8px;align-items:center">
         <button type="button" class="btn btn-secondary" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi"><span style="margin-right:3px">✨</span>Scansiona Sito</button>
         <button type="submit" class="btn btn-primary">Salva Profilo</button>
@@ -885,6 +892,9 @@
     const form = e.target;
     const data = {};
     new FormData(form).forEach((v, k) => { if (v) data[k] = v; });
+    // Le checkbox non spuntate non finiscono in FormData: gestiamo esplicitamente il toggle
+    const mrEl = form.querySelector('[name="monthly_report_enabled"]');
+    if (mrEl) data.monthly_report_enabled = mrEl.checked ? 1 : 0;
     await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
     window.location.reload();
   });
