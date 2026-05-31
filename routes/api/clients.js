@@ -877,8 +877,9 @@ router.get('/:id/insights/report.pdf', async (req, res) => {
     const summary = insights.getAccountSummary(client.id, days);
     const history = insights.getAccountInsightsHistory(client.id, days);
     const topPosts = insights.getTopPosts(client.id, days, 5);
+    const kpis = insights.getPeriodKpis(client.id, days);
     const periodLabel = `Ultimi ${days} giorni`;
-    const buffer = await renderInsightsReportPdf(client, periodLabel, summary, history, topPosts);
+    const buffer = await renderInsightsReportPdf(client, periodLabel, summary, history, topPosts, kpis);
     const filename = `report-${client.id}-${new Date().toISOString().slice(0,10)}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -905,8 +906,9 @@ router.post('/:id/insights/email-report', async (req, res) => {
     const summary = insights.getAccountSummary(client.id, days);
     const history = insights.getAccountInsightsHistory(client.id, days);
     const topPosts = insights.getTopPosts(client.id, days, 5);
+    const kpis = insights.getPeriodKpis(client.id, days);
     const periodLabel = `Ultimi ${days} giorni`;
-    const buffer = await renderInsightsReportPdf(client, periodLabel, summary, history, topPosts);
+    const buffer = await renderInsightsReportPdf(client, periodLabel, summary, history, topPosts, kpis);
 
     const filename = `report-performance-${client.id}-${new Date().toISOString().slice(0,10)}.pdf`;
     await sendInsightsReport({ client, recipient, periodLabel, summary, pdfBuffer: buffer, filename });
