@@ -356,6 +356,9 @@
     <% } else if (post.approval_status === 'pending') { %>
       <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="markApplied('approved')" title="Approva direttamente questo post (utile per post creati dopo l'approvazione mensile, che altrimenti resterebbero bloccati). Il publish guard non lo bloccherà più.">✓ Approva (admin)</button>
     <% } %>
+    <% if (post.status !== 'published') { %>
+      <button class="btn btn-sm" style="background:#0f1e4a;color:#fff" onclick="sendPostToClient()" title="Invia al cliente un'email con l'anteprima di questo singolo post (es. contenuto evento già concordato). Marca il post come approvato lato admin e lo mette in copia a EMC.">✉ Invia al cliente</button>
+    <% } %>
     <% if (post.status !== 'ready' && post.status !== 'published') { %>
       <button class="btn btn-secondary btn-sm" onclick="markReady()" title="Cambia lo stato in 'ready': il post verrà pubblicato automaticamente alla scheduled_date se lo schedule del mese è attivo.">&#9654; Segna pronto</button>
     <% } else if (post.status === 'ready') { %>
@@ -1574,6 +1577,18 @@
       if (res.error) { await showAlert(res.error); return; }
       toast(newStatus === 'approved' ? 'Post approvato' : 'Inviato al cliente per rivalutazione');
       window.location.reload();
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    }
+  }
+
+  async function sendPostToClient() {
+    if (!await showConfirm('Inviare al cliente l’anteprima di questo post via email?\n\nIl post verrà marcato come APPROVATO (admin) e il cliente riceverà una mail di conferma con l’anteprima del contenuto. EMC sarà in copia (CC).')) return;
+    try {
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/send-to-client', { method: 'POST', body: {} });
+      if (res.error) { await showAlert(res.error + (res.details ? '\n' + res.details : '')); return; }
+      toast('✓ Email inviata a ' + res.sent_to);
+      setTimeout(function () { window.location.reload(); }, 900);
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     }

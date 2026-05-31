@@ -7,7 +7,7 @@ const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { generateCaption } = require('../../lib/ai-provider');
 const { publishPost, getPageToken } = require('../../lib/meta-publish');
-const { notifyPublishFailed, notifyPublishPartial } = require('../../lib/notifier');
+const { notifyPublishFailed, notifyPublishPartial, sendSinglePostNotification } = require('../../lib/notifier');
 const { snapshotPostInsights, getLatestInsights } = require('../../lib/insights');
 const { renderImage } = require('../../lib/renderer');
 const postMedia = require('../../lib/post-media');
@@ -152,6 +152,55 @@ router.post('/:id/generate-caption', async (req, res) => {
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: 'Caption generation failed', details: err.message });
+  }
+});
+
+// Invia al CLIENTE la notifica di un singolo post programmato (post evento ad-hoc
+// già concordato). NON è una richiesta di approvazione cliente: marca il post come
+// APPROVATO lato admin (così non resta bloccato dal publish guard) e invia un'email
+// di anteprima del singolo contenuto, con EMC sempre in CC.
+router.post('/:id/send-to-client', async (req, res) => {
+  const db = getDb();
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const recipient = (req.body && req.body.to) || client.contact_email;
+  if (!recipient) return res.status(400).json({ error: 'Cliente senza contact_email — configura il campo o passa { to: "..." }' });
+
+  // Auto-approvazione admin: il post è già concordato col cliente → non deve
+  // restare bloccato dal publish guard di un'eventuale approvazione mensile.
+  db.prepare("UPDATE posts SET approval_status = 'approved', updated_at = datetime('now') WHERE id = ?").run(post.id);
+
+  // Anteprima: primo media (immagine se disponibile), fallback image_url legacy
+  const media = db.prepare('SELECT url, kind FROM post_media WHERE post_id = ? ORDER BY position LIMIT 1').get(post.id);
+  const mediaUrl = (media && media.url) || post.image_url || null;
+  const mediaKind = media ? media.kind : 'image';
+
+  // Etichetta data programmazione in italiano (parse robusto YYYY-MM-DD)
+  let scheduledLabel = 'da definire';
+  if (post.scheduled_date) {
+    const [y, m, d] = String(post.scheduled_date).split('-').map(Number);
+    if (y && m && d) {
+      scheduledLabel = new Date(y, m - 1, d).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+      if (post.scheduled_time) scheduledLabel += ' alle ' + post.scheduled_time;
+    }
+  }
+
+  try {
+    const r = await sendSinglePostNotification({ client, recipient, post, mediaUrl, mediaKind, scheduledLabel });
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.sent_to_client',
+      entity_type: 'post',
+      entity_id: post.id,
+      details: { recipient, scheduled: post.scheduled_date, category: post.category, sub_topic: post.sub_topic }
+    });
+    res.json({ ok: true, sent_to: r.sent_to, approved: true });
+  } catch (err) {
+    console.error('[send-to-client]', err.message);
+    res.status(500).json({ error: 'Invio email fallito', details: err.message });
   }
 });
 
