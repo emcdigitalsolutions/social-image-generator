@@ -209,7 +209,12 @@ router.get('/clients/:id', (req, res) => {
     total: Object.keys(onboardingSteps).length
   };
 
-  res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, onboarding, currentMonthShortcut, user: req.user });
+  // Stili visivi: parsati dal JSON salvato, con flag se sono i default (per la UI).
+  const { parseVisualStyles, DEFAULT_VISUAL_STYLES } = require('../lib/visual-prompt');
+  const visualStyles = parseVisualStyles(client.visual_styles);
+  const visualStylesIsDefault = !client.visual_styles;
+
+  res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, onboarding, currentMonthShortcut, visualStyles, visualStylesIsDefault, defaultVisualStyles: DEFAULT_VISUAL_STYLES, user: req.user });
 });
 
 // Plan editor

@@ -125,13 +125,31 @@ router.put('/:id', (req, res) => {
     'system_instruction', 'anthropic_api_key', 'gemini_api_key', 'ai_provider',
     'status', 'logo_filename', 'theme_filename', 'brand_colors',
     'subscription_plan', 'subscription_price', 'subscription_notes',
-    'editorial_months', 'monthly_report_enabled'];
+    'editorial_months', 'monthly_report_enabled', 'visual_styles'];
 
   // brand_colors arriva come array dal frontend; serializzo a JSON string
   if (Array.isArray(req.body.brand_colors)) {
     req.body.brand_colors = JSON.stringify(req.body.brand_colors.filter(c =>
       typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)
     ));
+  }
+
+  // visual_styles arriva come array di stringhe (uno stile per riga dalla UI).
+  // Validazione: max 12 stili, ognuno 1..500 char. Array vuoto → null (usa i default).
+  if (req.body.visual_styles !== undefined) {
+    if (Array.isArray(req.body.visual_styles)) {
+      const cleaned = req.body.visual_styles
+        .filter(s => typeof s === 'string')
+        .map(s => s.trim())
+        .filter(s => s.length > 0)
+        .map(s => s.substring(0, 500))
+        .slice(0, 12);
+      req.body.visual_styles = cleaned.length ? JSON.stringify(cleaned) : null;
+    } else if (req.body.visual_styles === null || req.body.visual_styles === '') {
+      req.body.visual_styles = null;
+    } else {
+      return res.status(400).json({ error: 'visual_styles deve essere un array di stringhe' });
+    }
   }
 
   // monthly_report_enabled è un toggle: normalizza qualunque rappresentazione a 0/1
@@ -184,6 +202,31 @@ router.put('/:id', (req, res) => {
   }
 
   res.json(client);
+});
+
+// Genera 5 stili visivi AI dal profilo brand del cliente.
+// Non salva nulla: ritorna le proposte, la UI popola la textarea e l'utente
+// conferma con "Salva Profilo". Così l'admin resta sempre in controllo.
+router.post('/:id/generate-visual-styles', async (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  try {
+    const { generateVisualStyles } = require('../../lib/visual-prompt');
+    const styles = await generateVisualStyles(client);
+    audit.logFromReq(req, {
+      client_id: req.params.id,
+      action: 'client.visual_styles_generated',
+      entity_type: 'client',
+      entity_id: req.params.id,
+      details: { count: styles.length }
+    });
+    res.json({ styles });
+  } catch (err) {
+    const status = err.code === 'NO_API_KEY' ? 400 : 502;
+    res.status(status).json({ error: err.message });
+  }
 });
 
 // Soft delete client (cancellazione logica).

@@ -98,6 +98,19 @@
         </label>
         <small style="color:var(--gray-500)">Se attivo, l'ultimo giorno di ogni mese il cliente riceve via email il PDF del report (con EMC in copia). Se disattivo, nessun invio automatico.</small>
       </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-weight:600">Stili visivi</span>
+          <span style="font-weight:400;color:var(--gray-400);font-size:11px">uno per riga — usati a rotazione per generare immagini AI sempre diverse</span>
+        </label>
+        <textarea name="visual_styles" id="visual-styles-input" rows="6" placeholder="es. macro close-up, golden hour side light, shallow depth of field, photorealistic" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.5"><%= visualStyles.join('\n') %></textarea>
+        <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap">
+          <small id="visual-styles-hint" style="color:var(--gray-500)">
+            <% if (visualStylesIsDefault) { %>Stai usando i <%= visualStyles.length %> stili predefiniti. Modificali o generane di nuovi dal brand.<% } else { %><%= visualStyles.length %> stili personalizzati. Svuota il campo per tornare ai predefiniti.<% } %>
+          </small>
+          <button type="button" class="btn btn-secondary" id="gen-styles-btn" onclick="generateVisualStyles()" title="Genera 5 stili a partire dal brand (settore, colori, tagline)"><span style="margin-right:3px">✨</span>Genera 5 stili AI dal brand</button>
+        </div>
+      </div>
       <div style="display:flex;gap:8px;align-items:center">
         <button type="button" class="btn btn-secondary" id="scan-website-btn" onclick="scanWebsite()" title="Analizza il sito e compila automaticamente i campi"><span style="margin-right:3px">✨</span>Scansiona Sito</button>
         <button type="submit" class="btn btn-primary">Salva Profilo</button>
@@ -909,9 +922,43 @@
     // Le checkbox non spuntate non finiscono in FormData: gestiamo esplicitamente il toggle
     const mrEl = form.querySelector('[name="monthly_report_enabled"]');
     if (mrEl) data.monthly_report_enabled = mrEl.checked ? 1 : 0;
+    // visual_styles: textarea (una riga = uno stile) → array. Sempre presente (anche
+    // vuoto, per permettere il ritorno ai default svuotando il campo).
+    const vsEl = form.querySelector('[name="visual_styles"]');
+    if (vsEl) {
+      data.visual_styles = vsEl.value.split('\n').map(s => s.trim()).filter(Boolean);
+    }
     await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
     window.location.reload();
   });
+
+  // Genera 5 stili visivi AI dal brand → popola la textarea (l'utente conferma con Salva)
+  async function generateVisualStyles() {
+    const btn = document.getElementById('gen-styles-btn');
+    const ta = document.getElementById('visual-styles-input');
+    const hint = document.getElementById('visual-styles-hint');
+    const existing = ta.value.trim();
+    if (existing && !await showConfirm('Sostituire gli stili attuali con 5 nuovi generati dal brand?')) return;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Genero…';
+    try {
+      const res = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/generate-visual-styles', { method: 'POST', body: {} });
+      if (res.error) { await showAlert(res.error); return; }
+      if (Array.isArray(res.styles) && res.styles.length) {
+        ta.value = res.styles.join('\n');
+        if (hint) hint.textContent = res.styles.length + ' stili generati dall’AI — controlla e premi “Salva Profilo” per applicarli.';
+        toast(res.styles.length + ' stili generati');
+      } else {
+        await showAlert('Nessuno stile generato, riprova.');
+      }
+    } catch (err) {
+      await showAlert('Errore generazione stili: ' + (err.message || err));
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  }
 
   // Social form
   document.getElementById('social-form').addEventListener('submit', async (e) => {
