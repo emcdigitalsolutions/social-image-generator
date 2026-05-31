@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { generateCaption } = require('../../lib/ai-provider');
-const { publishPost, getPageToken } = require('../../lib/meta-publish');
+const { publishPost, getPageToken, detectChannels } = require('../../lib/meta-publish');
 const { notifyPublishFailed, notifyPublishPartial, sendSinglePostNotification } = require('../../lib/notifier');
 const { snapshotPostInsights, getLatestInsights } = require('../../lib/insights');
 const { renderImage } = require('../../lib/renderer');
@@ -732,11 +732,7 @@ router.post('/:id/publish', async (req, res) => {
   if (Array.isArray(req.body.channels) && req.body.channels.length) {
     channels = req.body.channels.filter(c => ['fb', 'ig', 'linkedin'].includes(c));
   } else {
-    channels = [];
-    if (client.fb_page_id && client.fb_system_user_token) channels.push('fb');
-    if (client.ig_user_id && client.fb_system_user_token) channels.push('ig');
-    if (client.linkedin_org_id && client.linkedin_access_token) channels.push('linkedin');
-    if (!channels.length) channels = ['fb', 'ig']; // fallback retrocompatibile
+    channels = detectChannels(client); // auto-rileva, coerente con lo scheduler
   }
 
   // Re-entrancy guard: condiviso con lo scheduler tramite `inFlightPosts`.

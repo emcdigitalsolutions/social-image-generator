@@ -381,6 +381,20 @@
         <div class="form-group">
           <label>LinkedIn Token scade il <span style="font-weight:400;color:var(--gray-400);font-size:11px">(opzionale, per warning)</span></label>
           <input type="date" name="linkedin_token_expires_at" value="<%= client.linkedin_token_expires_at ? client.linkedin_token_expires_at.slice(0,10) : '' %>" style="width:100%">
+          <%
+            let liBadge = null;
+            if (client.linkedin_access_token && client.linkedin_token_expires_at) {
+              const _days = Math.floor((new Date(client.linkedin_token_expires_at) - new Date()) / 86400000);
+              if (_days < 0) liBadge = { txt: '⚠ Token scaduto da ' + (-_days) + ' giorni — rigeneralo su LinkedIn', color: '#991b1b', bg: '#fee2e2' };
+              else if (_days <= 14) liBadge = { txt: '⏳ Token scade tra ' + _days + ' giorni — pianifica il rinnovo', color: '#92400e', bg: '#fef3c7' };
+              else liBadge = { txt: '✓ Token valido (' + _days + ' giorni rimanenti)', color: '#166534', bg: '#dcfce7' };
+            } else if (client.linkedin_access_token && !client.linkedin_token_expires_at) {
+              liBadge = { txt: 'ℹ Imposta la data di scadenza per ricevere gli avvisi (i token LinkedIn durano 60 giorni)', color: '#92400e', bg: '#fef3c7' };
+            }
+          %>
+          <% if (liBadge) { %>
+            <div style="margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;line-height:1.4;background:<%= liBadge.bg %>;color:<%= liBadge.color %>"><%= liBadge.txt %></div>
+          <% } %>
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Salva Credenziali</button>

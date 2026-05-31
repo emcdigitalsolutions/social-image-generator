@@ -594,6 +594,13 @@
         <% } else { %>
           <span style="font-size:12px;color:var(--gray-400)">IG non configurato</span>
         <% } %>
+        <% if (client.linkedin_org_id && client.linkedin_access_token) { %>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="chan-linkedin" checked onchange="refreshPublishState()"> LinkedIn
+          </label>
+        <% } else { %>
+          <span style="font-size:12px;color:var(--gray-400)">LinkedIn non configurato</span>
+        <% } %>
       </div>
       <button class="btn btn-primary" onclick="publishPost()" id="publish-btn">Pubblica</button>
       <p class="help" id="publish-help" style="margin-top:8px;color:var(--gray-500)"></p>
@@ -815,16 +822,22 @@
     const c = [];
     const fb = document.getElementById('chan-fb');
     const ig = document.getElementById('chan-ig');
+    const li = document.getElementById('chan-linkedin');
     if (fb && fb.checked) c.push('fb');
     if (ig && ig.checked) c.push('ig');
+    if (li && li.checked) c.push('linkedin');
     return c;
+  }
+
+  const CHANNEL_LABELS = { fb: 'Facebook', ig: 'Instagram', linkedin: 'LinkedIn' };
+  function channelNames(channels) {
+    return channels.map(c => CHANNEL_LABELS[c] || c);
   }
 
   function publishLabel(channels) {
     const prefix = POST.status === 'published' ? 'Pubblica di nuovo' : 'Pubblica';
-    if (channels.length === 2) return prefix + ' su FB + IG';
-    if (channels.length === 1) return prefix + ' su ' + (channels[0] === 'fb' ? 'Facebook' : 'Instagram');
-    return prefix;
+    if (!channels.length) return prefix;
+    return prefix + ' su ' + channelNames(channels).join(' + ');
   }
 
   function refreshPublishState() {
@@ -850,7 +863,7 @@
 
     if (!channels.length) {
       btn.disabled = true;
-      help.textContent = 'Seleziona almeno una piattaforma (Facebook o Instagram)';
+      help.textContent = 'Seleziona almeno una piattaforma (Facebook, Instagram o LinkedIn)';
       return;
     }
     if (!captionOk) {
@@ -2980,7 +2993,7 @@
   async function publishPost() {
     const channels = selectedChannels();
     if (!channels.length) return;
-    const platforms = channels.map(c => c === 'fb' ? 'Facebook' : 'Instagram').join(' e ');
+    const platforms = channelNames(channels).join(' e ');
     if (!await showConfirm('Pubblicare questo post su ' + platforms + '?')) return;
     const btn = document.getElementById('publish-btn');
     btn.disabled = true;
