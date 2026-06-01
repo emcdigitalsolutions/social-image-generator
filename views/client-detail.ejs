@@ -444,6 +444,8 @@
             <div style="margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;line-height:1.4;background:<%= ttBadge.bg %>;color:<%= ttBadge.color %>"><%= ttBadge.txt %></div>
           <% } %>
           <p style="font-size:11px;color:var(--gray-500);margin-top:6px;line-height:1.5">⚠ Per pubblicare via API il dominio dei media (<code>media.emcdigitalsolutions.it</code>) dev'essere verificato sul TikTok Developer Portal, e l'app deve avere lo scope <code>video.publish</code>.</p>
+          <a href="/dashboard/tiktok/connect/<%= client.id %>" class="btn btn-secondary" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;text-decoration:none">🎵 Connetti account TikTok (OAuth)</a>
+          <p style="font-size:11px;color:var(--gray-500);margin-top:4px;line-height:1.5">Apre l'autorizzazione TikTok e compila automaticamente i token qui sopra. In alternativa, incolla i token a mano.</p>
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Salva Credenziali</button>
@@ -1004,6 +1006,18 @@
     await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
     toast('Credenziali salvate');
   });
+
+  // Esito del flusso OAuth TikTok (?tiktok=connected|error|noappkey)
+  (function () {
+    const p = new URLSearchParams(location.search);
+    const tt = p.get('tiktok');
+    if (!tt) return;
+    if (tt === 'connected') toast('✅ Account TikTok connesso — token salvati');
+    else if (tt === 'noappkey') toast('⚠ Manca TIKTOK_CLIENT_KEY: configura l\'app TikTok nelle impostazioni/env');
+    else if (tt === 'error') toast('❌ Connessione TikTok fallita: ' + (p.get('msg') || 'errore'));
+    // Pulisci i query param dall'URL
+    history.replaceState(null, '', location.pathname);
+  })();
 
   // AI provider toggle
   function toggleAiKeyFields() {

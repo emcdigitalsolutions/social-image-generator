@@ -217,6 +217,89 @@ router.get('/clients/:id', (req, res) => {
   res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, onboarding, currentMonthShortcut, visualStyles, visualStylesIsDefault, defaultVisualStyles: DEFAULT_VISUAL_STYLES, user: req.user });
 });
 
+// ── TikTok OAuth: connetti un account cliente (ottiene access+refresh token) ──
+// Step 1: redirige l'admin all'authorize di TikTok. Lo state è firmato (JWT) e
+// contiene il clientId, così al callback sappiamo a chi assegnare i token (e
+// abbiamo protezione CSRF: lo state non è falsificabile senza JWT_SECRET).
+router.get('/tiktok/connect/:id', (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT id FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.redirect('/dashboard');
+
+  const { getTikTokClientKey, getBaseUrl } = require('../lib/settings');
+  const clientKey = getTikTokClientKey();
+  if (!clientKey) {
+    return res.redirect('/dashboard/clients/' + client.id + '?tiktok=noappkey');
+  }
+  const jwt = require('jsonwebtoken');
+  const JWT_SECRET = process.env.JWT_SECRET || 'dashboard-dev-secret';
+  const state = jwt.sign({ cid: client.id, p: 'tiktok' }, JWT_SECRET, { expiresIn: '10m' });
+  const redirectUri = getBaseUrl().replace(/\/$/, '') + '/dashboard/tiktok/callback';
+
+  const { buildAuthorizeUrl } = require('../lib/tiktok-oauth');
+  res.redirect(buildAuthorizeUrl({ clientKey, redirectUri, state }));
+});
+
+// Step 2: callback. TikTok torna qui con code+state (o error). Scambiamo il code
+// con i token e li salviamo sul cliente.
+router.get('/tiktok/callback', async (req, res) => {
+  const { code, state, error, error_description } = req.query;
+  const fail = (cid, msg) => res.redirect('/dashboard/clients/' + (cid || '') + '?tiktok=error&msg=' + encodeURIComponent(msg));
+
+  if (error) return fail(null, error_description || error);
+  if (!code || !state) return fail(null, 'Risposta TikTok incompleta (code/state mancanti)');
+
+  const jwt = require('jsonwebtoken');
+  const JWT_SECRET = process.env.JWT_SECRET || 'dashboard-dev-secret';
+  let clientId;
+  try {
+    const decoded = jwt.verify(state, JWT_SECRET);
+    if (decoded.p !== 'tiktok' || !decoded.cid) throw new Error('state non valido');
+    clientId = decoded.cid;
+  } catch (e) {
+    return fail(null, 'State non valido o scaduto — riprova la connessione');
+  }
+
+  const db = getDb();
+  const client = db.prepare('SELECT id FROM clients WHERE id = ?').get(clientId);
+  if (!client) return res.redirect('/dashboard');
+
+  const { getTikTokClientKey, getTikTokClientSecret, getBaseUrl } = require('../lib/settings');
+  const { exchangeCodeForToken } = require('../lib/tiktok-oauth');
+  const redirectUri = getBaseUrl().replace(/\/$/, '') + '/dashboard/tiktok/callback';
+
+  try {
+    const tok = await exchangeCodeForToken({
+      clientKey: getTikTokClientKey(),
+      clientSecret: getTikTokClientSecret(),
+      code: String(code),
+      redirectUri
+    });
+    db.prepare(`
+      UPDATE clients SET
+        tiktok_access_token = ?,
+        tiktok_refresh_token = ?,
+        tiktok_open_id = ?,
+        tiktok_token_expires_at = ?,
+        tiktok_refresh_expires_at = ?,
+        updated_at = datetime('now')
+      WHERE id = ?
+    `).run(tok.access_token, tok.refresh_token, tok.open_id, tok.token_expires_at, tok.refresh_expires_at, clientId);
+
+    audit.logFromReq(req, {
+      client_id: clientId,
+      action: 'client.tiktok_connected',
+      entity_type: 'client',
+      entity_id: clientId,
+      details: { open_id: tok.open_id, scope: tok.scope }
+    });
+    res.redirect('/dashboard/clients/' + clientId + '?tiktok=connected');
+  } catch (e) {
+    console.error('[tiktok-oauth] exchange fallito:', e.message);
+    fail(clientId, e.message);
+  }
+});
+
 // Plan editor
 router.get('/clients/:id/plan/:planId', (req, res) => {
   const db = getDb();
