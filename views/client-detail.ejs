@@ -409,6 +409,42 @@
             <div style="margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;line-height:1.4;background:<%= liBadge.bg %>;color:<%= liBadge.color %>"><%= liBadge.txt %></div>
           <% } %>
         </div>
+        <div class="form-group">
+          <label>TikTok Open ID <span style="font-weight:400;color:var(--gray-400);font-size:11px">(ritornato dall'OAuth)</span></label>
+          <div style="display:flex;gap:4px"><input type="text" name="tiktok_open_id" value="<%= client.tiktok_open_id || '' %>" placeholder="open_id utente TikTok" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
+        </div>
+        <div class="form-group">
+          <label>TikTok Access Token <span style="font-weight:400;color:var(--gray-400);font-size:11px">(scope video.publish — dura 24h, si rinnova da solo)</span></label>
+          <div style="display:flex;gap:4px"><input type="password" name="tiktok_access_token" value="<%= client.tiktok_access_token || '' %>" placeholder="access token OAuth" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
+        </div>
+        <div class="form-group">
+          <label>TikTok Refresh Token <span style="font-weight:400;color:var(--gray-400);font-size:11px">(dura 365gg — la credenziale durevole)</span></label>
+          <div style="display:flex;gap:4px"><input type="password" name="tiktok_refresh_token" value="<%= client.tiktok_refresh_token || '' %>" placeholder="refresh token OAuth" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
+        </div>
+        <div class="form-group">
+          <label>TikTok Visibilità post</label>
+          <select name="tiktok_privacy_level" style="width:100%">
+            <% const _ttPriv = client.tiktok_privacy_level || 'PUBLIC_TO_EVERYONE'; %>
+            <option value="PUBLIC_TO_EVERYONE" <%= _ttPriv === 'PUBLIC_TO_EVERYONE' ? 'selected' : '' %>>Pubblico (tutti)</option>
+            <option value="MUTUAL_FOLLOW_FRIENDS" <%= _ttPriv === 'MUTUAL_FOLLOW_FRIENDS' ? 'selected' : '' %>>Amici (follow reciproco)</option>
+            <option value="SELF_ONLY" <%= _ttPriv === 'SELF_ONLY' ? 'selected' : '' %>>Solo io (privato)</option>
+          </select>
+          <%
+            let ttBadge = null;
+            if (client.tiktok_refresh_token && client.tiktok_refresh_expires_at) {
+              const _d = Math.floor((new Date(client.tiktok_refresh_expires_at) - new Date()) / 86400000);
+              if (_d < 0) ttBadge = { txt: '⚠ Refresh token scaduto da ' + (-_d) + ' giorni — ri-autorizza l\'account TikTok', color: '#991b1b', bg: '#fee2e2' };
+              else if (_d <= 21) ttBadge = { txt: '⏳ Refresh token scade tra ' + _d + ' giorni — pianifica il rinnovo', color: '#92400e', bg: '#fef3c7' };
+              else ttBadge = { txt: '✓ Refresh token valido (' + _d + ' giorni). L\'access token (24h) si rinnova da solo.', color: '#166534', bg: '#dcfce7' };
+            } else if (client.tiktok_refresh_token) {
+              ttBadge = { txt: 'ℹ Le scadenze verranno popolate automaticamente alla prima pubblicazione (refresh del token).', color: '#1e40af', bg: '#dbeafe' };
+            }
+          %>
+          <% if (ttBadge) { %>
+            <div style="margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;line-height:1.4;background:<%= ttBadge.bg %>;color:<%= ttBadge.color %>"><%= ttBadge.txt %></div>
+          <% } %>
+          <p style="font-size:11px;color:var(--gray-500);margin-top:6px;line-height:1.5">⚠ Per pubblicare via API il dominio dei media (<code>media.emcdigitalsolutions.it</code>) dev'essere verificato sul TikTok Developer Portal, e l'app deve avere lo scope <code>video.publish</code>.</p>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary">Salva Credenziali</button>
     </form>

@@ -646,6 +646,13 @@
         <% } else { %>
           <span style="font-size:12px;color:var(--gray-400)">LinkedIn non configurato</span>
         <% } %>
+        <% if (client.tiktok_refresh_token || client.tiktok_access_token) { %>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="chan-tiktok" checked onchange="refreshPublishState()"> TikTok
+          </label>
+        <% } else { %>
+          <span style="font-size:12px;color:var(--gray-400)">TikTok non configurato</span>
+        <% } %>
       </div>
       <button class="btn btn-primary" onclick="publishPost()" id="publish-btn">Pubblica</button>
       <p class="help" id="publish-help" style="margin-top:8px;color:var(--gray-500)"></p>
@@ -868,13 +875,15 @@
     const fb = document.getElementById('chan-fb');
     const ig = document.getElementById('chan-ig');
     const li = document.getElementById('chan-linkedin');
+    const tt = document.getElementById('chan-tiktok');
     if (fb && fb.checked) c.push('fb');
     if (ig && ig.checked) c.push('ig');
     if (li && li.checked) c.push('linkedin');
+    if (tt && tt.checked) c.push('tiktok');
     return c;
   }
 
-  const CHANNEL_LABELS = { fb: 'Facebook', ig: 'Instagram', linkedin: 'LinkedIn' };
+  const CHANNEL_LABELS = { fb: 'Facebook', ig: 'Instagram', linkedin: 'LinkedIn', tiktok: 'TikTok' };
   function channelNames(channels) {
     return channels.map(c => CHANNEL_LABELS[c] || c);
   }

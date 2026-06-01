@@ -122,6 +122,8 @@ router.put('/:id', (req, res) => {
     'contact_email', 'phone',
     'fb_page_id', 'fb_system_user_token', 'ig_user_id',
     'linkedin_org_id', 'linkedin_access_token', 'linkedin_token_expires_at',
+    'tiktok_open_id', 'tiktok_access_token', 'tiktok_refresh_token',
+    'tiktok_token_expires_at', 'tiktok_refresh_expires_at', 'tiktok_privacy_level',
     'system_instruction', 'anthropic_api_key', 'gemini_api_key', 'ai_provider',
     'status', 'logo_filename', 'theme_filename', 'brand_colors',
     'subscription_plan', 'subscription_price', 'subscription_notes',
