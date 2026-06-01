@@ -429,6 +429,51 @@
       </div>
     </div>
 
+    <%
+      // Menzioni salvate come JSON array → stringa "@a @b" per il campo testo.
+      let _mentionsStr = '';
+      try {
+        const _m = post.mentions ? JSON.parse(post.mentions) : [];
+        if (Array.isArray(_m)) _mentionsStr = _m.join(' ');
+      } catch (e) { _mentionsStr = post.mentions || ''; }
+    %>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h3>Call to action &amp; menzioni</h3></div>
+      <p style="font-size:11px;color:var(--gray-500);margin:0 0 12px;line-height:1.5">
+        Vengono aggiunte in fondo alla caption alla pubblicazione (e nell'anteprima). I post organici non hanno bottoni cliccabili: la CTA è una riga di testo; su Instagram il link non è cliccabile → rimanda al «link in bio».
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label>Azione (CTA)</label>
+          <input type="text" id="cta-label" list="cta-suggestions" placeholder="es. Prenota ora" value="<%= post.cta_label || '' %>" maxlength="120">
+          <datalist id="cta-suggestions">
+            <option value="Scopri di più"></option>
+            <option value="Prenota ora"></option>
+            <option value="Chiama ora"></option>
+            <option value="Visita il sito"></option>
+            <option value="Contattaci"></option>
+            <option value="Acquista ora"></option>
+            <option value="Scrivici in DM"></option>
+            <option value="Link in bio"></option>
+          </datalist>
+        </div>
+        <div class="form-group">
+          <label>Link o telefono <span style="color:var(--gray-500);font-weight:400">(opzionale)</span></label>
+          <input type="text" id="cta-url" placeholder="https://… oppure tel:+39…" value="<%= post.cta_url || '' %>" maxlength="300">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Menzioni / tag persone</label>
+        <input type="text" id="post-mentions" placeholder="@mario_rossi @negozio_xyz" value="<%= _mentionsStr %>">
+        <p style="font-size:11px;color:var(--gray-500);margin-top:4px;line-height:1.5">
+          Username separati da spazio o virgola (con o senza «@»). Inseriti come menzioni in caption — IG e Pagine FB le rendono cliccabili. «Taggare tutti gli amici» non è permesso dalle API.
+        </p>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-primary" onclick="saveCtaMentions()">Salva CTA &amp; menzioni</button>
+      </div>
+    </div>
+
     <div class="card" style="margin-bottom:16px">
       <div class="card-header"><h3>Dettagli</h3></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -1512,6 +1557,62 @@
     toast('Markdown convertito in Unicode — ricordati di cliccare "Salva Caption"');
     // Trigger refresh del preview se presente
     if (typeof renderPreview === 'function') renderPreview();
+  }
+
+  // ── CTA + menzioni: replica client-side di lib/post-caption.js per l'anteprima ──
+  function normalizeMentionsClient(input) {
+    if (!input) return [];
+    const out = [], seen = new Set();
+    for (const raw of String(input).split(/[\s,]+/)) {
+      const h = raw.trim().replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '').slice(0, 30);
+      if (!h) continue;
+      const k = h.toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k); out.push('@' + h);
+      if (out.length >= 30) break;
+    }
+    return out;
+  }
+  function formatCtaLineClient(label, url) {
+    const l = (label || '').trim();
+    let t = (url || '').trim();
+    if (/^tel:/i.test(t)) t = t.replace(/^tel:/i, '').trim();
+    if (!l && !t) return '';
+    if (l && t) return '\u{1F449} ' + l + ': ' + t;
+    return '\u{1F449} ' + (l || t);
+  }
+  function elVal(id) { const e = document.getElementById(id); return e ? e.value : ''; }
+  function composeCaptionClient() {
+    const base = (elVal('caption-text') || POST.caption || '').replace(/\s+$/, '');
+    const mentions = normalizeMentionsClient(elVal('post-mentions'));
+    const ctaLine = formatCtaLineClient(elVal('cta-label'), elVal('cta-url'));
+    const blocks = [];
+    if (base) blocks.push(base);
+    if (mentions.length) blocks.push(mentions.join(' '));
+    if (ctaLine) blocks.push(ctaLine);
+    return blocks.join('\n\n').trim();
+  }
+  async function saveCtaMentions() {
+    const updated = await apiFetch('/dashboard/api/posts/' + POST_ID, {
+      method: 'PUT',
+      body: {
+        cta_label: elVal('cta-label'),
+        cta_url: elVal('cta-url'),
+        mentions: elVal('post-mentions')
+      }
+    });
+    POST.cta_label = updated.cta_label;
+    POST.cta_url = updated.cta_url;
+    POST.mentions = updated.mentions;
+    // Re-popola il campo menzioni col valore normalizzato salvato.
+    try {
+      const m = updated.mentions ? JSON.parse(updated.mentions) : [];
+      if (Array.isArray(m) && document.getElementById('post-mentions')) {
+        document.getElementById('post-mentions').value = m.join(' ');
+      }
+    } catch (e) {}
+    toast('CTA e menzioni salvate');
+    renderPreview();
   }
 
   async function saveCaption() {
@@ -2800,7 +2901,7 @@
 
   function renderPreviewFb() {
     const root = document.getElementById('preview-frame');
-    const captionHtml = formatCaptionHtml(document.getElementById('caption-text').value || POST.caption || '');
+    const captionHtml = formatCaptionHtml(composeCaptionClient());
     if (MEDIA_TYPE === 'story') {
       root.innerHTML = '<div class="pv-empty">Su Facebook le Storie non si gestiscono da qui (le pubblica il cliente dalla app). Cambia tab Instagram per vedere come apparirebbe la Story.</div>';
       return;
@@ -2825,7 +2926,7 @@
 
   function renderPreviewIg() {
     const root = document.getElementById('preview-frame');
-    const caption = document.getElementById('caption-text').value || POST.caption || '';
+    const caption = composeCaptionClient();
     const captionHtml = formatCaptionHtml(caption);
 
     if (MEDIA_TYPE === 'story') {
@@ -2914,10 +3015,14 @@
   }
 
   // Re-render quando cambia qualcosa di rilevante
-  document.getElementById('caption-text').addEventListener('input', () => {
-    // Debounce leggero per non rendere troppe volte
-    clearTimeout(window._pvDebounce);
-    window._pvDebounce = setTimeout(renderPreview, 150);
+  ['caption-text', 'cta-label', 'cta-url', 'post-mentions'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      // Debounce leggero per non rendere troppe volte
+      clearTimeout(window._pvDebounce);
+      window._pvDebounce = setTimeout(renderPreview, 150);
+    });
   });
 
   // Init preview

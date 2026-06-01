@@ -99,8 +99,9 @@ router.put('/:id', (req, res) => {
   const db = getDb();
   const fields = ['category', 'sub_topic', 'template', 'caption', 'image_data',
     'source_image_url', 'scheduled_date', 'scheduled_time', 'status', 'media_type',
-    'ig_share_to_feed', 'week_number'];
+    'ig_share_to_feed', 'week_number', 'cta_label', 'cta_url', 'mentions'];
 
+  const { normalizeMentions } = require('../../lib/post-caption');
   const updates = [];
   const values = [];
 
@@ -108,6 +109,16 @@ router.put('/:id', (req, res) => {
     if (req.body[field] !== undefined) {
       let val = req.body[field];
       if (field === 'image_data') val = JSON.stringify(val);
+      // Menzioni: normalizza (stringa libera o array) → array di @handle pulito,
+      // salvato come JSON. Vuoto → NULL (nessuna menzione).
+      if (field === 'mentions') {
+        const handles = normalizeMentions(val);
+        val = handles.length ? JSON.stringify(handles) : null;
+      }
+      // CTA: stringhe corte, trim; vuoto → NULL.
+      if (field === 'cta_label' || field === 'cta_url') {
+        val = (typeof val === 'string' ? val.trim() : '').slice(0, 300) || null;
+      }
       if (field === 'week_number') {
         const n = parseInt(val, 10);
         if (!Number.isInteger(n) || n < 1 || n > 5) {
