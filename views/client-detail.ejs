@@ -136,7 +136,7 @@
       <div class="empty-state"><p>Nessun questionario creato</p></div>
     <% } else { %>
       <table>
-        <thead><tr><th>ID</th><th>Settore</th><th>Stato</th><th>Inviato</th><th>Link</th><th>Azioni</th></tr></thead>
+        <thead><tr><th>ID</th><th>Settore</th><th>Stato</th><th>Inviato</th><th>Azioni</th></tr></thead>
         <tbody>
           <% questionnaires.forEach(q => {
             const qUrl = `/dashboard/q/${q.token}`;
@@ -146,15 +146,15 @@
             <td><%= q.sector ? q.sector.replace(/_/g, ' ') : '—' %></td>
             <td><span class="badge badge-<%= q.status %>"><%= q.status %></span></td>
             <td><%= q.submitted_at || '—' %></td>
-            <td style="display:flex;gap:4px">
-              <a href="<%= qUrl %>" target="_blank" class="btn btn-sm btn-secondary">Apri</a>
-              <button type="button" class="btn btn-sm btn-secondary" onclick="copyQLink(this, '<%= qUrl %>')" title="Copia il link da inviare al cliente">📋 Copia link</button>
-            </td>
-            <td style="display:flex;gap:4px">
-              <% if (q.status === 'submitted') { %>
-                <button class="btn btn-sm btn-secondary" onclick="viewResponses('<%= q.id %>')">Risposte</button>
-              <% } %>
-              <button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="deleteQuestionnaire('<%= q.id %>')">Elimina</button>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <a href="<%= qUrl %>" target="_blank" class="qicon" title="Apri il questionario in una nuova scheda"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+                <button type="button" class="qicon" onclick="copyQLink(this, '<%= qUrl %>')" title="Copia il link da inviare al cliente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+                <% if (q.status === 'submitted') { %>
+                <button type="button" class="qicon" onclick="viewResponses('<%= q.id %>')" title="Vedi le risposte"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
+                <% } %>
+                <button type="button" class="qicon qicon-danger" onclick="deleteQuestionnaire('<%= q.id %>')" title="Elimina questionario"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+              </div>
             </td>
           </tr>
           <% }) %>
@@ -560,15 +560,23 @@
 <!-- Responses modal -->
 <div class="modal-overlay" id="responses-modal">
   <div class="modal" style="max-width:700px">
-    <h2>Risposte Questionario</h2>
-    <pre id="responses-content" style="white-space:pre-wrap;font-size:13px;max-height:60vh;overflow-y:auto;background:var(--gray-50);padding:16px;border-radius:6px"></pre>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <h2 style="margin:0">Risposte Questionario</h2>
+      <button type="button" id="resp-copy-link" class="qicon" title="Copia il link del questionario" style="display:none" onclick="copyQLink(this, window._qRespUrl)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+    </div>
+    <pre id="responses-content" style="white-space:pre-wrap;font-size:13px;max-height:60vh;overflow-y:auto;background:var(--gray-50);padding:16px;border-radius:6px;margin-top:12px"></pre>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('responses-modal')">Chiudi</button>
     </div>
   </div>
 </div>
 
-<style>.btn-copy{display:flex;align-items:center;justify-content:center;width:34px;min-width:34px;height:34px;border:1px solid var(--gray-200);border-radius:6px;background:var(--gray-50);color:var(--gray-400);cursor:pointer;transition:all .15s}.btn-copy:hover{background:var(--gray-100);color:var(--gray-600)}.btn-copy.copied{background:#dcfce7;border-color:#86efac;color:#16a34a}</style>
+<style>.btn-copy{display:flex;align-items:center;justify-content:center;width:34px;min-width:34px;height:34px;border:1px solid var(--gray-200);border-radius:6px;background:var(--gray-50);color:var(--gray-400);cursor:pointer;transition:all .15s}.btn-copy:hover{background:var(--gray-100);color:var(--gray-600)}.btn-copy.copied{background:#dcfce7;border-color:#86efac;color:#16a34a}
+.qicon{display:inline-flex;align-items:center;justify-content:center;width:34px;min-width:34px;height:34px;border:1px solid var(--gray-200);border-radius:6px;background:var(--gray-50);color:var(--gray-500);cursor:pointer;transition:all .15s;text-decoration:none}
+.qicon:hover{background:var(--gray-100);color:var(--gray-700)}
+.qicon.copied{background:#dcfce7;border-color:#86efac;color:#16a34a}
+.qicon-danger{color:#ef4444}
+.qicon-danger:hover{background:#fee2e2;border-color:#fecaca;color:#dc2626}</style>
 <script>
   const CLIENT_ID = '<%= client.id %>';
 
@@ -585,12 +593,16 @@
 
   // Copia il link pubblico del questionario (URL assoluto) da inviare al cliente
   function copyQLink(btn, relUrl) {
+    if (!relUrl) return;
     const url = location.origin + relUrl;
     const done = () => {
-      const orig = btn.innerHTML;
-      btn.innerHTML = '✓ Copiato';
       if (typeof toast === 'function') toast('🔗 Link questionario copiato');
-      setTimeout(() => { btn.innerHTML = orig; }, 1500);
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.classList.add('copied');
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1500);
+      }
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(url).then(done).catch(() => window.prompt('Copia il link:', url));
@@ -1495,6 +1507,9 @@
   async function viewResponses(id) {
     const res = await apiFetch('/dashboard/api/questionnaires/' + id);
     document.getElementById('responses-content').textContent = JSON.stringify(res.responses || {}, null, 2);
+    const copyBtn = document.getElementById('resp-copy-link');
+    window._qRespUrl = res.token ? ('/dashboard/q/' + res.token) : '';
+    if (copyBtn) copyBtn.style.display = res.token ? '' : 'none';
     openModal('responses-modal');
   }
 
