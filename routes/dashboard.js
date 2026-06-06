@@ -3,6 +3,7 @@ const { getDb } = require('../lib/db');
 const { pageAuthMiddleware, verifyToken } = require('../lib/auth');
 const { SETTORI, getQuestionnaireConfig } = require('../lib/questionnaire-config');
 const audit = require('../lib/audit');
+const notifier = require('../lib/notifier');
 
 const router = express.Router();
 
@@ -76,10 +77,21 @@ router.post('/q/:token/submit', express.json(), (req, res) => {
   const q = db.prepare('SELECT * FROM questionnaires WHERE token = ?').get(req.params.token);
   if (!q) return res.status(404).json({ error: 'Questionnaire not found' });
 
+  const responses = (req.body && req.body.responses) || {};
   db.prepare(`
     UPDATE questionnaires SET responses = ?, status = 'submitted', submitted_at = datetime('now')
     WHERE token = ?
-  `).run(JSON.stringify(req.body.responses), req.params.token);
+  `).run(JSON.stringify(responses), req.params.token);
+
+  // Recap email a EMC (con il cliente in CC) — non blocca la risposta al cliente
+  try {
+    const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(q.client_id);
+    const fresh = db.prepare('SELECT * FROM questionnaires WHERE token = ?').get(req.params.token);
+    Promise.resolve(notifier.sendQuestionnaireRecap({ client, questionnaire: fresh, responses }))
+      .catch(err => console.error('[questionnaire] recap email error:', err.message));
+  } catch (err) {
+    console.error('[questionnaire] recap email setup error:', err.message);
+  }
 
   res.json({ success: true, message: 'Grazie per aver compilato il questionario!' });
 });

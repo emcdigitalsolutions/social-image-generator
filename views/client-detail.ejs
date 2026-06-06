@@ -146,7 +146,10 @@
             <td><%= q.sector ? q.sector.replace(/_/g, ' ') : '—' %></td>
             <td><span class="badge badge-<%= q.status %>"><%= q.status %></span></td>
             <td><%= q.submitted_at || '—' %></td>
-            <td><a href="<%= qUrl %>" target="_blank" class="btn btn-sm btn-secondary">Apri</a></td>
+            <td style="display:flex;gap:4px">
+              <a href="<%= qUrl %>" target="_blank" class="btn btn-sm btn-secondary">Apri</a>
+              <button type="button" class="btn btn-sm btn-secondary" onclick="copyQLink(this, '<%= qUrl %>')" title="Copia il link da inviare al cliente">📋 Copia link</button>
+            </td>
             <td style="display:flex;gap:4px">
               <% if (q.status === 'submitted') { %>
                 <button class="btn btn-sm btn-secondary" onclick="viewResponses('<%= q.id %>')">Risposte</button>
@@ -578,6 +581,22 @@
       btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
       setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1500);
     });
+  }
+
+  // Copia il link pubblico del questionario (URL assoluto) da inviare al cliente
+  function copyQLink(btn, relUrl) {
+    const url = location.origin + relUrl;
+    const done = () => {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✓ Copiato';
+      if (typeof toast === 'function') toast('🔗 Link questionario copiato');
+      setTimeout(() => { btn.innerHTML = orig; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done).catch(() => window.prompt('Copia il link:', url));
+    } else {
+      window.prompt('Copia il link:', url);
+    }
   }
 
   // Tabs — persist active tab in location.hash so reloads/deletes keep context
