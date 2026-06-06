@@ -562,7 +562,7 @@
   <div class="modal" style="max-width:700px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
       <h2 style="margin:0">Risposte Questionario</h2>
-      <button type="button" id="resp-copy-link" class="qicon" title="Copia il link del questionario" style="display:none" onclick="copyQLink(this, window._qRespUrl)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+      <button type="button" id="resp-copy-json" class="qicon" title="Copia il contenuto JSON delle risposte" onclick="copyJson(this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
     </div>
     <pre id="responses-content" style="white-space:pre-wrap;font-size:13px;max-height:60vh;overflow-y:auto;background:var(--gray-50);padding:16px;border-radius:6px;margin-top:12px"></pre>
     <div class="modal-actions">
@@ -1507,10 +1507,27 @@
   async function viewResponses(id) {
     const res = await apiFetch('/dashboard/api/questionnaires/' + id);
     document.getElementById('responses-content').textContent = JSON.stringify(res.responses || {}, null, 2);
-    const copyBtn = document.getElementById('resp-copy-link');
-    window._qRespUrl = res.token ? ('/dashboard/q/' + res.token) : '';
-    if (copyBtn) copyBtn.style.display = res.token ? '' : 'none';
     openModal('responses-modal');
+  }
+
+  // Copia il contenuto JSON delle risposte (dal modale Risposte)
+  function copyJson(btn) {
+    const txt = (document.getElementById('responses-content').textContent || '').trim();
+    if (!txt) return;
+    const done = () => {
+      if (typeof toast === 'function') toast('📋 JSON risposte copiato');
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.classList.add('copied');
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1500);
+      }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done).catch(() => window.prompt('Copia il JSON:', txt));
+    } else {
+      window.prompt('Copia il JSON:', txt);
+    }
   }
 
   // Import plan editoriale da file JSON (prepared offline)
