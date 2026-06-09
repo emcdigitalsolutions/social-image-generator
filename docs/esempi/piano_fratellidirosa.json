@@ -1,0 +1,816 @@
+{
+  "title": "Piano Editoriale - Agenzia Funebre Fratelli Di Rosa (6 mesi, Maggio-Ottobre 2026)",
+  "categories": [
+    {
+      "code": "C1",
+      "name": "Servizi offerti",
+      "frequency": "3/mese",
+      "description": "Presentazione dei servizi concreti: tanoestetica, trasporto salma, disbrigo pratiche, camera ardente, cremazioni, trasporti nazionali/esteri. Focus sul valore umano dietro ogni gesto, mai su prezzi."
+    },
+    {
+      "code": "C2",
+      "name": "Il team e la famiglia Di Rosa",
+      "frequency": "1-2/mese",
+      "description": "Volti e storia dei fratelli Giuseppe e Gaspare Di Rosa. La dimensione familiare dell'agenzia, l'esperienza dal 1999, il team al lavoro."
+    },
+    {
+      "code": "C3",
+      "name": "Struttura, sede e mezzi",
+      "frequency": "1-2/mese",
+      "description": "La sede di Via Olimpica 18, la camera ardente, i mezzi funebri, l'attrezzatura per la conservazione. Ambiente dignitoso e accogliente."
+    },
+    {
+      "code": "C4",
+      "name": "Il valore del ricordo",
+      "frequency": "2/mese",
+      "description": "Messaggi simbolici sulla memoria, la dignità dell'addio, il supporto alle famiglie. Frasi evocative, immagini simboliche (fiori, candele, mani)."
+    },
+    {
+      "code": "C5",
+      "name": "Laboratorio floreale interno",
+      "frequency": "1-2/mese",
+      "description": "Gli addobbi floreali creati internamente: composizioni, corone, omaggi personalizzati. Dettaglio dei fiori, cura artigianale, stagionalità."
+    },
+    {
+      "code": "C6",
+      "name": "Festività e ricorrenze",
+      "frequency": "1-2/mese",
+      "description": "Calendario liturgico e civile: 1 Maggio, mese della Madonna, San Vito (patrono Ravanusa), Assunta, 2 Novembre. Comunicazione rispettosa, legata al territorio."
+    },
+    {
+      "code": "C7",
+      "name": "Disponibilità H24 e contatti",
+      "frequency": "1/mese",
+      "description": "Il servizio reperibilità 24/7 come segno di dedizione alla comunità. Call-to-action dignitoso sul numero, senza urgenza commerciale."
+    }
+  ],
+  "months": [
+    {
+      "month_number": 1,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Reperibilità H24: ogni chiamata trova una risposta, anche alle 3 di notte",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Immagine: un telefono con cornetta / luce soffusa del laboratorio. Caption sul valore dell'essere raggiungibili sempre"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C2",
+              "sub_topic": "Giuseppe e Gaspare Di Rosa: due fratelli, una famiglia al servizio del territorio",
+              "media_type": "reel",
+              "notes": "Reel 30-45s verticale: brevi scene del team al lavoro, cornice familiare. Voce off o testo minimale. Musica rispettosa strumentale"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "L'amore che ci ha unito non svanisce: il ricordo come eredità",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Frase evocativa su sfondo simbolico (fiore, candela). Tono poetico ma dignitoso"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C6",
+              "sub_topic": "1 Maggio: un pensiero a chi ha dedicato la vita al lavoro",
+              "media_type": "single_image",
+              "template": "event",
+              "notes": "Festa dei Lavoratori. Immagine di mani, strumenti antichi, campi siciliani. Messaggio sul valore del lavoro come eredità"
+            },
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Il trasporto del feretro: mezzi propri, cura per ogni chilometro",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Foto carro funebre pulito e ordinato. Focus su professionalità e mezzi curati"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C5",
+              "sub_topic": "Maggio è il mese della Madonna: fiori bianchi e gesti di devozione",
+              "media_type": "carousel",
+              "notes": "3-5 foto degli addobbi floreali del laboratorio ispirati alla devozione mariana. Rose bianche, gigli, composizioni mariane"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C3",
+              "sub_topic": "La nostra sede in Via Olimpica 18 a Ravanusa: un ambiente accogliente per chi ha bisogno",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Foto interni/esterni della sede. Tono accogliente, non freddo"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C5",
+              "sub_topic": "Dietro ogni corona: l'arte artigianale del nostro laboratorio floreale interno",
+              "media_type": "reel",
+              "notes": "Reel: mani che compongono fiori, dettagli macro, colori caldi e rispettosi"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C1",
+              "sub_topic": "Tanoestetica: restituire dignità e pace ai volti dei nostri cari",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Immagine simbolica (fiore, luce soffusa). Caption delicata sul valore della tanoestetica, senza scene crude"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C4",
+              "sub_topic": "Un ultimo saluto, con rispetto e dignità: la nostra promessa",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Tagline brand come quote visivamente forte. Sfondo neutro rispettoso"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C1",
+              "sub_topic": "Disbrigo pratiche burocratiche: pensiamo noi ai documenti, voi pensate agli affetti",
+              "media_type": "carousel",
+              "notes": "Carousel 3-4 slide: tipi di pratiche gestite (certificato morte, autorizzazioni, cimiteriali), con testo sobrio"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C6",
+              "sub_topic": "Maggio della Madonna: portiamo un fiore sulla tomba dei nostri cari",
+              "media_type": "story",
+              "notes": "STORIA (pubblica il cliente dall'app): invito empatico a visitare il cimitero durante il mese mariano. Frase semplice + foto fiore"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 2,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Allestimento camera ardente: un luogo raccolto per gli ultimi saluti",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Foto camera ardente allestita: fiori, candele, luce bassa. Ambiente dignitoso"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C2",
+              "sub_topic": "Dal 1999 al servizio del territorio: la nostra storia familiare",
+              "media_type": "reel",
+              "notes": "Reel storico: foto d'epoca + attuali, musica lenta. Racconta il passaggio dal 1999 al 2018 dell'attività autonoma"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "Ogni vita merita un commiato curato in ogni dettaglio",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Citazione sobria. Sfondo: dettaglio floreale o candela accesa"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "venerdì",
+              "time": "10:00",
+              "category": "C6",
+              "sub_topic": "13 giugno, Sant'Antonio: il santo dei miracoli e di chi cerca conforto",
+              "media_type": "single_image",
+              "template": "event",
+              "notes": "Ricorrenza religiosa siciliana. Immagine simbolica (cero, giglio bianco). Tono devozionale rispettoso"
+            },
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Trasporto nazionale e internazionale: riportare a casa chi è partito lontano",
+              "media_type": "carousel",
+              "notes": "Carousel 3 slide: mappa Italia, procedura trasporti esteri, rassicurazione famiglia. Tono informativo"
+            },
+            {
+              "day": "domenica",
+              "time": "09:00",
+              "category": "C6",
+              "sub_topic": "15 giugno, San Vito protettore di Ravanusa: la nostra comunità in festa e in ricordo",
+              "media_type": "reel",
+              "notes": "Reel dedicato al patrono. Scorci di Ravanusa, processione (se immagini autorizzate), sfondo musicale tradizionale. POST IMPORTANTE — massima cura"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C3",
+              "sub_topic": "Le nostre attrezzature: tecnologia al servizio della dignità",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Foto attrezzatura conservazione (senza macabre): ambienti puliti, strumentazione professionale"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C5",
+              "sub_topic": "Fiori d'estate: gerbere, gigli, rose — la nostra selezione stagionale",
+              "media_type": "carousel",
+              "notes": "Carousel 4-5 foto macro fiori stagionali: gerbere, gigli, rose bianche/rosse, peonie"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "Piangere insieme è già un primo passo: noi ci siamo",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Frase empatica. Immagine mani che si tengono (simbolica, non identificabile)"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Cremazione: una scelta delicata, accompagnata con cura fino all'ultimo",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Tema sensibile. Immagine simbolica (urna, fiori). Spiegazione pratica senza toni macabri"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C7",
+              "sub_topic": "Un numero che non dorme mai: 24 ore su 24, 7 giorni su 7",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Call-to-action sobrio sul numero di telefono H24. Evocare affidabilità, non urgenza commerciale"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "Ravanusa, la nostra terra: tra queste strade viviamo e accompagniamo",
+              "media_type": "reel",
+              "notes": "Reel paesaggistico: scorci di Ravanusa (strade, chiese, piazze), il legame con il territorio"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 3,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Portantini esperti: ogni gesto accompagnato con misura e rispetto",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Immagine simbolica (mani che sollevano). Valore del gesto portato"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C2",
+              "sub_topic": "Il team dietro le quinte: ogni dettaglio preparato con attenzione",
+              "media_type": "reel",
+              "notes": "Reel BTS: preparazione camera ardente, allestimento fiori, pulizia mezzi. 30s con testo che valorizza la cura"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "Il dolore non si misura, ma si accoglie — e noi siamo qui per accoglierlo",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Citazione. Immagine di mani o spalla che conforta, in silhouette"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Il trasporto salma: cura e discrezione per ogni passaggio",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Foto mezzi funebri fermi, ordinati. Tono informativo sulla professionalità"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C5",
+              "sub_topic": "Ogni composizione raccoglie un pensiero: i fiori sono un messaggio",
+              "media_type": "carousel",
+              "notes": "Carousel 4-5 foto composizioni del laboratorio. Linguaggio dei fiori: rose=amore, gigli=purezza, crisantemi=ricordo"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "Una voce che conforta quando tutto tace: basta una telefonata",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Tagline più personale. Sfondo notturno soffuso"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C3",
+              "sub_topic": "Una struttura pensata per la famiglia: dalla camera ardente alla sala del commiato",
+              "media_type": "carousel",
+              "notes": "Carousel 4 slide: ingresso, sala commiato, camera ardente, esterno sede. Testi brevi accoglienti"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C1",
+              "sub_topic": "Manifesti di partecipazione al lutto: un gesto comunitario ancora importante",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Foto manifesto tipico (senza nomi leggibili). Tradizione siciliana del ricordo pubblico"
+            },
+            {
+              "day": "domenica",
+              "time": "09:00",
+              "category": "C4",
+              "sub_topic": "Estate a Ravanusa: anche nei mesi caldi, siamo qui per voi",
+              "media_type": "reel",
+              "notes": "Reel estivo: scorcio del paese d'estate, cicale, team al lavoro nell'orario più fresco"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C7",
+              "sub_topic": "Estate o inverno, giorno o notte: il nostro numero resta sempre attivo",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Promemoria H24. Immagine orologio o insegna sede accesa di notte"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C5",
+              "sub_topic": "Girasoli e fiori d'estate: la luce della memoria nelle giornate lunghe",
+              "media_type": "reel",
+              "notes": "Reel macro su composizioni estive: girasoli, gladioli, margherite"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "Chi lasciamo andare resta con noi, nelle cose piccole che amava",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Frase evocativa sul ricordo quotidiano. Immagine di oggetto simbolico (tazza, libro aperto, sedia vuota)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 4,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Allestimento camera ardente a domicilio: se preferite restare a casa",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Servizio di allestimento domiciliare. Foto camera ardente in casa (rispettosa), tono informativo"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C2",
+              "sub_topic": "Agosto: restiamo aperti per voi, come sempre",
+              "media_type": "single_image",
+              "template": "event",
+              "notes": "Rassicurazione su continuità servizio anche in agosto, mese di vacanza per molti"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C5",
+              "sub_topic": "Fiori d'estate: gelsomini, oleandri, fiori del sud — la nostra terra",
+              "media_type": "carousel",
+              "notes": "Carousel fiori tipici siciliani d'estate che usiamo nel laboratorio"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C6",
+              "sub_topic": "Verso il 15 agosto: Maria SS. Assunta, la Madre che ha accompagnato ogni partenza",
+              "media_type": "single_image",
+              "template": "event",
+              "notes": "Preludio Assunta. Immagine simbolica mariana (statua, fiori bianchi, cielo aperto)"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C4",
+              "sub_topic": "Agosto ci ricorda le partenze: chi resta, chi torna, chi resterà sempre",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Citazione sul tema partenza/ritorno/memoria nel contesto estivo"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C5",
+              "sub_topic": "Per l'Assunta: composizioni di gigli bianchi e rose per la Madre",
+              "media_type": "reel",
+              "notes": "Reel laboratorio: composizioni mariane per i cimiteri. Gigli bianchi, rose, drappi azzurri"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "venerdì",
+              "time": "09:00",
+              "category": "C6",
+              "sub_topic": "15 Agosto — Maria SS. Assunta: la festa di chi guarda al cielo e ricorda",
+              "media_type": "carousel",
+              "notes": "POST IMPORTANTE DEL MESE. Carousel dedicato: storia della ricorrenza a Ravanusa, tradizione del cimitero, omaggio floreale. Rispettoso, non folcloristico"
+            },
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C3",
+              "sub_topic": "Le nostre sale d'estate: aria condizionata e luce soffusa per chi resta a vegliare",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Foto sede con illuminazione estiva. Confort per le famiglie"
+            },
+            {
+              "day": "domenica",
+              "time": "20:00",
+              "category": "C4",
+              "sub_topic": "Dopo l'Assunta, il ricordo continua: ogni fiore portato è un gesto d'amore",
+              "media_type": "reel",
+              "notes": "Reel del cimitero di Ravanusa dopo il 15 agosto (dall'esterno, nessun volto), fiori freschi sulle tombe"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Lavori cimiteriali: marmo, incisioni, manutenzione — curiamo anche il dopo",
+              "media_type": "carousel",
+              "notes": "Carousel 4 slide sui lavori cimiteriali offerti. Foto lapidi restaurate, incisioni, tombe ordinate"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C7",
+              "sub_topic": "Il numero che in agosto non prende ferie: siamo qui anche il 15 agosto",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Rassicurazione disponibilità in periodo vacanze. Tono pratico"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C2",
+              "sub_topic": "Una famiglia che accompagna le famiglie: i Di Rosa da tre generazioni",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Ribadire identità familiare del brand. Eventualmente foto vintage familiare (se disponibile)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 5,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C4",
+              "sub_topic": "Settembre: la dolcezza dei giorni che si accorciano e dei pensieri che restano",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Tono autunnale iniziale, malinconico ma caldo. Immagine luce morbida, foglie prime ingiallire"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C2",
+              "sub_topic": "Settembre ci rimette al lavoro: ma per noi il servizio non si è mai fermato",
+              "media_type": "reel",
+              "notes": "Reel ripresa attività autunnale, team al lavoro, sede pulita e ordinata"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C1",
+              "sub_topic": "Il servizio H24: una scelta, non uno slogan",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Approfondimento H24: cosa significa concretamente essere sempre reperibili"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C3",
+              "sub_topic": "I nostri mezzi funebri: pulizia, discrezione, rispetto su ogni strada",
+              "media_type": "carousel",
+              "notes": "Carousel 3 slide: carri funebri puliti, interni (senza scene crude), cura quotidiana"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C5",
+              "sub_topic": "Fiori d'autunno: crisantemi, dalie, gerbere — i colori del ricordo",
+              "media_type": "reel",
+              "notes": "Reel laboratorio con fiori autunnali. Macro, dettagli, mani che compongono"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "Il crisantemo: simbolo di verità, non di tristezza — ogni cultura lo vive a modo suo",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Riflessione sul simbolismo del crisantemo, fiore del ricordo in Italia"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Disbrigo pratiche: dalla burocrazia all'affido, senza pesi aggiunti",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Servizio pratiche. Toni pratici sul sollevare la famiglia dalla burocrazia"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C3",
+              "sub_topic": "La nostra sala del commiato: spazio raccolto per abbracci e silenzi",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Foto sala commiato vuota ma pronta: sedie, luce bassa, fiori sull'altare"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C4",
+              "sub_topic": "Chi siamo stati, chi saremo, chi ricordiamo: un filo che non si spezza",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Citazione sulla continuità delle generazioni. Immagine catene/legami visivi simbolici"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C1",
+              "sub_topic": "Trasporti esteri: quando una famiglia è divisa tra due terre",
+              "media_type": "carousel",
+              "notes": "Carousel 3 slide su trasporti esteri: documenti, procedura consolare, consegna alla famiglia. Storia emigrazione siciliana"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C6",
+              "sub_topic": "Verso novembre: il mese che ricorda tutti, anche chi è partito lontano",
+              "media_type": "single_image",
+              "template": "event",
+              "notes": "Preannuncio del 2 novembre, mese dedicato al ricordo. Tono dolce, preparatorio"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C2",
+              "sub_topic": "Dietro il nostro lavoro, tre generazioni di ascolto",
+              "media_type": "reel",
+              "notes": "Reel sulla storia familiare — nonno/padre/figli — tramandare l'attività come tradizione"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 6,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C4",
+              "sub_topic": "Ottobre accende le candele: il mese che prepara al ricordo di tutti",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Atmosfera ottobre verso 2 novembre. Immagine candela accesa, luce calda"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C3",
+              "sub_topic": "Il cimitero di Ravanusa: un luogo che merita rispetto e cura costante",
+              "media_type": "reel",
+              "notes": "Reel cimitero di Ravanusa (esterno, mai volti): tombe curate, viali, luce autunnale"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C1",
+              "sub_topic": "Lavori cimiteriali: puliamo, restauriamo, incidiamo — prepariamo al 2 novembre",
+              "media_type": "carousel",
+              "notes": "Carousel 4 slide lavori cimiteriali: pulizia lapidi, restauro marmo, nuove incisioni. Servizio stagionale"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C6",
+              "sub_topic": "Il 2 novembre si avvicina: preparare il ricordo è già un gesto d'amore",
+              "media_type": "single_image",
+              "template": "event",
+              "notes": "Preparazione a Commemorazione Defunti. Invito a pensare al fiore, alla candela, alla visita"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C5",
+              "sub_topic": "Crisantemi: non li diciamo tristi, li diciamo fedeli",
+              "media_type": "reel",
+              "notes": "Reel macro crisantemi del laboratorio. Colori autunnali: bronzo, ocra, viola, bianco"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C5",
+              "sub_topic": "Le nostre corone per il 2 novembre: prenota il tuo omaggio floreale",
+              "media_type": "carousel",
+              "notes": "Carousel corone disponibili per la commemorazione. CTA sobrio: contattaci per la tua composizione"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C2",
+              "sub_topic": "Un'agenzia familiare significa che sentiamo ogni dolore come se fosse il nostro",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Identità familiare del brand. Sfondo caldo, foto del team (silhouette o posa rispettosa)"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C7",
+              "sub_topic": "Verso il 2 novembre restiamo sempre raggiungibili: il nostro numero è qui",
+              "media_type": "single_image",
+              "template": "service",
+              "notes": "Reminder H24 nel mese del ricordo"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C5",
+              "sub_topic": "Nel nostro laboratorio: ogni corona per ottobre nasce a mano, una per una",
+              "media_type": "reel",
+              "notes": "Reel laboratorio in fase pre-2 novembre. Piena attività di composizione corone. Tempo-lapsi lento rispettoso"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì",
+              "time": "14:30",
+              "category": "C4",
+              "sub_topic": "Ottobre ci prepara: a guardare indietro con gratitudine",
+              "media_type": "single_image",
+              "template": "quote",
+              "notes": "Chiusura mese con tono riflessivo, verso novembre. Immagine di foglia che cade"
+            },
+            {
+              "day": "giovedì",
+              "time": "18:00",
+              "category": "C3",
+              "sub_topic": "Ravanusa d'autunno: le nostre strade, le nostre case, i nostri ricordi",
+              "media_type": "reel",
+              "notes": "Reel paesaggistico Ravanusa in autunno. Legame al territorio"
+            },
+            {
+              "day": "sabato",
+              "time": "10:00",
+              "category": "C6",
+              "sub_topic": "Fra pochi giorni sarà il 2 novembre: noi siamo pronti, voi prendetevi il tempo",
+              "media_type": "single_image",
+              "template": "event",
+              "notes": "Ultimo reminder pre-Commemorazione. Tono invitante a pianificare la visita, fiori, pensieri"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

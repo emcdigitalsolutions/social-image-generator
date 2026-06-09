@@ -1511,7 +1511,7 @@
     btn.innerHTML = '<span class="loading"></span> Generazione...';
     try {
       const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/generate-caption', { method: 'POST' });
-      if (res.error) { await showAlert(res.error); return; }
+      if (res.error) { await showAlert(res.details ? (res.error + '\n\n' + res.details) : res.error); return; }
       document.getElementById('caption-text').value = res.caption || '';
       refreshPublishState();
     } catch (err) {

@@ -40,6 +40,9 @@
       <p style="font-size:11px;color:var(--gray-500);margin-top:4px">⚠ HF Inference API gratuita ha deprecato MusicGen — molto probabile 404. Tieni come fallback se hai accesso.</p>
     </div>
     <button type="submit" class="btn btn-primary">Salva</button>
+    <button type="button" class="btn btn-secondary" onclick="testAi()">🔍 Verifica stato AI (credito/connessione)</button>
+    <p style="font-size:11px;color:var(--gray-500);margin-top:8px">Google non espone il saldo in € via API: questo test fa una chiamata reale e indica se la generazione funziona (credito attivo) o perché no.</p>
+    <div id="aiStatus" style="margin-top:14px;display:none"></div>
   </form>
 </div>
 
@@ -252,6 +255,25 @@ async function testSmtp() {
     setBanner('smtpAlert', 'success', data.message || 'Email inviata.');
   } catch (err) {
     setBanner('smtpAlert','error', 'Errore: ' + err.message);
+  }
+}
+
+async function testAi() {
+  const box = document.getElementById('aiStatus');
+  box.style.display = 'block';
+  box.innerHTML = '<div style="padding:10px 14px;border-radius:6px;background:#eef2ff;color:#3538cd;font-size:13px">⏳ Verifica in corso (chiamata reale ai provider)...</div>';
+  try {
+    const res = await fetch('/dashboard/api/settings/test-ai', { method: 'POST', headers: { 'Authorization': 'Bearer ' + getToken() } });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+    const colors = { ok: ['#e7f6ec', '#1a7f37'], warn: ['#fff6e5', '#9a6700'], error: ['#fdecea', '#b42318'], muted: ['#f1f1f1', '#666'] };
+    const icon = { ok: '✅', warn: '⚠️', error: '❌', muted: '➖' };
+    box.innerHTML = (data.results || []).map(function (r) {
+      var c = colors[r.level] || colors.muted;
+      return '<div style="padding:10px 14px;border-radius:6px;margin-bottom:8px;background:' + c[0] + ';color:' + c[1] + ';font-size:13px"><strong>' + (icon[r.level] || '') + ' ' + r.provider + '</strong> — ' + r.message + (r.status ? ' <span style="opacity:.55">(HTTP ' + r.status + ')</span>' : '') + '</div>';
+    }).join('');
+  } catch (err) {
+    box.innerHTML = '<div style="padding:10px 14px;border-radius:6px;background:#fdecea;color:#b42318;font-size:13px">Errore: ' + err.message + '</div>';
   }
 }
 

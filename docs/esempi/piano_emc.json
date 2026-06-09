@@ -1,0 +1,1148 @@
+{
+  "title": "Piano Editoriale - EMC Digital Solutions (6 mesi, Maggio-Ottobre 2026)",
+  "categories": [
+    { "code": "C1", "name": "Servizi offerti", "frequency": "2/settimana", "description": "Sviluppo web, SaaS, e-commerce, gestione social, Google Business, ERP retail. Sempre in chiave beneficio concreto per il cliente." },
+    { "code": "C2", "name": "Consigli pratici", "frequency": "1/settimana", "description": "Pillole su SEO, UX, mobile-first, sicurezza, performance, conversioni. Tono accessibile ma autorevole." },
+    { "code": "C3", "name": "Team e competenze", "frequency": "0.5/settimana", "description": "15 anni di esperienza, tecnologie, metodo, formazione continua, behind-the-scenes." },
+    { "code": "C4", "name": "Casi di successo", "frequency": "1/settimana", "description": "Storie anonime di PMI che hanno digitalizzato processi o aumentato visibilità. Mai citare nomi cliente." },
+    { "code": "C5", "name": "FAQ", "frequency": "1/settimana", "description": "Risposte a domande frequenti: costi, tempi, manutenzione, modifiche future, SEO inclusa, ambito geografico." },
+    { "code": "C6", "name": "Festività e valori", "frequency": "1/settimana", "description": "Date civili/religiose italiane + valori brand (qualità, dedizione, territorio). Tono rispettoso e mai commerciale diretto." },
+    { "code": "C7", "name": "Territorio e crescita", "frequency": "0.5/settimana", "description": "Sicilia digitale, Campobello di Licata, PMI locali che diventano competitive online, lavoro remoto da provincia." }
+  ],
+  "months": [
+    {
+      "month_number": 1,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "venerdì", "time": "10:00", "category": "C6",
+              "sub_topic": "1 Maggio - Festa dei Lavoratori: onore al lavoro ben fatto",
+              "media_type": "single_image", "template": "event",
+              "caption": "Oggi si celebra il lavoro. Quello fatto bene, con cura, con competenza. Quello che trasforma un'idea in realtà concreta, una difficoltà in opportunità.\n\nA chi ogni giorno mette passione in quello che fa: buona Festa dei Lavoratori. 💪\n\n#PrimoMaggio #FestaDeiLavoratori #EMCDigitalSolutions #SiciliaDigitale #InnovazionePMI"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Quanto costa un sito web professionale?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "\"Quanto costa un sito web?\" è la domanda che sentiamo più spesso.\n\nLa risposta onesta: dipende da cosa ti serve davvero. Un sito vetrina per farti trovare online non costa come un e-commerce con gestionale integrato. Per questo partiamo sempre da una chiacchierata gratuita: capiamo cosa ti serve e solo dopo ti facciamo una proposta chiara, senza sorprese.\n\nScrivici su WhatsApp per un preventivo su misura.\n\n#FAQ #SviluppoWeb #EMCDigitalSolutions #TrasparenzaPrezzi #SiciliaDigitale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Maggio, mese della Madonna: dedizione e cura come valori",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Maggio è un mese che in Sicilia porta con sé il significato di cura e dedizione. Gli stessi valori che mettiamo in ogni progetto: dedicarsi davvero a un cliente, curare ogni dettaglio, seguirlo nel tempo.\n\nPerché un sito web non si consegna e basta. Si fa crescere insieme. 🌹\n\n#Maggio #Valori #EMCDigitalSolutions #CuraDelDettaglio #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Sviluppo siti web su misura: ogni attività merita il suo",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un template uguale a mille altri siti non ti fa emergere. Noi costruiamo siti cuciti addosso alla tua attività: grafica, contenuti, funzioni, velocità. Ogni pixel ha un perché.\n\nIl risultato? Un sito che convince chi lo visita a sceglierti.\n\nPronto a farti vedere online come meriti? Scrivici.\n\n#SviluppoWeb #SitoSuMisura #EMCDigitalSolutions #WebDesign #SiciliaDigitale #InnovazionePMI"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio pratico: la velocità del sito influisce sulle vendite",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Lo sapevi? Se il tuo sito impiega più di 3 secondi a caricarsi, più della metà dei visitatori se ne va prima ancora di vederlo.\n\nPer Google la velocità è un fattore di ranking. Per il tuo cliente è una questione di pazienza. Per il tuo fatturato, sono soldi lasciati sul tavolo.\n\nOttimizziamo il tuo sito per la velocità. Parliamone.\n\n#ConsigliWeb #PerformanceWeb #SEO #EMCDigitalSolutions #SviluppoWeb"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "SaaS su misura: il tuo software, i tuoi processi",
+              "media_type": "carousel",
+              "caption": "Il tuo lavoro non entra in un gestionale \"da supermercato\". Ogni attività ha processi unici che un software generico non riesce a gestire bene.\n\nNoi sviluppiamo SaaS su misura: tu ci racconti come lavori, noi progettiamo lo strumento che fa scorrere tutto liscio. Multi-utente, cloud, aggiornato automaticamente.\n\nHai un flusso di lavoro che il tuo gestionale attuale non capisce? Scrivici.\n\n#SaaS #SoftwareSuMisura #EMCDigitalSolutions #DigitalTransformation #InnovazionePMI #ERP"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "15 anni di esperienza: il nostro modo di lavorare",
+              "media_type": "reel",
+              "caption": "Da più di 15 anni sviluppiamo software, siti e soluzioni digitali. In questi anni abbiamo imparato una cosa sopra tutte: ascoltare prima di scrivere codice.\n\nPrima capiamo cosa ti serve davvero. Poi progettiamo. Solo dopo costruiamo.\n\nÈ il motivo per cui i nostri clienti restano con noi anni, non mesi. 🤝\n\n#Team #Esperienza #EMCDigitalSolutions #DigitalTransformation #SviluppoSoftware"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: da rivendita locale a shop online attivo in tutta Italia",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un cliente del settore retail siciliano ci ha contattato un anno fa: vendeva solo in negozio, voleva raggiungere anche chi non poteva passare fisicamente.\n\nAbbiamo progettato insieme un e-commerce pulito, veloce, con gestionale integrato per non impazzire con gli ordini. Oggi il 30% del suo fatturato arriva da clienti fuori provincia.\n\nAnche tu hai un'attività locale ma clienti potenziali ovunque? Parliamone.\n\n#CasoDiSuccesso #Ecommerce #DigitalTransformation #EMCDigitalSolutions #SiciliaDigitale"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Quanto tempo ci vuole per fare un sito?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Per un sito vetrina professionale di solito parliamo di 3-5 settimane dal via libera. Per un e-commerce completo siamo sui 2-3 mesi. Per un gestionale SaaS su misura dipende tutto dalla complessità.\n\nQuello che non facciamo mai: promettere tempi irrealistici per prenderti il lavoro. Preferiamo un cronoprogramma onesto e rispettato.\n\nCuriosità su un progetto? Scrivici su WhatsApp.\n\n#FAQ #SviluppoWeb #Trasparenza #EMCDigitalSolutions #SiciliaDigitale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Domenica: riflessione sul valore del \"fatto bene\"",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Nel nostro lavoro c'è sempre una scorciatoia. Un plugin pronto invece di un codice pulito. Un copia-incolla invece di una soluzione specifica. Un sì facile invece di una domanda scomoda.\n\nNoi scegliamo sempre la strada più lunga. Perché un lavoro fatto bene si vede dopo due anni, non dopo due giorni. 🛠️\n\n#Valori #FattoBene #EMCDigitalSolutions #Qualità #SviluppoSoftware"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Gestione social media: non solo post, strategia completa",
+              "media_type": "single_image", "template": "service",
+              "caption": "Pubblicare qualche post ogni tanto non è fare social media. È riempire uno spazio vuoto.\n\nNoi costruiamo piani editoriali mensili con contenuti pensati per il tuo pubblico, rispondiamo ai commenti come se fossimo in azienda con te, analizziamo cosa funziona e cosa no. I tuoi social diventano un canale commerciale, non un dovere da spuntare.\n\nVuoi vedere un esempio di piano? Scrivici.\n\n#SocialMediaManagement #EMCDigitalSolutions #StrategiaSocial #DigitalMarketing #SiciliaDigitale"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: mobile-first non è una moda, è come naviga il tuo cliente",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Oltre il 70% delle visite ai siti aziendali italiani arriva da smartphone. Se il tuo sito è pensato prima per il desktop, stai servendo bene il 30% dei tuoi visitatori.\n\nMobile-first significa progettare tenendo in mente prima il telefono: pulsanti grandi, testo leggibile, tempi di caricamento rapidi anche in 4G.\n\nApri il tuo sito dal cellulare ora. È facile da usare? Se hai dubbi, parliamone.\n\n#MobileFirst #WebDesign #ConsigliWeb #EMCDigitalSolutions #UX"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Google Business Profile: farsi trovare quando qualcuno cerca vicino",
+              "media_type": "carousel",
+              "caption": "Quando qualcuno cerca \"{il tuo servizio} vicino a me\" su Google, chi compare in alto nelle mappe? Quasi sempre chi ha un Google Business Profile curato.\n\nNoi lo creiamo da zero o miglioriamo quello esistente: foto ad alta qualità, orari aggiornati, descrizione ottimizzata, gestione recensioni. Risultato: più chiamate, più clienti che trovano la strada fino alla tua attività.\n\nHai già registrato la tua attività su Google? Scrivici se vuoi una verifica.\n\n#GoogleBusinessProfile #SEOLocale #EMCDigitalSolutions #VisibilitàLocale #SiciliaDigitale #CampobelloDiLicata"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "Lavorare dal Sud con clienti in tutta Italia: la nostra normalità",
+              "media_type": "reel",
+              "caption": "Siamo basati a Campobello di Licata, in provincia di Agrigento. Tra una riunione e l'altra si vede il mare.\n\nI nostri clienti? In Sicilia, in Lombardia, in Toscana, qualcuno anche all'estero. Il digitale ha abbattuto le distanze prima che diventasse un luogo comune dirlo.\n\nLa Sicilia non è un limite. È il nostro modo di lavorare. 🌊\n\n#SiciliaDigitale #RemoteWork #EMCDigitalSolutions #SudItalia #CampobelloDiLicata #InnovazionePMI"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: gestionale su misura per uno studio professionale",
+              "media_type": "single_image", "template": "service",
+              "caption": "Uno studio di consulenza ci ha contattati con un problema preciso: il software gestionale che usavano li costringeva ad adattare i processi allo strumento, non il contrario.\n\nIn tre mesi abbiamo sviluppato un SaaS su misura che segue il loro modo di lavorare. Agenda condivisa, fatturazione elettronica, gestione pratiche, tutto in un'unica dashboard.\n\nIl loro commento dopo 6 mesi: \"Non torneremmo indietro per niente al mondo.\"\n\nAnche tu senti che il gestionale attuale ti frena? Scrivici.\n\n#CasoDiSuccesso #SaaS #GestionalesuMisura #EMCDigitalSolutions #DigitalTransformation"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Dopo il lancio del sito, posso ancora modificarlo?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Certo. I siti che creiamo sono pensati per crescere con te.\n\nTesti, foto, prodotti, pagine nuove: tutto si aggiunge e modifica nel tempo. A seconda del progetto puoi gestirli tu da un pannello semplice, oppure possiamo farlo noi con un pacchetto di manutenzione mensile.\n\nIl sito giusto non è \"finito\" il giorno del lancio. È pronto per diventare quello che serve domani.\n\n#FAQ #ManutenzioneSito #EMCDigitalSolutions #SviluppoWeb #Flessibilità"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Domenica: la calma necessaria per le decisioni giuste",
+              "media_type": "single_image", "template": "quote",
+              "caption": "La settimana lavorativa è veloce. Domenica è il giorno in cui molti imprenditori si fermano a pensare: \"Come va davvero la mia attività online?\"\n\nSe ti sei fatto questa domanda anche questa settimana, forse è il momento di approfondirla. Lunedì siamo qui, a un messaggio di distanza.\n\n#Domenica #Strategia #EMCDigitalSolutions #BusinessDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "E-commerce professionale: vendere online senza complicazioni",
+              "media_type": "single_image", "template": "service",
+              "caption": "Aprire uno shop online oggi è più accessibile di quanto si pensi. Il difficile è farlo bene: catalogo ordinato, pagamenti sicuri, spedizioni automatiche, gestione magazzino, fatturazione elettronica.\n\nNoi lo costruiamo chiavi in mano e ti insegniamo a gestirlo. Niente formazione impossibile, niente plugin che si rompono. Un sistema solido che funziona.\n\nPronto a vendere online? Scrivici.\n\n#Ecommerce #VenditaOnline #EMCDigitalSolutions #SviluppoWeb #SiciliaDigitale #DigitalTransformation"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: la sicurezza del sito non è un lusso, è un obbligo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Un sito compromesso può portare a: dati dei clienti rubati, blacklist di Google, danni reputazionali pesanti.\n\nI rimedi sono semplici e non costosi: certificato HTTPS, backup automatici, aggiornamenti regolari, firewall applicativo. Ma vanno fatti PRIMA, non dopo l'attacco.\n\nControlliamo gratuitamente lo stato di sicurezza del tuo sito. Scrivici il link.\n\n#SicurezzaWeb #Cybersecurity #EMCDigitalSolutions #ConsigliWeb #SiciliaDigitale"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Sistemi di prenotazione online: tempo recuperato ogni giorno",
+              "media_type": "carousel",
+              "caption": "Quante telefonate ricevi al giorno solo per gestire prenotazioni? E quanti clienti perdi perché chiamano fuori orario?\n\nUn sistema di prenotazione online ti libera. Il cliente prenota quando vuole, tu ricevi il promemoria, il calendario si aggiorna da solo. In più: meno dimenticanze, meno no-show grazie ai reminder automatici.\n\nFunziona per ristoranti, studi professionali, saloni, officine, qualsiasi attività su appuntamento.\n\nCuriosità? Scrivici.\n\n#PrenotazioniOnline #EMCDigitalSolutions #AutomazioneProcessi #GestionalesuMisura #InnovazionePMI"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Il nostro stack tecnologico: scegliamo lo strumento giusto, non quello facile",
+              "media_type": "reel",
+              "caption": "Non ci innamoriamo di una tecnologia. Scegliamo quella giusta per il problema del cliente.\n\nReact per interfacce dinamiche, Node.js per backend scalabili, MySQL/PostgreSQL per dati affidabili, Docker per rendere tutto riproducibile. Ma se una soluzione più semplice basta, scegliamo quella.\n\nLa tecnologia è un mezzo. L'obiettivo è il tuo risultato. 💻\n\n#StackTecnologico #EMCDigitalSolutions #DevTeam #DigitalTransformation #SoftwareSuMisura"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: rifacimento sito + Google Business = +200% chiamate in 4 mesi",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un'attività locale del settore servizi aveva un sito datato e un Google Business Profile abbandonato. I clienti nuovi arrivavano quasi solo per passaparola.\n\nAbbiamo rifatto il sito in chiave mobile-first, ottimizzato Google Business con foto professionali e keyword giuste, sistemato il profilo Facebook. In 4 mesi: +200% chiamate ricevute dal profilo Google, posizione 1-3 su \"servizio + città\".\n\nAnche tu hai un sito che non ti porta clienti? Parliamone.\n\n#CasoDiSuccesso #SEOLocale #GoogleBusiness #EMCDigitalSolutions #DigitalTransformation"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Lavorate anche con clienti fuori dalla Sicilia?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sì, assolutamente. Oltre la metà dei nostri progetti parte da clienti in Centro-Nord Italia, e collaboriamo anche con realtà estere.\n\nLa distanza non è un problema quando il progetto è chiaro: video-call, project management online, consegne tracciate. Molti clienti ci hanno scelto proprio perché siamo in Sicilia — costi più contenuti ma qualità al livello delle grandi città.\n\nOvunque tu sia, parliamone.\n\n#FAQ #RemoteWork #EMCDigitalSolutions #SiciliaDigitale #LavoriOvunque"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Fine mese: il bilancio e il passo successivo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Ogni fine mese è un buon momento per fermarsi un attimo e farsi due domande:\n\n1. La mia attività online mi sta portando quello che mi aspettavo?\n2. Cosa posso migliorare il mese prossimo?\n\nNon servono risposte complete. Bastano le domande giuste. Se vuoi un occhio esterno per il bilancio, siamo a disposizione. 🎯\n\n#FineMese #BilancioDigitale #EMCDigitalSolutions #StrategiaBusiness #InnovazionePMI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 2,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Giugno parte: nuove soluzioni per la tua estate digitale",
+              "media_type": "single_image", "template": "service",
+              "caption": "Giugno è il mese in cui molte attività si ripensano in vista dell'estate. È il momento giusto per dare una svolta alla tua presenza online prima del picco di stagione.\n\nRifacimento sito, ottimizzazione Google Business, gestione social professionale: un mese basta per preparare il terreno e far arrivare l'estate con un'immagine finalmente all'altezza.\n\nParliamone ora. Scrivici su WhatsApp.\n\n#GiugnoDigitale #SviluppoWeb #EMCDigitalSolutions #SiciliaDigitale #InnovazionePMI"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: i contenuti sul tuo sito parlano di te anche quando non ci sei",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Il testo del tuo sito è un venditore che lavora 24 ore su 24, anche quando tu dormi.\n\nSe è confuso, pieno di tecnicismi o impersonale, manda a casa i potenziali clienti. Se è chiaro, diretto, umano, li converte.\n\nNon sottovalutare i testi. Spesso fanno la differenza più del design.\n\n#Copywriting #ConsigliWeb #EMCDigitalSolutions #MarketingContenuti #SiciliaDigitale"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Manutenzione continuativa: un sito sicuro, veloce, aggiornato",
+              "media_type": "carousel",
+              "caption": "Il sito non è un quadro appeso al muro. È un organismo che va curato.\n\nOgni mese controlliamo backup, aggiornamenti, sicurezza, velocità, SEO, link rotti. Rileviamo i problemi prima che diventino crisi e ti mandiamo un report mensile semplice.\n\nMeno pensieri per te, un sito che funziona davvero sempre. Contatta per info sul piano di manutenzione.\n\n#ManutenzioneSito #EMCDigitalSolutions #SicurezzaWeb #SupportoContinuativo #SiciliaDigitale"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "Sicilia innovativa: le PMI che stanno cambiando il racconto",
+              "media_type": "reel",
+              "caption": "La Sicilia digitale non è un'eccezione. È una realtà che cresce ogni mese.\n\nPiccole attività che vendono all'estero, studi professionali che servono clienti ovunque, produttori che raccontano il territorio online. Dietro ognuna c'è scelte coraggiose e strumenti giusti.\n\nAnche la tua può essere una di queste storie. 🌞\n\n#SiciliaDigitale #PMI #EMCDigitalSolutions #Innovazione #DigitalTransformation #SudItalia"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: portale prenotazioni per struttura ricettiva",
+              "media_type": "single_image", "template": "service",
+              "caption": "Una struttura ricettiva siciliana aveva un problema concreto: le prenotazioni arrivavano da 5 canali diversi, le doppie prenotazioni erano la norma, il personale passava ore a ricontrollare.\n\nAbbiamo sviluppato un portale con motore di prenotazione unico, sincronizzato con Booking e Airbnb. Ora le disponibilità si aggiornano in tempo reale e le doppie prenotazioni sono sparite.\n\nHai un problema simile? Progetteremmo la soluzione insieme.\n\n#CasoDiSuccesso #Prenotazioni #EMCDigitalSolutions #TurismoDigitale #SiciliaDigitale"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Che differenza c'è tra sito vetrina e e-commerce?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sito vetrina: presenta la tua attività, fa conoscere servizi, permette di ricevere contatti. Non vende direttamente online.\n\nE-commerce: tutto quanto sopra + permette al cliente di comprare prodotti/servizi con carta o PayPal, con catalogo, carrello, spedizioni.\n\nQuale serve a te? Dipende se vendi qualcosa che può essere acquistato online senza contatto umano, o se il tuo valore è la consulenza iniziale. Parliamone.\n\n#FAQ #Ecommerce #SitoVetrina #EMCDigitalSolutions #SviluppoWeb"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "2 Giugno: Festa della Repubblica - valori fondanti anche nel digitale",
+              "media_type": "single_image", "template": "event",
+              "caption": "Oggi è la Festa della Repubblica. I valori della Costituzione — libertà, partecipazione, pari opportunità — riguardano anche il mondo digitale.\n\nUn sito accessibile, trasparente, sicuro è un piccolo gesto che li rispetta. Buona Festa della Repubblica a tutti. 🇮🇹\n\n#2Giugno #FestaDellaRepubblica #EMCDigitalSolutions #ValoriDigitali #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Integrazione sistemi: i tuoi strumenti che finalmente si parlano",
+              "media_type": "single_image", "template": "service",
+              "caption": "Gestionale da una parte, sito dall'altra, e-commerce da un'altra ancora, fatturazione elettronica in un quarto programma. Risultato: ore perse a copiare dati manualmente.\n\nColleghiamo tra loro gli strumenti che già usi. Un ordine online arriva dritto nel gestionale, la fattura si genera da sola, il magazzino si aggiorna automaticamente.\n\nMeno errori, più tempo per quello che conta davvero. Contatta per un audit.\n\n#IntegrazioneSistemi #Automazione #EMCDigitalSolutions #ProduttivitàAziendale #DigitalTransformation"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: le recensioni Google contano più di quanto pensi",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Quando scegli un ristorante nuovo o un idraulico che non conosci, cosa guardi per prima cosa? Le recensioni.\n\nLo fanno tutti. Lo fanno anche i tuoi potenziali clienti.\n\nChiedere attivamente recensioni ai clienti soddisfatti è la strategia SEO locale più sottovalutata e più efficace. Se non sai come iniziare, ti prepariamo un sistema automatico che le richiede.\n\n#RecensioniGoogle #SEOLocale #EMCDigitalSolutions #ConsigliMarketing #ReputazioneOnline"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Landing page per campagne: una pagina che converte davvero",
+              "media_type": "carousel",
+              "caption": "Lanci una campagna pubblicitaria e mandi il traffico sulla home del sito? Stai sprecando metà del budget.\n\nUna landing page dedicata, pensata per UN solo obiettivo, converte 2-5 volte di più. Titolo chiaro, beneficio immediato, prova sociale, form semplice. Niente distrazioni.\n\nProgettiamo landing page mirate per ogni campagna. Scrivici per un esempio concreto.\n\n#LandingPage #CampagneMarketing #ConversionRate #EMCDigitalSolutions #DigitalMarketing #SiciliaDigitale"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Il nostro metodo: fase di analisi prima di scrivere una riga di codice",
+              "media_type": "reel",
+              "caption": "La prima settimana di ogni progetto non scriviamo codice. Ascoltiamo.\n\nIntervista con il cliente, mappatura dei processi, analisi dei concorrenti, definizione degli obiettivi misurabili. Solo dopo produciamo un documento di progetto che diventa la nostra bussola.\n\nSembra lento, in realtà fa risparmiare settimane di revisioni dopo. 📐\n\n#MetodoDiLavoro #EMCDigitalSolutions #Professionalità #DigitalTransformation #SviluppoSoftware"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: sito + campagna Google Ads per lancio nuovo servizio",
+              "media_type": "single_image", "template": "service",
+              "caption": "Uno studio professionale voleva lanciare un servizio nuovo nella sua zona. Budget ridotto, urgenza di risultati.\n\nAbbiamo creato una landing page dedicata, impostato una campagna Google Ads con budget di 300€/mese, ottimizzato ogni settimana. In 6 settimane: 47 richieste qualificate, costo per contatto 19€. Per un servizio che ne vale centinaia, è tanto.\n\nStai per lanciare qualcosa? Parliamone.\n\n#CasoDiSuccesso #GoogleAds #LancioServizio #EMCDigitalSolutions #LandingPage"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Il mio sito attuale è vecchio, conviene rifarlo o aggiornarlo?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Dipende da tre cose: quanto è vecchio il codice sotto, quanti contenuti ha che vale la pena salvare, quanto cambierà la strategia.\n\nIn generale: sotto i 5 anni spesso basta un restyling + ottimizzazione. Oltre i 7 anni conviene rifare da zero — costa simile alla manutenzione profonda ma risultato incomparabile.\n\nAnalizziamo gratis il tuo sito e ti diciamo cosa fare. Zero impegno.\n\n#FAQ #RestylingSito #EMCDigitalSolutions #SviluppoWeb #Trasparenza"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Domenica: il giusto ritmo fra lavoro e riposo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "I migliori imprenditori che conosciamo hanno una cosa in comune: sanno fermarsi.\n\nIl giorno di riposo non è tempo perso. È quello che permette di tornare lunedì con idee chiare e le giuste priorità.\n\nBuona domenica. Lunedì siamo qui. 🌿\n\n#Domenica #EquilibrioLavoroVita #EMCDigitalSolutions #Valori #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "10:00", "category": "C6",
+              "sub_topic": "15 Giugno - San Vito: patrono di Ravanusa e territorio che cresce",
+              "media_type": "single_image", "template": "event",
+              "caption": "Oggi la vicina Ravanusa celebra il suo patrono, San Vito. Una giornata di festa che unisce la comunità intorno alle proprie radici.\n\nCampobello di Licata, Ravanusa, Naro, Licata, Canicattì: questo entroterra siciliano è il nostro territorio di riferimento. Qui crescono attività che scelgono il digitale per farsi conoscere oltre i propri confini.\n\nBuona festa di San Vito alla comunità di Ravanusa. 🕊️\n\n#SanVito #15Giugno #Ravanusa #EMCDigitalSolutions #SiciliaDigitale #CampobelloDiLicata #Territorio"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: la SEO locale è il miglior investimento per le piccole attività",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Competere con le grandi aziende su parole generiche è quasi impossibile. Competere per \"avvocato Campobello di Licata\" o \"ristorante pesce Agrigento\" è assolutamente alla tua portata.\n\nLa SEO locale — posizionarsi bene per ricerche geolocalizzate — è l'investimento digitale con il miglior ritorno per le piccole attività di provincia.\n\nScrivici il nome della tua città + servizio: cerchiamo insieme come stai posizionato.\n\n#SEOLocale #PiccoleImprese #EMCDigitalSolutions #ConsigliWeb #SiciliaDigitale"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Registrazione e verifica Google Business Profile",
+              "media_type": "carousel",
+              "caption": "Hai un'attività ma non sai se è registrata correttamente su Google? Oppure sai di esserci ma non compari nelle mappe?\n\nIl problema quasi sempre è uno di questi: profilo non verificato, categoria sbagliata, mancanza di foto, recensioni non gestite.\n\nNoi ti assistiamo in tutto il processo: registrazione, verifica via posta o videochiamata, ottimizzazione. Una volta fatto, la differenza nel traffico si vede entro 30 giorni.\n\nVuoi sapere come sei messo? Scrivici.\n\n#GoogleBusinessProfile #EMCDigitalSolutions #SEOLocale #VisibilitàOnline #SiciliaDigitale"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "Provincia non significa provinciale: il digitale ha cambiato le regole",
+              "media_type": "reel",
+              "caption": "C'è un'idea superata che vuole chi lavora in provincia sia automaticamente dietro rispetto alle grandi città.\n\nLa realtà è diversa: costi operativi più bassi, meno stress, qualità della vita più alta, ma stessi strumenti e stessa rete di chi lavora a Milano o Roma. Con la maturità digitale, spesso si lavora anche meglio.\n\nSiamo fieri di essere di Campobello di Licata. 🚀\n\n#ProvinciaDigitale #EMCDigitalSolutions #CampobelloDiLicata #SiciliaDigitale #RemoteWork #SudItalia"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: trasformazione digitale di un negozio di quartiere",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un negozio di quartiere vendeva solo a clientela locale, conosciuto per passaparola. Il proprietario voleva provare a vendere anche online senza perdere il rapporto umano con chi entrava in negozio.\n\nAbbiamo costruito un e-commerce semplice, una pagina Facebook attiva e un sistema di ordini via WhatsApp con consegna in giornata in città. Risultato: +40% fatturato in 8 mesi, senza perdere un cliente in negozio.\n\nAnche tu hai una realtà locale da ampliare online? Scrivici.\n\n#CasoDiSuccesso #NegozioDiQuartiere #DigitalTransformation #EMCDigitalSolutions #Ecommerce #SiciliaDigitale"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Cosa include esattamente la gestione social?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Un pacchetto di gestione social completo include: piano editoriale mensile, grafiche su misura, scrittura dei testi, programmazione dei post, risposta ai commenti e messaggi, report mensile con numeri.\n\nQuello che NON includiamo: promesse di \"migliaia di follower in un mese\", scorciatoie strane, bot.\n\nCi interessa che i tuoi social portino contatti veri, non numeri gonfiati.\n\n#FAQ #SocialMediaManagement #EMCDigitalSolutions #Trasparenza #DigitalMarketing"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Estate arriva: il tempo giusto per rinnovarsi",
+              "media_type": "single_image", "template": "quote",
+              "caption": "L'estate in Sicilia è un periodo di transizione. Prima del caldo pieno, c'è una finestra perfetta per pianificare: nuovi progetti, rinnovi, cambiamenti che a settembre daranno frutti.\n\nSe c'è qualcosa della tua presenza online che sai dovrebbe cambiare, questo è il mese giusto per parlarne. 🌻\n\n#EstateDigitale #PianificazioneStrategica #EMCDigitalSolutions #SiciliaDigitale #BusinessCrescita"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Area clienti privata: professionisti che offrono un servizio \"premium\"",
+              "media_type": "single_image", "template": "service",
+              "caption": "Uno studio professionale che vuole farsi percepire come premium non può consegnare documenti via email e file su WhatsApp.\n\nSviluppiamo aree clienti riservate: login sicuro, documenti ordinati per pratica, comunicazioni tracciate, calendario appuntamenti. Il cliente si sente seguito davvero.\n\nÈ una funzione che fa percepire valore e trattenere chi altrimenti cambierebbe professionista. Parliamone.\n\n#AreaClienti #ProfessionistiPremium #EMCDigitalSolutions #SoftwareSuMisura #InnovazionePMI"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: investi in foto professionali per il sito",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Un sito moderno con foto stock generiche sembra finto. Un sito semplice con foto reali della tua attività, delle tue persone, dei tuoi spazi costruisce fiducia istantanea.\n\n200-500€ di fotografo professionale sono uno degli investimenti con il miglior ritorno per la tua presenza online. Non sottovalutare.\n\n#FotoProfessionali #BrandingVisivo #ConsigliWeb #EMCDigitalSolutions #WebDesign"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "ERP retail StockflowERP: il nostro prodotto per negozi che crescono",
+              "media_type": "carousel",
+              "caption": "Hai un negozio e gestisci ancora vendite, magazzino, scontrini, e-commerce con software diversi che non si parlano?\n\nStockflowERP è il nostro gestionale retail: un'unica piattaforma per cassa, magazzino multi-punto, e-commerce collegato, fatturazione elettronica, report sui prodotti più venduti. Scala da 1 negozio a catena con più punti vendita.\n\nProva dimostrativa gratuita. Scrivici.\n\n#StockflowERP #ERPRetail #EMCDigitalSolutions #GestionaleNegozio #DigitalTransformation"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Formazione continua: non ci siamo mai fermati a studiare",
+              "media_type": "reel",
+              "caption": "Il mondo digitale cambia ogni settimana. Tecnologie nuove, best practice aggiornate, vulnerabilità scoperte.\n\nDedichiamo una parte di ogni settimana alla formazione. Corsi online, conferenze, sperimentazione su progetti interni. Questo ci permette di proporre al cliente sempre la soluzione migliore oggi, non quella che funzionava 5 anni fa.\n\nLa qualità del tuo prodotto dipende anche dalla curiosità di chi lo costruisce. 📚\n\n#FormazioneContinua #EMCDigitalSolutions #AggiornamentoCostante #DevTeam #Professionalità"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: integrare fatturazione elettronica in gestionale esistente",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un'azienda aveva un gestionale personalizzato che usavano da anni, ma la fatturazione elettronica era un pezzo a parte che richiedeva 2 ore al giorno di lavoro manuale.\n\nAbbiamo integrato fatturazione elettronica nel loro gestionale esistente: fatture che partono automaticamente allo SDI appena si conclude una vendita. Da 2 ore al giorno a zero.\n\nHai processi manuali che vorresti automatizzare? Parliamone.\n\n#CasoDiSuccesso #FatturazioneElettronica #Automazione #EMCDigitalSolutions #ERP #DigitalTransformation"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Quanto dura la fase di supporto dopo il lancio?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Dopo il lancio di un sito o software, il primo mese offriamo supporto incluso gratuito per sistemare piccoli aggiustamenti e rispondere alle tue domande.\n\nDopo il primo mese, si passa al contratto di manutenzione mensile (opzionale): backup, aggiornamenti, monitoraggio, piccole modifiche. Non sei mai \"da solo\" dopo la consegna se non vuoi esserlo.\n\nTrasparenza totale sui costi fin dall'inizio.\n\n#FAQ #SupportoPostLancio #EMCDigitalSolutions #Trasparenza #ManutenzioneSito"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Fine giugno: l'estate entra davvero nel vivo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "L'estate siciliana ha un suo ritmo. Più lento nei pomeriggi, più vivo la sera. Le persone hanno tempo. Guardano cose online con più calma.\n\nÈ il periodo migliore per consolidare la propria presenza digitale senza fretta. Una pagina fatta bene oggi ha un anno davanti per dare risultati. 🌊\n\n#EstateSicilia #EMCDigitalSolutions #Strategia #SiciliaDigitale #BusinessDigitale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 3,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Sito ottimizzato per il turismo: ricevere richieste dall'estero",
+              "media_type": "single_image", "template": "service",
+              "caption": "Se la tua attività può interessare turisti stranieri, il tuo sito deve essere pronto ad accoglierli: versione multilingua, pagamenti internazionali, testi pensati per chi non conosce la Sicilia.\n\nTrasformiamo siti locali in piattaforme aperte al mondo. Il risultato? Più prenotazioni, più richieste, più fatturato senza aprire nuove sedi.\n\nCuriosità per il tuo caso? Scrivici.\n\n#TurismoDigitale #SitiMultilingua #EMCDigitalSolutions #SiciliaInnovation #Internazionalizzazione"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: il blog aziendale funziona solo se è strategico",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Aprire un blog aziendale \"perché lo fanno tutti\" è sprecare energie. Aprirlo con una strategia precisa può raddoppiarti il traffico organico in un anno.\n\nLa regola: ogni articolo deve rispondere a una domanda reale che i tuoi clienti cercano su Google. Se scrivi \"buone feste a tutti\", non stai facendo SEO, stai facendo cartoline.\n\nVuoi un piano editoriale blog pensato per portarti clienti? Scrivici.\n\n#BlogStrategico #SEO #ContentMarketing #EMCDigitalSolutions #ConsigliWeb"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Integrazione WhatsApp Business nel tuo sito",
+              "media_type": "carousel",
+              "caption": "I tuoi clienti preferiscono scrivere su WhatsApp piuttosto che compilare un form. Sfrutta questa preferenza.\n\nIntegriamo WhatsApp Business nel tuo sito: bottone fluttuante sempre visibile, messaggi predefiniti personalizzati per pagina, richieste che arrivano direttamente al tuo numero aziendale. Il tasso di conversione di solito triplica rispetto al form classico.\n\nVuoi provare sul tuo sito? Scrivici su WhatsApp (ovviamente 😉).\n\n#WhatsAppBusiness #Conversioni #EMCDigitalSolutions #IntegrazioneWhatsApp #SiciliaDigitale"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Come lavoriamo in team: comunicazione quotidiana e obiettivi chiari",
+              "media_type": "reel",
+              "caption": "Un progetto digitale di qualità nasce dalla buona organizzazione del team che lo fa.\n\nOgni settimana pianifichiamo obiettivi, ogni giorno un rapido allineamento, ogni progetto ha un referente unico per il cliente. Niente catene di email. Niente \"ti richiamo più tardi\" che diventa \"la prossima settimana\".\n\nIl risultato per te: sai sempre a che punto siamo. ⚙️\n\n#TeamWork #EMCDigitalSolutions #Metodo #ProjectManagement #Professionalità"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: blog SEO strategico per studio professionale",
+              "media_type": "single_image", "template": "service",
+              "caption": "Uno studio di professionisti ci ha chiesto come aumentare il traffico organico senza investire in pubblicità.\n\nRisposta: piano editoriale blog con 2 articoli al mese, ognuno pensato su una domanda reale dei clienti. Parole chiave studiate, ricerca concorrenti, titoli ottimizzati. Dopo 10 mesi: +320% visite organiche, posizione 1-3 per 8 parole chiave locali.\n\nLa pazienza paga. Anche tu vuoi lavorarci? Scrivici.\n\n#CasoDiSuccesso #BlogSEO #EMCDigitalSolutions #SEOLocale #ContentMarketing"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Posso cambiare hosting / dominio se ho già un sito fatto altrove?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sì, senza problemi. Il dominio e l'hosting sono cose separate dal sito.\n\nIl passaggio comprende: trasferimento del dominio al registrar che preferisci, migrazione del sito sul nuovo hosting, verifica che tutto funzioni, redirect per non perdere SEO. Normalmente zero downtime visibile.\n\nHai un sito bloccato su un fornitore con cui non ti trovi bene? Ti aiutiamo noi a portarlo altrove.\n\n#FAQ #MigrazioneSito #EMCDigitalSolutions #Hosting #SiciliaDigitale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Luglio entra: il mese della visione sul lungo periodo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Luglio in Italia è il mese più pensieroso. Tra il ritmo del lavoro e la preparazione alle ferie, molti imprenditori si fermano a guardare i numeri dei primi 6 mesi.\n\nHai già fatto il tuo bilancio digitale? Traffico, contatti, vendite online rispetto all'anno scorso? Se non sai da dove partire, ti prepariamo un report gratuito. ☀️\n\n#Luglio #BilancioDigitale #EMCDigitalSolutions #AnalisiBusiness #InnovazionePMI"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Newsletter: il canale che nessuno \"spegne\"",
+              "media_type": "single_image", "template": "service",
+              "caption": "I social cambiano algoritmo, a volte oscurano i tuoi post. L'email invece arriva sempre a chi si è iscritto.\n\nProgettiamo newsletter professionali: grafica coerente con il tuo brand, contenuti che informano davvero (non solo offerte), integrazione con il tuo gestionale per segmentare i clienti. Risultato: fidelizzazione reale.\n\nCuriosità per la tua attività? Scrivici.\n\n#NewsletterProfessionale #EmailMarketing #EMCDigitalSolutions #Fidelizzazione #DigitalMarketing"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: controlla i backup del tuo sito OGGI",
+              "media_type": "single_image", "template": "quote",
+              "caption": "I disastri digitali (hackeraggio, hosting che fallisce, aggiornamento sbagliato) colpiscono sempre inaspettati. L'unica difesa è un backup recente e testato.\n\nChiedi ora al tuo fornitore: \"Quando è stato fatto l'ultimo backup del mio sito e dov'è conservato?\" Se la risposta non arriva in 1 ora, forse il backup non c'è.\n\nNoi facciamo backup giornalieri e mensili su locazioni separate. Sicurezza vera.\n\n#BackupSito #SicurezzaWeb #EMCDigitalSolutions #ConsigliWeb #DataProtection"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "CRM semplice per piccole aziende: gestire i clienti senza impazzire",
+              "media_type": "carousel",
+              "caption": "\"CRM\" fa paura a molti imprenditori. Sembra complesso, caro, inutile per chi ha pochi clienti.\n\nLa realtà: un CRM semplice e ben fatto costa poco, si impara in un pomeriggio e ti fa guadagnare ore ogni settimana. Anagrafica cliente, storico comunicazioni, promemoria automatici, statistiche vendite.\n\nSviluppiamo CRM su misura in base a come lavori davvero. Parliamone.\n\n#CRM #GestioneClienti #EMCDigitalSolutions #ProduttivitàAziendale #SoftwareSuMisura"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "La Sicilia che innova: cooperative, giovani imprese, territorio",
+              "media_type": "reel",
+              "caption": "Una volta si diceva che in Sicilia \"non si fa\". Oggi ci sono cooperative agricole che esportano online in tutta Europa, startup tech ad Agrigento, designer freelance che vincono premi nazionali da Palermo.\n\nIl Sud non è più da scoprire. È da raccontare. 🌅\n\n#SiciliaInnovation #SudItalia #EMCDigitalSolutions #StartupSicilia #DigitalTransformation"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: automazione email per attività con clienti ricorrenti",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un'attività con clientela ricorrente perdeva tempo ogni settimana a scrivere promemoria personalizzati per controlli e scadenze.\n\nAbbiamo progettato un sistema che manda automaticamente email personalizzate (non spam, messaggi veri) in base a cosa ha comprato il cliente e quando. Esempio: 10 mesi dopo un acquisto, arriva un promemoria utile. Tasso di riconversione: 23%.\n\nHai clienti che tornano ma non riesci a gestirli? Parliamone.\n\n#CasoDiSuccesso #AutomazioneEmail #EMCDigitalSolutions #CRM #DigitalMarketing"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: È vero che mi serve una app mobile?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Nel 90% dei casi no. Una \"app nativa\" (da scaricare sul telefono) ha senso solo se il cliente la userà spesso, ogni settimana.\n\nPer la maggior parte delle attività, un sito web \"responsive\" (che si adatta al telefono) basta e avanza, costa un quinto e non richiede lo store.\n\nPer casi specifici in cui l'app serve davvero, la sviluppiamo anche quelle. Parliamo del tuo caso concreto.\n\n#FAQ #AppMobile #SitoResponsive #EMCDigitalSolutions #ConsigliWeb"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Metà luglio: il tempo per fare ciò che \"avevi rimandato\"",
+              "media_type": "single_image", "template": "quote",
+              "caption": "C'è sempre una cosa che continui a rimandare per la tua attività online. Un aggiornamento al sito, un profilo social che andrebbe sistemato, un servizio che vorresti aggiungere.\n\nA metà luglio hai ancora tempo per farla prima di ferragosto. A settembre sarà troppo tardi per \"farla partire con calma\". Ci vuoi parlare? 🔧\n\n#TempoGiusto #PianificazioneEstiva #EMCDigitalSolutions #Strategia #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Rifacimento sito con migrazione SEO: non perdere il posizionamento",
+              "media_type": "single_image", "template": "service",
+              "caption": "Paura di rifare il sito perché \"poi perdo tutto quello che Google sa di me\"? Giustissimo preoccuparsene, ma oggi esistono tecniche per non perdere un posizionamento.\n\nMappatura URL vecchio → nuovo, redirect 301 corretti, mantenimento della struttura semantica, sitemap aggiornata. Fatto bene, il posizionamento può anche migliorare nelle 4 settimane post-lancio.\n\nProgetto in mente? Scrivici.\n\n#MigrazioneSEO #RifacimentoSito #EMCDigitalSolutions #SEO #SviluppoWeb"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: usa Google Analytics 4 per capire chi visita il tuo sito",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Sai da dove arrivano i tuoi visitatori? Quanti leggono davvero i contenuti? Quante persone cliccano il numero di telefono?\n\nGoogle Analytics 4 è gratuito e ti dà tutte queste risposte. Ma va configurato bene, altrimenti vedi numeri e non capisci cosa significano.\n\nGratis configuriamo GA4 e ti facciamo una dashboard semplice con le 5 metriche che contano per te. Scrivici.\n\n#GoogleAnalytics #WebAnalytics #EMCDigitalSolutions #DataDriven #ConsigliWeb"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "App web (PWA): il meglio di sito e app senza store",
+              "media_type": "carousel",
+              "caption": "Le Progressive Web App (PWA) funzionano come app mobile — si installano dal browser, notifiche push, funzionano offline — ma NON richiedono App Store o Play Store.\n\nCosto ridotto, nessun processo di approvazione, compatibili con tutti gli smartphone. Ideali per: gestionali interni, sistemi di prenotazione, cataloghi sfogliabili offline.\n\nCuriosità per la tua attività? Scrivici.\n\n#PWA #ProgressiveWebApp #EMCDigitalSolutions #AppSuMisura #InnovazioneTech"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Code review: perché ogni riga di codice viene controllata da due persone",
+              "media_type": "reel",
+              "caption": "Nel nostro team nessun codice finisce in produzione prima di essere stato letto da almeno due persone.\n\nSembra lento ma è l'opposto: riduciamo i bug del 70%, condividiamo conoscenza nel team, cresciamo tutti di livello ogni settimana. Il cliente riceve un prodotto più solido, senza sorprese dopo il lancio.\n\nLa qualità non si improvvisa. 🔍\n\n#CodeReview #QualitàSoftware #EMCDigitalSolutions #DevTeam #ProcessiQualità"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: dashboard BI personalizzata per azienda manifatturiera",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un'azienda manifatturiera aveva dati sparsi: gestionale, magazzino, vendite, qualità. Il direttore vedeva tutto solo il 30 del mese, troppo tardi per intervenire.\n\nAbbiamo costruito una dashboard BI che aggrega i dati ogni notte e li mostra la mattina. Grafici chiari, KPI in tempo reale, avvisi automatici sulle anomalie.\n\nDecisioni più veloci, meno sorprese a fine mese. Anche tu hai dati sparsi da unificare? Parliamone.\n\n#CasoDiSuccesso #BusinessIntelligence #EMCDigitalSolutions #DigitalTransformation #DashboardDati"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Quando conviene investire in pubblicità online?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "La pubblicità online (Google Ads, Meta Ads) funziona bene quando hai già: sito chiaro che converte, prodotti/servizi con margini adeguati, capacità di gestire le nuove richieste.\n\nSe il sito è confuso, ogni click speso in pubblicità finisce sprecato. Prima sistemiamo la base, poi parte dell'investimento in advertising diventa sensato.\n\nAnalisi gratuita della tua situazione prima di qualsiasi proposta.\n\n#FAQ #PubblicitàOnline #GoogleAds #EMCDigitalSolutions #DigitalMarketing"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Fine luglio: si entra nel cuore dell'estate",
+              "media_type": "single_image", "template": "quote",
+              "caption": "L'ultima settimana di luglio è un tempo sospeso. Si conclude il semestre, ci si prepara alle ferie, si fanno consegne da non rimandare.\n\nQualsiasi cosa tu stia rimandando del tuo lavoro online, ora è il momento di decidere: o si fa, o si accetta di lasciarla perdere. Scrivici se serve un consiglio. ☀️\n\n#FineLuglio #DecisioniRapide #EMCDigitalSolutions #Strategia #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Chatbot intelligente: rispondere ai clienti 24 ore su 24",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un chatbot ben configurato risponde alle domande frequenti dei clienti anche di notte, nei weekend, durante le ferie. Ovviamente non sostituisce te — ma filtra l'80% delle richieste semplici lasciandoti solo quelle veramente importanti.\n\nLo progettiamo personalizzato sul tuo settore: domande reali, risposte naturali, passaggio a te quando serve umano.\n\nCuriosità? Scrivici.\n\n#Chatbot #AssistenzaClienti #EMCDigitalSolutions #Automazione #ServizioClienti"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: prima di pianificare ferie, programma social di agosto",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Molte attività spariscono dai social ad agosto. Il pubblico è attivo anche in ferie, spesso di più perché ha tempo.\n\nChi è presente ad agosto con contenuti di qualità raccoglie clienti che a settembre chiameranno. Chi scompare perde posizionamento prezioso.\n\nProgrammiamo i contenuti di agosto in anticipo, mantenendoti presente senza toglierti tempo dalle ferie.\n\n#SocialAgosto #PianoEditoriale #EMCDigitalSolutions #ConsigliMarketing #SiciliaDigitale"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Analisi competitiva: cosa fanno online i tuoi competitor?",
+              "media_type": "carousel",
+              "caption": "Quante volte ti sei chiesto: \"Ma come mai il mio competitor compare prima di me su Google?\"\n\nLa risposta non è mai un mistero. Strumenti specifici permettono di analizzare il loro sito, le parole chiave per cui sono posizionati, le pubblicità che fanno. Poi puoi fare meglio.\n\nPacchetto di analisi competitiva: scrivici e ti proponiamo un confronto con i tuoi 3 competitor principali.\n\n#AnalisiCompetitor #MarketIntelligence #EMCDigitalSolutions #SEO #DigitalStrategy"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "Il digitale in Sicilia: ancora tante PMI senza sito web decente",
+              "media_type": "reel",
+              "caption": "Ancora oggi moltissime PMI siciliane hanno siti fermi al 2015 o nessun sito.\n\nNon è per cattiveria o pigrizia: è mancanza di informazioni chiare e paura di spendere male. Noi rompiamo questo muro con consulenze gratuite e preventivi trasparenti.\n\nIl digitale non è un lusso da grandi aziende. È la nuova base di partenza per qualsiasi attività che vuole crescere. 🏝️\n\n#SiciliaDigitale #PMISiciliane #EMCDigitalSolutions #DigitalDivide #SudItalia"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: sistema anti-frode per e-commerce",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un e-commerce aveva un problema crescente: ordini fraudolenti pagati con carte rubate, che venivano scoperti settimane dopo con chargeback.\n\nAbbiamo implementato un sistema di controllo: verifica automatica IP sospetti, pattern di comportamento anomalo, flag per revisione manuale sopra certe soglie. Chargeback ridotti del 92% in 6 mesi.\n\nHai un e-commerce e noti ordini strani? Scrivici.\n\n#CasoDiSuccesso #SicurezzaEcommerce #EMCDigitalSolutions #AntiFrode #DigitalTransformation"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Posso chiedervi consulenza anche se non voglio fare un progetto?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Certo. Offriamo consulenze strategiche a chi vuole capire dove investire energie nel digitale senza (ancora) avere un progetto specifico in mente.\n\nIn una chiamata di un'ora possiamo analizzare insieme la tua situazione online, i competitor, le opportunità concrete per te. Spesso bastano quei 60 minuti per avere una roadmap chiara dei prossimi 12 mesi.\n\nTi interessa una consulenza? Scrivici.\n\n#FAQ #ConsulenzaDigitale #EMCDigitalSolutions #StrategiaDigitale #SiciliaDigitale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Ultima domenica di luglio: agosto porta cambio di ritmo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Domani entriamo in un agosto che sarà diverso: ci saranno giornate più calde, orari più rilassati, molti clienti in ferie.\n\nMa la rete continua a funzionare. Chi ci lavora con cura anche in agosto costruisce il fatturato di settembre. 🌻\n\n#UltimaDomenicaLuglio #AgostoLavoro #EMCDigitalSolutions #Strategia #SiciliaDigitale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 4,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Agosto operativi: nessun fermo lavoro per i nostri clienti",
+              "media_type": "single_image", "template": "service",
+              "caption": "Agosto per noi non è ferie totali. Restiamo operativi per: monitoraggio sicurezza siti, gestione social programmata, supporto urgente a clienti attivi.\n\nSe il tuo attuale fornitore sparisce tutto agosto e poi torna a settembre con problemi da recuperare, è il segnale che forse è ora di cambiare.\n\nNoi ci siamo anche ad agosto. Scrivici anche solo per valutare un cambio.\n\n#AgostoOperativi #SupportoContinuativo #EMCDigitalSolutions #Affidabilità #SiciliaDigitale"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: il mobile si usa moltissimo ad agosto",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Ad agosto gli utenti usano lo smartphone più che mai: in spiaggia, in pausa pranzo, in treno verso le vacanze.\n\nSe il tuo sito non è impeccabile da telefono, perdi un mese intero di opportunità. Controlla ora: velocità, leggibilità testi, pulsanti cliccabili facilmente, form compilabili con una mano sola.\n\nDubbi? Facciamo un check gratuito.\n\n#MobileFirst #AgostoDigitale #EMCDigitalSolutions #UX #ConsigliWeb"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Hosting gestito professionale: il tuo sito sempre online",
+              "media_type": "carousel",
+              "caption": "Un sito lento o offline anche per poche ore ti costa clienti. Con un hosting gestito professionale questi problemi non accadono.\n\nServer dedicati con SSD, backup giornalieri automatici, monitoring 24/7, certificati SSL inclusi, supporto tecnico italiano. Zero pensieri, tu ti concentri sul business.\n\nVuoi sapere quanto costa un upgrade? Scrivici.\n\n#HostingProfessionale #EMCDigitalSolutions #Affidabilità #Uptime #SiciliaDigitale"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Backup e disaster recovery: come proteggiamo i dati dei nostri clienti",
+              "media_type": "reel",
+              "caption": "Ogni sito, app, gestionale che sviluppiamo ha un piano di disaster recovery.\n\nBackup giornalieri multipli su server diversi, simulazioni di ripristino regolari, documentazione chiara per riportare tutto online in ore anche nello scenario peggiore. I dati dei nostri clienti sono al sicuro, sempre.\n\nHai backup del tuo sito? Quando è stato l'ultimo test di ripristino? 🛡️\n\n#DisasterRecovery #SicurezzaDati #EMCDigitalSolutions #Backup #BusinessContinuity"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: siti multipli per catena di negozi",
+              "media_type": "single_image", "template": "service",
+              "caption": "Una catena di negozi ci ha chiesto: \"Ogni punto vendita vuole il suo sito ma la gestione centralizzata diventa un incubo.\"\n\nAbbiamo creato una piattaforma multi-sito: un unico pannello di controllo, siti indipendenti per ogni negozio (foto, promozioni locali, orari), aggiornamenti del brand propagati a tutti con un click.\n\nGestisci più sedi? Parliamone.\n\n#CasoDiSuccesso #CatenaNegozi #EMCDigitalSolutions #MultiSito #DigitalTransformation"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: E se non so cosa mettere nel mio sito?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "È la paura più comune ed è del tutto normale. Scrivere di se stessi è difficile.\n\nNoi facciamo una parte importante del lavoro: ti intervistiamo, mettiamo noi i testi in ordine, proponiamo strutture testate. Tu correggi e aggiungi quello che manca. Poi finiamo insieme.\n\nNessun cliente ha mai dovuto scrivere tutto da zero con noi.\n\n#FAQ #ContenutiSito #EMCDigitalSolutions #Copywriting #Collaborazione"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Agosto inizia: calma, tempo, riflessione",
+              "media_type": "single_image", "template": "quote",
+              "caption": "La prima domenica di agosto è l'ideale per fermarsi davvero. Lontano dal lavoro operativo, guardando da fuori la propria attività.\n\nQuali sono le 3 cose che vorrei migliorare entro fine anno? La risposta che arriva in questi momenti di pausa è quasi sempre quella giusta. 🌿\n\n#AgostoRiflessione #EMCDigitalSolutions #StrategiaAziendale #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Pagine servizi efficaci: far capire valore in 30 secondi",
+              "media_type": "single_image", "template": "service",
+              "caption": "La pagina \"Servizi\" è una delle più visitate del tuo sito. Se il visitatore non capisce in 30 secondi cosa fai e perché tu sei la scelta giusta, passa ad un altro sito.\n\nStruttura vincente: beneficio chiaro in prima linea, elenco breve di cosa include, prezzo (o motivo per chiedere preventivo), prova sociale, call-to-action precisa.\n\nControlliamo la tua pagina servizi e la riscriviamo se serve. Scrivici.\n\n#PaginaServizi #ConversionRate #EMCDigitalSolutions #WebDesign #SiciliaDigitale"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: aggiungere sottotitoli ai video aumenta le visualizzazioni",
+              "media_type": "single_image", "template": "quote",
+              "caption": "L'85% dei video sui social vengono guardati senza audio (in treno, in bagno, in ufficio).\n\nSottotitoli visibili, grossi, ben sincronizzati sono il segreto che distingue un video visto a metà da uno completo. Non costano molto ma triplicano l'engagement.\n\nCreiamo video social con sottotitoli integrati e grafica brand coerente. Scrivici.\n\n#VideoSottotitolati #SocialVideo #EMCDigitalSolutions #ConsigliMarketing #VideoMarketing"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Integrazione fatturazione elettronica in qualsiasi sistema",
+              "media_type": "carousel",
+              "caption": "La fatturazione elettronica è obbligatoria ma quasi sempre è un processo separato dal gestionale/e-commerce. Risultato: doppio inserimento dati, errori, tempo perso.\n\nLa integriamo nel tuo sistema esistente: vendita → fattura elettronica auto-inviata allo SDI → registrazione nel gestionale. Tutto automatico.\n\nFunziona con qualsiasi provider fatturazione. Curiosità? Scrivici.\n\n#FatturazioneElettronica #Automazione #EMCDigitalSolutions #IntegrazioneGestionale #DigitalTransformation"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "Dove inventiamo il futuro: la nostra quotidianità in Sicilia",
+              "media_type": "reel",
+              "caption": "C'è una bellezza speciale nel lavorare dalla Sicilia su progetti che vanno nel resto d'Italia e nel mondo.\n\nAbbiamo luce naturale, tempi di vita sani, contatto quotidiano con una cultura millenaria. Tutto questo entra nel modo in cui pensiamo i prodotti digitali: con pazienza, cura, senza fretta.\n\nBuon pomeriggio dalla Sicilia. 🌞\n\n#LavoroInSicilia #EMCDigitalSolutions #RemoteWork #CampobelloDiLicata #SiciliaDigitale #BelloVivereQui"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: portale pazienti per studio medico",
+              "media_type": "single_image", "template": "service",
+              "caption": "Uno studio medico voleva ridurre le chiamate in segreteria per richieste ripetitive: referti, ricette, appuntamenti.\n\nAbbiamo costruito un portale pazienti protetto dove ogni paziente ha la sua area con referti scaricabili, prenotazione online, chat con la segreteria. Risultato: -60% chiamate in segreteria, tempo risparmiato che la segretaria dedica ora a pazienti complessi.\n\nHai uno studio professionale? Parliamone.\n\n#CasoDiSuccesso #PortalePazienti #EMCDigitalSolutions #StudiMedici #DigitalTransformation #GDPR"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Il sito deve essere a norma GDPR?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sì, qualsiasi sito che raccoglie dati personali (anche solo un form di contatto o un cookie di analytics) deve essere a norma GDPR.\n\nNon è solo conformità legale: è fiducia che dai al visitatore. Cookie banner funzionante, informativa privacy chiara, procedura per richiedere cancellazione dati.\n\nOgni sito che consegniamo è conforme GDPR di base. Parliamone se hai dubbi sul tuo.\n\n#FAQ #GDPR #EMCDigitalSolutions #PrivacyWeb #ComplianceLegale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Seconda domenica di agosto: si prepara il ferragosto",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Fra poco è ferragosto, quel giorno sospeso dove quasi tutti si fermano.\n\nPer chi ha un'attività online, è ottimo ricordare al pubblico di tornare dopo le ferie — magari con un promemoria programmato per il 20 agosto. Non vendita: servizio. Fa sentire il cliente seguito. 🏖️\n\n#PrepararsiFerragosto #EMCDigitalSolutions #Email #Fidelizzazione #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Ottimizzazione velocità sito: da 8 secondi a 2 in una settimana",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un sito lento perde clienti silenziosamente. Ogni secondo in più di caricamento = 7% di conversioni perse.\n\nIn una settimana possiamo far passare un sito da 8-10 secondi di caricamento a sotto i 2 secondi: ottimizzazione immagini, compressione, CDN, cache, pulizia plugin. Risultato misurabile in Google PageSpeed.\n\nFacciamo audit gratuito della velocità. Scrivici il link del tuo sito.\n\n#VelocitàSito #PerformanceWeb #EMCDigitalSolutions #SEO #OttimizzazioneSito"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: le recensioni non si comprano ma si stimolano bene",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Comprare recensioni è vietato, costoso e riconoscibile. La soluzione vera è stimolare recensioni autentiche.\n\nCome? Link diretto al profilo Google Business via WhatsApp dopo un lavoro finito, email con promemoria cortese, QR code in negozio o sullo scontrino. Piccoli accorgimenti che raddoppiano il numero di recensioni ricevute.\n\nVuoi un sistema automatico? Parliamone.\n\n#RecensioniAutentiche #ConsigliMarketing #EMCDigitalSolutions #ReputazioneOnline #SEOLocale"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Soluzioni customizzate: un'idea nuova? Progettiamo insieme",
+              "media_type": "carousel",
+              "caption": "Ogni tanto un cliente ci contatta con un'idea che non esiste ancora. Una soluzione originale per un problema del suo settore.\n\nQueste sono le conversazioni più belle. Partiamo da zero, prototipiamo rapidamente, validiamo con utenti reali, sviluppiamo in cicli corti. Risultato: un prodotto originale che può anche diventare commercializzabile in seguito.\n\nHai un'idea che nessuno ha ancora realizzato? Scrivici.\n\n#Innovazione #SoluzioniSuMisura #EMCDigitalSolutions #Prototipazione #StartUpAiuto"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Relazione a lungo termine con i clienti: il 60% sono con noi da più di 3 anni",
+              "media_type": "reel",
+              "caption": "Quando un cliente sceglie noi, non ci vediamo come fornitori sostituibili. Ci vediamo come partner tecnologici.\n\nIl 60% dei nostri clienti lavora con noi da più di 3 anni. Questo accade solo se ascolti, se sei trasparente sui costi, se ti occupi davvero dei loro problemi.\n\nÈ il nostro modo di lavorare. Se vuoi un partner e non solo un fornitore, siamo qui. 🤝\n\n#PartnerTecnologico #EMCDigitalSolutions #RelazioniClienti #LongTerm #DigitalTransformation"
+            },
+            {
+              "day": "venerdì", "time": "10:00", "category": "C6",
+              "sub_topic": "14 Agosto: la vigilia del Ferragosto, pensiero a chi lavora ancora",
+              "media_type": "single_image", "template": "event",
+              "caption": "Alla vigilia del Ferragosto, un pensiero speciale a chi domani non avrà giorno di festa: i settori del turismo, ospedali, forze dell'ordine, ristorazione, trasporti.\n\nIl lavoro che tiene in piedi l'Italia in vacanza merita sempre rispetto. Noi li onoriamo con i loro strumenti digitali funzionanti, giorno e notte. 🇮🇹\n\n#VigiliaFerragosto #LavorareIlFerragosto #EMCDigitalSolutions #Rispetto #SiciliaDigitale"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C6",
+              "sub_topic": "15 Agosto - Maria SS. Assunta: festa della comunità italiana",
+              "media_type": "carousel",
+              "caption": "Buon Ferragosto a tutti. 🌊\n\nIn Italia il 15 agosto è il giorno dell'Assunta: festa religiosa, festa di comunità, festa della pausa. Giorno in cui le città si svuotano e i borghi si riempiono, le famiglie si ritrovano, i parenti lontani tornano.\n\nUn pensiero a chi oggi sente un'assenza in questi momenti. E buona festa a chi oggi si ritrova con chi ama.\n\n#Ferragosto #Assunta #15Agosto #EMCDigitalSolutions #SiciliaDigitale #BuoneVacanze"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Il giorno dopo Ferragosto: la seconda parte dell'estate",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Il 16 agosto ha sempre un sapore speciale. Si torna piano piano nel ritmo. Si pensa già a settembre ma si ha ancora tempo per godersi l'estate.\n\nÈ un ottimo giorno per pianificare i primi contatti di settembre: programmare email, aggiornare il sito con le novità post-ferie, immaginare il primo progetto dell'autunno. 🌅\n\n#16Agosto #DopoFerragosto #EMCDigitalSolutions #PianificareSettembre #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Formazione per il tuo team sull'uso del sito/gestionale",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un sito o un gestionale avanzato ha senso solo se le persone che lo usano sanno usarlo bene.\n\nPer ogni progetto, includiamo sessioni di formazione online con il tuo team: registriamo i video, prepariamo manuale operativo in PDF, rispondiamo alle domande in chat dedicata nei giorni successivi.\n\nNessuno si sente mai abbandonato dopo la consegna. Scrivici.\n\n#FormazioneTeam #EMCDigitalSolutions #OnboardingUtenti #SupportoClienti #SiciliaDigitale"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: calendario editoriale social anche per il tuo business",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Improvvisare post social ogni giorno è stressante e poco efficace. Un calendario editoriale mensile ti fa risparmiare ore e ti dà qualità.\n\nPer ogni settimana: 1 post valore/educativo, 1 dietro le quinte, 1 caso di successo, 1 promozione, 1-2 riflessioni. Cinque post di qualità > quindici improvvisati.\n\nTi prepariamo un calendario editoriale su misura. Scrivici.\n\n#CalendarioEditoriale #SocialMediaStrategia #EMCDigitalSolutions #ConsigliMarketing #SiciliaDigitale"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Sito istituzionale + area riservata investitori",
+              "media_type": "carousel",
+              "caption": "Per aziende strutturate, il sito istituzionale deve comunicare solidità. Oltre al classico chi siamo / cosa facciamo, serve spesso un'area riservata per investitori, bandi, certificazioni.\n\nProgettiamo siti istituzionali con sezioni riservate: documentazione scaricabile, bilanci, report, report ESG. Accesso controllato, tracciabile, conforme ai regolamenti.\n\nAzienda strutturata? Parliamone.\n\n#SitoIstituzionale #AziendeStrutturate #EMCDigitalSolutions #InvestorRelations #DigitalTransformation"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Anche noi in ferie? Sì, ma con monitoring attivo 24/7",
+              "media_type": "reel",
+              "caption": "Anche noi ci prendiamo qualche giorno in agosto. Ma i siti e le app dei nostri clienti non possono fermarsi.\n\nIl monitoring automatico ci avvisa entro 2 minuti se qualcosa non va. Uno di noi è sempre reperibile per emergenze. In 10 anni non abbiamo mai lasciato un cliente con il sito down per più di 30 minuti.\n\nPuoi andare in ferie tranquillo se il tuo fornitore digitale ha un piano serio. 📡\n\n#MonitoringAttivo #EMCDigitalSolutions #SupportoContinuativo #Affidabilità #Uptime"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: web app per gestione squadre sportive",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un'associazione sportiva locale gestiva 12 squadre giovanili con fogli Excel, gruppi WhatsApp sparsi e mille telefonate.\n\nAbbiamo costruito una web app personalizzata: iscrizione online, gestione pagamenti quote, convocazioni automatiche, archivio foto, statistiche stagione. Tutto accessibile da smartphone per genitori, allenatori, dirigenti.\n\nAnche tu gestisci un'associazione o squadra? Parliamone.\n\n#CasoDiSuccesso #SportDigitale #EMCDigitalSolutions #WebApp #GestionaleAssociazioni"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Posso pagare il sito a rate?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sì, strutturiamo il pagamento in modo flessibile in base al tuo progetto.\n\nOpzioni più comuni: 50% alla conferma + 50% alla consegna, oppure rateizzazione in 3-6 mensilità per progetti grandi. Per e-commerce e SaaS spesso consigliamo canone mensile che include hosting + manutenzione + piccole modifiche.\n\nParliamo del tuo caso concreto senza impegno.\n\n#FAQ #PagamentoRateale #EMCDigitalSolutions #Trasparenza #InvestimentoDigitale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Ultima domenica di agosto: si torna al lavoro",
+              "media_type": "single_image", "template": "quote",
+              "caption": "L'ultima domenica di agosto ha un sapore di ripartenza. I pensieri vanno a settembre: nuovi progetti, obiettivi, promesse a se stessi.\n\nQualunque cosa tu voglia lanciare in autunno, è il momento di iniziare a prepararlo. Un sito non si fa in una settimana ma in 4-6. Parlaci ora, arriverai a ottobre pronto. 🍂\n\n#UltimaDomenicaAgosto #PronoSettembre #EMCDigitalSolutions #Strategia #SiciliaDigitale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 5,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Ripartenza autunno: il momento giusto per il nuovo sito",
+              "media_type": "single_image", "template": "service",
+              "caption": "Settembre è il mese dei nuovi inizi anche per il business. L'energia che torna dopo le ferie è perfetta per lanciare progetti rimandati.\n\nNuovo sito, rebranding, e-commerce, gestionale: 4-8 settimane di lavoro fatto bene e a novembre sei pronto per lo sprint finale dell'anno. Aspettare gennaio significa perdere i mesi più produttivi.\n\nContattaci ora per iniziare a settembre.\n\n#Settembre #RipartenzaAutunno #EMCDigitalSolutions #SviluppoWeb #SiciliaDigitale #NuoviProgetti"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: aggiorna le foto del sito dopo l'estate",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Se le foto del tuo sito sono ferme a due anni fa, il messaggio che mandi è: \"La mia attività non è più quella di oggi\".\n\nSettembre è il momento perfetto per un servizio fotografico professionale: luce buona, staff motivato, prodotti/servizi \"in nuova veste\" da rappresentare. Investimento 300-800€, impatto a lunga durata.\n\nTi diamo il nome di 2-3 fotografi affidabili in Sicilia? Scrivici.\n\n#FotoAziendali #RinnovoSito #EMCDigitalSolutions #ConsigliWeb #BrandingVisivo"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Sistemi di gestione documentale per aziende",
+              "media_type": "carousel",
+              "caption": "Documenti cartacei, PDF sparsi nel cloud, email con allegati: chi lavora in un'azienda strutturata sa quanto si perde tempo a cercare il documento giusto.\n\nUn sistema DMS (Document Management System) centralizza tutto: ricerca full-text, versioning, permessi per ruolo, firma digitale integrata. Tempo trovato: ore ogni settimana.\n\nProgettiamo DMS su misura per aziende di ogni dimensione. Parliamone.\n\n#GestioneDocumentale #DMS #EMCDigitalSolutions #ProduttivitàAziendale #DigitalTransformation"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Ritorno dalle ferie: abbiamo ricaricato per un autunno intenso",
+              "media_type": "reel",
+              "caption": "Siamo tornati. Rilassati, lucidi, pronti.\n\nL'autunno è tradizionalmente il momento più intenso dell'anno per lo sviluppo web e software. Siamo qui per gestirlo con la stessa energia che abbiamo ricaricato in queste settimane di pausa.\n\nSe hai un progetto da iniziare, siamo pronti a partire. 🚀\n\n#RitornoDalleFerie #Autunno #EMCDigitalSolutions #ProjectStart #SiciliaDigitale"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: re-launch di un e-commerce stagionale",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un e-commerce stagionale aveva vendite buone da ottobre ad aprile ma volume piatto il resto dell'anno.\n\nAbbiamo ristrutturato il sito introducendo prodotti complementari per i mesi estivi (accessori, linee home, abbigliamento mezza stagione). Risultato: vendite estive +180% senza compromettere quelle invernali.\n\nAnche la tua attività ha picchi stagionali difficili da gestire? Parliamone.\n\n#CasoDiSuccesso #EcommerceStagionale #EMCDigitalSolutions #DigitalTransformation #StrategiaCommerciale"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Cosa posso fare da solo e cosa dovrei delegare?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Dipende dal tuo tempo e dalla tua competenza. In generale:\n\nPUOI fare da solo: pubblicare post social basic, rispondere ai commenti, aggiornare orari/foto su Google Business, scrivere piccoli articoli blog.\n\nDELEGA: sviluppo tecnico del sito, SEO strutturata, campagne pubblicitarie, analytics avanzata, integrazioni tra sistemi.\n\nL'equilibrio giusto varia per ognuno. Analizziamo insieme la tua situazione.\n\n#FAQ #DelegareDigitale #EMCDigitalSolutions #ConsulenzaStrategica #ImprendorriCompetenze"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Inizio settembre: ritmo di casa, scuola, lavoro",
+              "media_type": "single_image", "template": "quote",
+              "caption": "La prima settimana di settembre riporta tutto in moto: scuola, ritmi familiari, progetti di lavoro. Dopo settimane più lente, la routine torna.\n\nIn mezzo a questo ri-avvio, non perdere di vista la tua presenza online. Oggi è il primo giorno di tanti mesi produttivi davanti. 🍃\n\n#InizioSettembre #RitmiNuovi #EMCDigitalSolutions #Strategia #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Piattaforme e-learning per corsi professionali",
+              "media_type": "single_image", "template": "service",
+              "caption": "Se sei un professionista o un ente formativo, vendere corsi online è una rendita di posizione. Un corso registrato una volta, venduto infinite volte.\n\nCostruiamo piattaforme e-learning professionali: video streaming, test di verifica, certificati automatici, pagamenti integrati, area studente. Accesso da qualsiasi dispositivo.\n\nProfessionale? Ente? Parliamone.\n\n#ELearning #CorsiOnline #EMCDigitalSolutions #FormazioneDigitale #DigitalTransformation #SiciliaDigitale"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: misura sempre prima di cambiare",
+              "media_type": "single_image", "template": "quote",
+              "caption": "\"Ho cambiato il titolo della home e le vendite sono aumentate.\" Spesso è coincidenza temporale, non causa.\n\nPer capire cosa funziona davvero serve A/B testing: mostri due versioni della pagina a due gruppi simili, misuri dopo 2-3 settimane. Solo così sai su cosa puntare davvero.\n\nConfiguriamo A/B test per e-commerce e landing page. Scrivici.\n\n#ABTesting #DataDriven #EMCDigitalSolutions #ConsigliWeb #ConversionRate"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "API integrations: far \"parlare\" sistemi diversi tra loro",
+              "media_type": "carousel",
+              "caption": "Hai tanti sistemi (gestionale, CRM, e-commerce, fatturazione, social) che NON si parlano? È tempo di collegarli con integrazioni API.\n\nUna vendita arriva su Shopify → cliente viene creato automaticamente in CRM → fattura generata nel gestionale → email di ringraziamento personalizzata inviata. Tutto in 2 secondi, senza intervento umano.\n\nCollegiamo sistemi tra loro. Scrivici per un audit.\n\n#APIIntegrations #Automazione #EMCDigitalSolutions #DigitalTransformation #ProcessiAutomatizzati"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "La nuova generazione di imprenditori siciliani",
+              "media_type": "reel",
+              "caption": "Sta emergendo una nuova generazione di imprenditori siciliani: under 40, formati fuori e tornati, consapevoli del digitale come strumento — non come moda.\n\nCon loro il dialogo è diverso: obiettivi misurabili, reportistica chiara, crescita sostenibile. È la Sicilia che vogliamo supportare con i nostri progetti.\n\nHai meno di 40 anni e guidi un'azienda? Ci parleremmo volentieri. 💡\n\n#NuovaGenerazione #SiciliaImprenditori #EMCDigitalSolutions #UnderFortySicilia #InnovazioneSicilia"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: app interna per squadra tecnici sul campo",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un'azienda di installazioni aveva 15 tecnici sul campo con tablet. Ognuno compilava rapporti su fogli Excel, rientrava in sede, li dava alla segretaria che li ricopiava.\n\nAbbiamo fatto una PWA che i tecnici usano dal telefono: form intelligenti, foto integrate, firma cliente digitale. Il rapporto arriva in ufficio in tempo reale, fatturato subito.\n\nTecnici sul campo? Parliamone.\n\n#CasoDiSuccesso #TecniciCampo #EMCDigitalSolutions #PWA #DigitalTransformation #FieldService"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: È meglio WordPress o un sito sviluppato da zero?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Per siti vetrina semplici o blog, WordPress ben configurato è un'ottima scelta: veloce da fare, facile da aggiornare.\n\nPer funzionalità custom, prestazioni top, progetti che crescono molto nel tempo, conviene un sito sviluppato da zero in tecnologie moderne (React, Node.js, database strutturato).\n\nConsiglio onesto dopo analisi del tuo caso concreto. Scrivici.\n\n#FAQ #WordPressVsCustom #EMCDigitalSolutions #SviluppoWeb #ConsigliTecnici"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Metà settembre: il vento cambia, anche in azienda",
+              "media_type": "single_image", "template": "quote",
+              "caption": "A metà settembre il vento cambia in Sicilia. Le serate iniziano più fresche, il ritmo del lavoro trova il suo regime di crociera per i mesi più produttivi dell'anno.\n\nÈ il momento di mettere a fuoco le 2-3 cose veramente importanti da finire entro dicembre. Tutto il resto, può aspettare. 🍁\n\n#MetaSettembre #FocusProduttivo #EMCDigitalSolutions #Strategia #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Rebranding digitale: quando il tuo brand è cambiato ma il sito no",
+              "media_type": "single_image", "template": "service",
+              "caption": "Logo nuovo, palette colori aggiornata, tono di voce evoluto: se il tuo brand si è trasformato, il sito non può restare al logo di 5 anni fa.\n\nIl rebranding digitale è spesso più veloce e meno costoso di quanto pensi. Non sempre serve rifare tutto: a volte basta un restyling mirato con mantenimento della struttura SEO.\n\nAnalisi gratuita del tuo sito attuale. Scrivici.\n\n#Rebranding #RestylingSito #EMCDigitalSolutions #BrandingDigitale #WebDesign #SiciliaDigitale"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: il Black Friday si prepara a settembre, non a novembre",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Se fai e-commerce, sappi che chi vince il Black Friday lo decide ora.\n\nStrategie di prezzo, campagne email in anticipo, remarketing delle ultime settimane, ottimizzazione velocità sito per il picco di traffico, test di scalabilità. Tutto va fatto entro ottobre.\n\nVuoi prepararti bene? Scrivici per un piano Black Friday su misura.\n\n#BlackFriday #EcommerceStrategy #EMCDigitalSolutions #VenditaOnline #ConsigliMarketing"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Piani di manutenzione mensili: cosa ti assicurano",
+              "media_type": "carousel",
+              "caption": "Un piano di manutenzione mensile include: backup giornalieri, aggiornamenti sicurezza, monitoring 24/7, piccole modifiche (testi, foto, prodotti), report mensile delle azioni svolte.\n\nCosti medi: dai 80-150€/mese per siti vetrina, dai 250-500€/mese per e-commerce/SaaS complessi. Risparmio: tempo, stress e soprattutto danni quando qualcosa va storto.\n\nVuoi un preventivo preciso per il tuo caso? Scrivici.\n\n#ManutenzioneContinuativa #EMCDigitalSolutions #SupportoClienti #SicurezzaWeb #SiciliaDigitale"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "La nostra cultura interna: confronto, errori e miglioramento continuo",
+              "media_type": "reel",
+              "caption": "Una volta al mese facciamo la \"retrospettiva\": ognuno di noi condivide errori fatti, cose da migliorare nel processo, successi da replicare.\n\nÈ un momento onesto, senza filtri. Gli errori non si nascondono, si imparano. Ecco perché miglioriamo ogni mese, insieme.\n\nQuesta cultura si riflette nel prodotto che consegnamo al cliente. 🔄\n\n#CulturaAziendale #MiglioramentoContinuo #EMCDigitalSolutions #TeamCulture #Professionalità"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: piattaforma B2B per commercio all'ingrosso",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un'azienda all'ingrosso aveva oltre 200 rivenditori che ordinavano via telefono, fax, WhatsApp, email. Gestione da incubo, errori quotidiani.\n\nAbbiamo sviluppato una piattaforma B2B con ordini online, listini personalizzati per rivenditore, fatturazione automatica, storico ordini. Risultato: errori -95%, tempo gestione ordini -80%.\n\nHai rete vendita B2B? Parliamone.\n\n#CasoDiSuccesso #B2B #EMCDigitalSolutions #Ingrosso #DigitalTransformation #PiattaformaB2B"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Se cambio web agency, il mio sito viene gestito bene?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Questa è una paura legittima. Il cambio di fornitore è uno dei momenti più delicati.\n\nCosa facciamo noi quando un cliente arriva da un'altra agency: audit completo dello stato attuale, lista trasparente di quello che funziona / non funziona, piano di recupero graduale senza rompere quello che c'è.\n\nIl periodo di transizione è gestito con cura. Nessuna brusca interruzione.\n\n#FAQ #CambioFornitore #EMCDigitalSolutions #MigrazioneSicura #SiciliaDigitale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Terza domenica di settembre: l'autunno entra davvero",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Oggi inizia ufficialmente l'autunno. È la stagione del raccolto — dei frutti e dei progetti.\n\nLa semina fatta nei mesi scorsi inizia a dare risultati. Le strategie digitali che hanno macinato in silenzio ora portano i numeri. Chi ha piantato ha da raccogliere. 🍂\n\n#EquinozioAutunno #Raccolto #EMCDigitalSolutions #Strategia #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Tracking conversioni avanzato: sapere cosa converte davvero",
+              "media_type": "single_image", "template": "service",
+              "caption": "La domanda che ogni imprenditore dovrebbe potersi rispondere: \"Quanto mi costa un cliente nuovo via sito? Via Facebook? Via Google?\".\n\nCon tracking conversioni ben configurato (GA4, Meta Pixel, attribution multi-touch) sai esattamente dove investe meglio. Decisioni più precise, budget sprecato meno.\n\nConfiguriamo tracking professionale per e-commerce e siti lead gen. Scrivici.\n\n#TrackingConversioni #Attribution #EMCDigitalSolutions #DataDriven #DigitalMarketing"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: la landing page ringraziamento è importante quanto il form",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Dopo che un visitatore compila il form sul tuo sito, dove lo mandi? Se gli mostri solo un misero \"Grazie, ti contatteremo\", stai sprecando un momento d'oro.\n\nUsa quella pagina per: dare un tempo di risposta preciso, suggerire contenuti utili intanto, chiedere di seguirti sui social, offrire un piccolo bonus. Il tasso di chiusura si alza del 20-30%.\n\nVuoi un esempio? Scrivici.\n\n#ThankYouPage #ConversionRate #EMCDigitalSolutions #ConsigliWeb #UXDesign"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Soluzioni AR/VR integrate nei siti e-commerce",
+              "media_type": "carousel",
+              "caption": "Permettere al cliente di vedere un prodotto in realtà aumentata prima di acquistarlo è una rivoluzione. \"Come starebbe questa lampada nel mio salone?\" risposto in 3 secondi dal telefono.\n\nIntegriamo AR per e-commerce che vendono prodotti \"fisici con impatto visivo\": mobili, arredo, oggetti design, abbigliamento. Tasso di reso -40%, conversioni +25%.\n\nHai un catalogo adatto? Parliamone.\n\n#AugmentedReality #ARCommerce #EMCDigitalSolutions #Innovazione #EcommerceFuturo"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "La Sicilia esporta: digitale come ponte verso il mondo",
+              "media_type": "reel",
+              "caption": "I prodotti siciliani hanno una reputazione eccellente nel mondo: olio, vino, agrumi, ceramica, pesce, pasta, tessuti.\n\nIl problema storico era la distanza dai mercati. Oggi il digitale l'ha azzerata: un e-commerce ben fatto dalla Sicilia può vendere in Germania tanto quanto uno con base a Milano.\n\nEsporti o vorresti esportare? Parliamone. 🌍\n\n#ExportSicilia #EcommerceInternazionale #EMCDigitalSolutions #SiciliaMondo #DigitalExport"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: dashboard operativa per centro logistico",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un centro logistico siciliano gestiva 80 spedizioni giornaliere con 3 operatori che si coordinavano a voce.\n\nDashboard operativa custom: tutte le spedizioni visibili in una schermata, stato in tempo reale, assegnazione automatica al corriere giusto in base a zona/peso. Ritardi -60%, errori scomparsi.\n\nHai operatività complessa? Parliamone.\n\n#CasoDiSuccesso #Logistica #EMCDigitalSolutions #DashboardOperativa #SoftwareGestionale"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Fate anche branding e logo?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sì. Il branding è il pilastro su cui costruire sito, social, materiali. Prima il brand, poi il sito.\n\nOffriamo: analisi brand esistente, logo design, palette colori, tipografia, tono di voce, manuale di stile. Per aziende che partono da zero o vogliono rinnovarsi completamente.\n\nBrand pronto? Costruiamo il sito di conseguenza. Da zero? Partiamo dal brand.\n\n#FAQ #BrandingDesign #EMCDigitalSolutions #Logo #IdentitàVisiva"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Fine settembre: bilancio dei tre quarti d'anno",
+              "media_type": "single_image", "template": "quote",
+              "caption": "A fine settembre siamo al 75% dell'anno. Tre trimestri alle spalle, uno solo davanti.\n\nÈ il momento di un bilancio vero: cosa ha funzionato? Cosa no? Cosa nel quarto trimestre può ancora fare la differenza?\n\nSe vuoi un occhio esterno sul tuo business digitale, offriamo consulenze strategiche a fine anno senza impegno. Scrivici. 📊\n\n#Q4 #BilancioAnnuale #EMCDigitalSolutions #StrategiaAziendale #SiciliaDigitale"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 6,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Sprint Q4: ottobre è il mese della velocità",
+              "media_type": "single_image", "template": "service",
+              "caption": "Ottobre, novembre, dicembre sono i 3 mesi più produttivi per il retail, l'e-commerce, i servizi B2C. Chi arriva preparato fa la differenza dell'intero anno.\n\nOttimizzazione velocità, aumento scala server, A/B testing aggressivo sulle landing, campagne email potenziate, remarketing. Possiamo lavorarci in fretta ma bene.\n\nContattaci ora per un'azione rapida Q4.\n\n#Q4 #SprintFinale #EMCDigitalSolutions #Ecommerce #Ottobre #SiciliaDigitale"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: ottimizza la pagina carrello prima del Black Friday",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Il 70% dei carrelli viene abbandonato senza completare l'acquisto. Sul Black Friday questa percentuale aumenta ancora.\n\nCose semplici che riducono gli abbandoni: progress bar checkout, metodi di pagamento multipli (anche PayPal/Satispay), zero form opzionali, codici sconto chiari, calcolo spedizioni trasparente.\n\nAnalisi gratuita del tuo checkout. Scrivici.\n\n#CartAbandonment #CheckoutOptimization #EMCDigitalSolutions #Ecommerce #ConsigliWeb"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Ottimizzazione per le ricerche Google \"vicino a me\"",
+              "media_type": "carousel",
+              "caption": "Ogni giorno milioni di italiani cercano su Google \"ristorante vicino a me\", \"elettricista zona Agrigento\", \"parrucchiera Campobello\". Chi emerge in questi risultati è in gran parte deciso dalla SEO locale.\n\nOttimizziamo: scheda Google Business, recensioni strutturate, citazioni locali (directory), link profilo professionale, contenuti geolocalizzati. Posizionamento visibile in 60-90 giorni.\n\nVuoi essere trovato da chi cerca vicino a te? Scrivici.\n\n#SEOLocale #VicinoAMe #EMCDigitalSolutions #VisibilitàLocale #SiciliaDigitale #GoogleBusiness"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Ottobre in azienda: il mese in cui si decidono i budget 2027",
+              "media_type": "reel",
+              "caption": "Ottobre è il mese in cui molte aziende definiscono i budget dell'anno successivo. Un momento critico per valutare investimenti digitali.\n\nNoi affianchiamo CFO e manager in questa fase: diamo stime realistiche (non gonfiate), dividiamo costi in voci chiare (sviluppo / manutenzione / infrastruttura), proponiamo alternative modulari.\n\nStai pianificando il budget 2027? Parliamone. 📈\n\n#Budget2027 #PianoAnnuale #EMCDigitalSolutions #PianificazioneAziendale #TrasparenzaCosti"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: e-commerce preparato in 3 mesi per stagione critica",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un cliente ci ha contattato a fine luglio: voleva il suo nuovo e-commerce online entro inizio novembre per il Black Friday.\n\nSprint condiviso, consegne incrementali, testing continuo. Il 25 ottobre era live. Il 29 novembre (Black Friday) ha fatto il miglior giorno di sempre: €38.000 di vendite in 24 ore.\n\nHai scadenze strette? Non scontate. Parliamone.\n\n#CasoDiSuccesso #BlackFriday #EMCDigitalSolutions #Ecommerce #TimeToMarket #SiciliaDigitale"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: I vostri siti sono ottimizzati per i motori di ricerca?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sì, tutti i siti che consegniamo sono SEO-ready di base: titoli strutturati, meta tag corretti, schema.org, sitemap XML, velocità ottimizzata, URL leggibili.\n\nQuesto è il punto di partenza. La SEO \"avanzata\" (ricerca keyword approfondita, link building, content strategy continuativa) è un lavoro separato nel tempo, mensile.\n\nStrutturato nel contratto in base a cosa ti serve.\n\n#FAQ #SEO #EMCDigitalSolutions #OttimizzazioneSito #SitiProfessionali"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Inizio ottobre: la luce cambia, i pensieri anche",
+              "media_type": "single_image", "template": "quote",
+              "caption": "La luce d'ottobre in Sicilia ha un suo colore unico: dorata, obliqua, calma. Induce a riflessioni diverse da quelle dell'estate.\n\nCosa vuoi che la tua attività sia diventata tra 12 mesi? Se rispondi ora, da oggi inizi a costruirla. Altrimenti, a ottobre 2027 ti chiederai cos'hai fatto nei 12 mesi prima. 🌅\n\n#InizioOttobre #VisioneLungoPeriodo #EMCDigitalSolutions #SiciliaDigitale #Strategia"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Remarketing: riprendere i visitatori che non hanno comprato",
+              "media_type": "single_image", "template": "service",
+              "caption": "Di 100 visitatori al tuo sito, 97 se ne vanno senza comprare niente. Il remarketing è l'arte di rincontrarli su Facebook, Google, Instagram, ricordandogli gentilmente di tornare.\n\nConfiguriamo campagne remarketing intelligenti (non invasive): mostri il prodotto visto, offri uno sconto, fermi al carrello abbandonato. Conversioni secondarie reali: +15-30%.\n\nPronto a recuperare visitatori? Scrivici.\n\n#Remarketing #RetargetingPubblicità #EMCDigitalSolutions #Ecommerce #DigitalMarketing"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: la newsletter natalizia si prepara ora",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Dicembre è il mese con più email promozionali ricevute dagli italiani. Emergere nella casella postale richiede preparazione ora, non improvvisazione a dicembre.\n\nSegmentazione clienti, calendario di invio (non mandare tutti nello stesso giorno), grafica coerente con tuo brand, offerte genuine (non gonfiate). Iniziamo a ottobre.\n\nVuoi un piano email Q4 su misura? Scrivici.\n\n#NewsletterNatale #EmailMarketing #EMCDigitalSolutions #ConsigliMarketing #Q4"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Sistemi di gestione abbonamenti per SaaS e servizi ricorrenti",
+              "media_type": "carousel",
+              "caption": "Vendi abbonamenti? Servizio in ricorrenza mensile? Hai bisogno di un sistema che gestisca pagamenti, rinnovi, disdette, upgrade/downgrade automaticamente.\n\nProgettiamo sistemi subscription-based integrati con Stripe/PayPal: self-service per il cliente, retention automatica, dunning management (recupero pagamenti falliti). Churn ridotto, cash flow prevedibile.\n\nHai un servizio ricorrente? Parliamone.\n\n#Subscription #SaaSBilling #EMCDigitalSolutions #PagamentiRicorrenti #BusinessModel"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "Sicilia come hub digitale del Mediterraneo: una visione",
+              "media_type": "reel",
+              "caption": "La Sicilia è al centro del Mediterraneo. Per secoli è stata ponte tra culture. Può tornare a esserlo come hub digitale.\n\nIstituzioni locali, università, imprese tech, investitori internazionali: le condizioni ci sono. Tocca a noi imprese siciliane dimostrare ogni giorno che qui si lavora benissimo.\n\nFiero di fare la mia parte. 🌍\n\n#SiciliaHubDigitale #Mediterraneo #EMCDigitalSolutions #SiciliaInnovation #VisioneFutura"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: migrazione da piattaforma legacy a cloud moderno",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un cliente aveva un gestionale sviluppato 12 anni fa, funzionante ma ormai difficile da mantenere e incapace di scalare.\n\nAbbiamo pianificato una migrazione in 3 fasi verso un'architettura cloud moderna: Zero downtime sul business, training parallelo degli utenti, switch definitivo in un weekend. Oggi il sistema è più veloce, più sicuro, espandibile.\n\nHai software legacy da modernizzare? Parliamone.\n\n#CasoDiSuccesso #MigrazioneCloud #EMCDigitalSolutions #LegacyModernization #DigitalTransformation"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Come scegliere il fornitore giusto per progetto digitale?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "3 domande da fare a qualsiasi fornitore prima di firmare:\n\n1. Posso parlare con almeno 2 vostri clienti esistenti?\n2. Cosa succede se ad un certo punto voglio andarmene con i miei dati e il mio codice?\n3. Il contratto include obiettivi misurabili e penali in caso di ritardi?\n\nSe un fornitore fa fatica a rispondere, è un segnale. Noi rispondiamo subito a tutte e 3.\n\n#FAQ #SceltaFornitore #EMCDigitalSolutions #Trasparenza #DomandeGiuste"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Seconda domenica di ottobre: tempo di scelte",
+              "media_type": "single_image", "template": "quote",
+              "caption": "A metà ottobre, mancano circa 80 giorni alla fine dell'anno. Tempo sufficiente per cambiare la narrazione di un'annata che sembrava fissata.\n\nUna sola buona decisione oggi può ribaltare i numeri a dicembre. Quale sarà la tua?\n\n#OttobreDecisivo #FinalSprint #EMCDigitalSolutions #Strategia #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Piattaforma eventi online per webinar e formazione",
+              "media_type": "single_image", "template": "service",
+              "caption": "Se organizzi webinar, corsi, masterclass online, usare Zoom + Google Forms + foglio Excel = caos.\n\nProgettiamo piattaforme eventi online complete: iscrizione, pagamento, promemoria automatici, dirette streaming integrate, registrazioni scaricabili, community post-evento. Esperienza premium per i partecipanti.\n\nOrganizzi eventi? Parliamone.\n\n#EventiOnline #Webinar #EMCDigitalSolutions #PiattaformaEventi #FormazioneDigitale"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: i video brevi dominano l'attenzione nel 2026",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Reel Instagram, TikTok, Shorts YouTube: il formato video 15-60 secondi è quello che genera più engagement organico nel 2026.\n\nNon serve essere attori. Servono: idea chiara, primi 3 secondi accattivanti, sottotitoli, call-to-action finale. Un reel settimanale è un investimento piccolo con ritorno grande.\n\nProduciamo video social professionali. Scrivici.\n\n#ReelVideo #VideoMarketing2026 #EMCDigitalSolutions #SocialStrategy #ConsigliMarketing"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Integrazione WhatsApp Business API per aziende strutturate",
+              "media_type": "carousel",
+              "caption": "WhatsApp Business Cloud API permette di gestire grandi volumi di messaggi in modo professionale: chatbot avanzati, notifiche broadcast (entro regole), etichette cliente, integrazione CRM.\n\nPer aziende che ricevono 50+ messaggi al giorno è un cambio di gioco. Niente più caos, ogni messaggio tracciato e risposto in tempi ragionevoli.\n\nVolumi grossi? Parliamone.\n\n#WhatsAppBusinessAPI #EMCDigitalSolutions #CustomerService #Automazione #IntegrazioneWhatsApp"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C3",
+              "sub_topic": "Cultura del codice pulito: i progetti che durano 10 anni",
+              "media_type": "reel",
+              "caption": "Il codice lo legge chi viene dopo. Questo semplice pensiero è alla base della nostra cultura di sviluppo.\n\nCommenti utili, nomi chiari delle variabili, struttura coerente, documentazione aggiornata. Sembra dettaglio, in realtà è ciò che permette a un software di durare 10 anni ed evolvere, invece di doverlo buttare dopo 3.\n\nGli investimenti che facciamo con i clienti devono durare. 📘\n\n#CodicePuro #CleanCode #EMCDigitalSolutions #QualitàSoftware #SostenibilitàTecnica"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: gestionale personalizzato per azienda agricola",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un'azienda agricola siciliana gestiva raccolta, lavorazione e vendita con quaderni cartacei e WhatsApp.\n\nAbbiamo sviluppato un gestionale mobile-first pensato per uso da campo: registrazione raccolta via smartphone (con foto geolocalizzata), tracciabilità dal campo al cliente, fatturazione automatica, report per certificazioni bio. I controllori sono entusiasti.\n\nAzienda agricola o di trasformazione? Parliamone.\n\n#CasoDiSuccesso #GestionaleAgricolo #EMCDigitalSolutions #Tracciabilità #DigitalTransformation #SiciliaDigitale"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Offrite supporto anche dopo anni dalla consegna?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sì. Il 60% dei nostri clienti attuali è con noi da oltre 3 anni, alcuni da più di 10.\n\nOffriamo piani di supporto continuativi calibrati sull'utilizzo reale del prodotto. Per software custom, il supporto evolve insieme al software: nuove funzioni richieste, aggiornamenti, integrazioni nuove.\n\nNessun \"abbandono\" dopo la consegna. La relazione è nel tempo.\n\n#FAQ #SupportoLungoTermine #EMCDigitalSolutions #RelazioneClienti #SiciliaDigitale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Terza domenica di ottobre: si avvicina il ricordo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Tra due settimane sarà il 1° novembre. In Italia è tempo del ricordo di chi non c'è più: familiari, amici, persone che hanno segnato.\n\nUna riflessione: nel digitale tutto sembra nuovo, veloce, effimero. Ma i valori di cura, memoria, dignità rimangono universali. Anche un sito, un software, un prodotto digitale può essere fatto con cura duratura. 🕯️\n\n#VersoOgnissanti #Ricordo #EMCDigitalSolutions #ValoriDuraturi #SiciliaDigitale"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:30", "category": "C1",
+              "sub_topic": "Fine anno: lo sprint finale merita tecnologia all'altezza",
+              "media_type": "single_image", "template": "service",
+              "caption": "A novembre e dicembre molte attività generano il 30-40% del fatturato annuo. Un sito lento, un server che si blocca sotto picco, un checkout difficile = soldi veri persi in 8 settimane.\n\nIn due settimane possiamo mettere in sicurezza il tuo sito per lo sprint finale: scaling infrastruttura, ottimizzazione performance, backup aggressivi, monitoring.\n\nPronto al Black Friday? Scrivici entro ottobre.\n\n#SprintFinale #NovembreDicembre #EMCDigitalSolutions #PerformanceSito #EcommerceSeason"
+            },
+            {
+              "day": "martedì", "time": "19:00", "category": "C2",
+              "sub_topic": "Consiglio: preparati alla caccia al regalo di Natale che inizia ora",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Il 35% degli italiani inizia a cercare regali di Natale già a fine ottobre. Non a dicembre.\n\nSe fai e-commerce, categoria \"idee regalo\" e filtri \"regalo per lui/lei\" vanno sistemati ora. Se offri servizi (buoni esperienza, voucher, gift card), la landing dedicata va pubblicata oggi.\n\nVuoi un aiuto rapido per il tuo shopping natalizio online? Scrivici.\n\n#RegaliNatale #EcommerceNatale #EMCDigitalSolutions #ConsigliMarketing #GiftCards"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Audit gratuito del tuo sito: cosa funziona, cosa no",
+              "media_type": "carousel",
+              "caption": "Offriamo audit gratuiti (valore: 200€ circa, gratis per l'ingresso a fine anno). Analizziamo:\n\n• Velocità di caricamento su mobile e desktop\n• SEO tecnica di base\n• Usabilità (UX) delle pagine chiave\n• Conformità GDPR\n• Sicurezza base\n• Posizionamento Google per le tue parole chiave\n\nTi mandiamo un report PDF di 5-10 pagine con priorità d'azione. Nessun impegno successivo.\n\n#AuditGratuito #EMCDigitalSolutions #WebAudit #ConsulenzaGratuita #SiciliaDigitale"
+            },
+            {
+              "day": "giovedì", "time": "19:00", "category": "C7",
+              "sub_topic": "Il territorio ci ha cresciuti, ora lo aiutiamo a crescere",
+              "media_type": "reel",
+              "caption": "Campobello di Licata, Ravanusa, Naro, Licata, Canicattì. Questo entroterra agrigentino ci ha visti crescere come persone e come professionisti.\n\nOra è il nostro turno di aiutare le attività del territorio a emergere online. Non per piccola misura, ma per farle competere con qualsiasi competitor nazionale.\n\nSe sei di queste parti, parliamo. 🌾\n\n#EntroterraAgrigentino #EMCDigitalSolutions #Territorio #CampobelloDiLicata #SiciliaDigitale #Radici"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Caso studio: sistema prenotazioni per ristorante multi-sala",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un ristorante con 3 sale e 80 coperti era sommerso da telefonate per prenotazioni. Il proprietario passava 2 ore al giorno al telefono invece che in cucina.\n\nAbbiamo integrato un sistema di prenotazione online con gestione intelligente sale, cucina e tavoli. Confirma automatica via SMS, reminder 2 ore prima, no-show ridotti. Tempo liberato: 10 ore a settimana.\n\nRistorante? Parliamone.\n\n#CasoDiSuccesso #PrenotazioniRistorante #EMCDigitalSolutions #Ristorazione #DigitalTransformation"
+            },
+            {
+              "day": "sabato", "time": "10:30", "category": "C5",
+              "sub_topic": "FAQ: Fate anche consulenze brevi una tantum?",
+              "media_type": "single_image", "template": "advice",
+              "caption": "Sì, molti clienti ci scelgono inizialmente per una consulenza una tantum di 60-90 minuti.\n\nEsempi: \"Voglio capire se il mio sito ha senso\", \"Che ERP mi conviene scegliere?\", \"Come lancio un'idea di e-commerce?\". Risposte dirette, senza vendita spinta. Molti poi ci contattano a distanza di mesi per progetti veri.\n\nTariffa fissa, niente sorprese. Scrivici.\n\n#FAQ #ConsulenzaBreve #EMCDigitalSolutions #UnaTantum #SiciliaDigitale"
+            },
+            {
+              "day": "domenica", "time": "11:00", "category": "C6",
+              "sub_topic": "Verso il 1° novembre: tempo di gratitudine",
+              "media_type": "single_image", "template": "event",
+              "caption": "Tra pochi giorni sarà Ognissanti, tempo di ricordare chi ha lasciato traccia nella nostra vita.\n\nUn pensiero va a chi ci ha insegnato il valore del lavoro ben fatto: genitori, maestri, vecchi colleghi, imprenditori visionari che non ci sono più. Una parte di quel che facciamo è merito loro.\n\nBuon fine settimana di ottobre. Lunedì siamo qui per affrontare insieme il nuovo mese. 🕊️\n\n#VersoOgnissanti #Gratitudine #EMCDigitalSolutions #Valori #SiciliaDigitale"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

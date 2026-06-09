@@ -1,0 +1,596 @@
+{
+  "title": "Piano Editoriale - Agenzia Funebre Fratelli Di Rosa (6 mesi, Maggio-Ottobre 2026) + Caption",
+  "categories": [
+    { "code": "C1", "name": "Servizi offerti", "frequency": "3/mese", "description": "Presentazione dei servizi concreti: tanoestetica, trasporto salma, disbrigo pratiche, camera ardente, cremazioni, trasporti nazionali/esteri. Focus sul valore umano dietro ogni gesto, mai su prezzi." },
+    { "code": "C2", "name": "Il team e la famiglia Di Rosa", "frequency": "1-2/mese", "description": "Volti e storia dei fratelli Giuseppe e Gaspare Di Rosa. La dimensione familiare dell'agenzia, l'esperienza dal 1999, il team al lavoro." },
+    { "code": "C3", "name": "Struttura, sede e mezzi", "frequency": "1-2/mese", "description": "La sede di Via Olimpica 18, la camera ardente, i mezzi funebri, l'attrezzatura per la conservazione. Ambiente dignitoso e accogliente." },
+    { "code": "C4", "name": "Il valore del ricordo", "frequency": "2/mese", "description": "Messaggi simbolici sulla memoria, la dignità dell'addio, il supporto alle famiglie. Frasi evocative, immagini simboliche (fiori, candele, mani)." },
+    { "code": "C5", "name": "Laboratorio floreale interno", "frequency": "1-2/mese", "description": "Gli addobbi floreali creati internamente: composizioni, corone, omaggi personalizzati. Dettaglio dei fiori, cura artigianale, stagionalità." },
+    { "code": "C6", "name": "Festività e ricorrenze", "frequency": "1-2/mese", "description": "Calendario liturgico e civile: 1 Maggio, mese della Madonna, San Vito (patrono Ravanusa), Assunta, 2 Novembre. Comunicazione rispettosa, legata al territorio." },
+    { "code": "C7", "name": "Disponibilità H24 e contatti", "frequency": "1/mese", "description": "Il servizio reperibilità 24/7 come segno di dedizione alla comunità. Call-to-action dignitoso sul numero, senza urgenza commerciale." }
+  ],
+  "months": [
+    {
+      "month_number": 1,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Reperibilità H24: ogni chiamata trova una risposta, anche alle 3 di notte",
+              "media_type": "single_image", "template": "service",
+              "caption": "Il telefono squilla alle tre di notte. È un momento che nessuno vorrebbe vivere, ma quando arriva, noi rispondiamo. Sempre. Perché il dolore non guarda l'orologio, e nemmeno noi.\n\nSiamo reperibili 24 ore su 24, ogni giorno dell'anno.\n\n📞 +39 328 968 5570 — Via Olimpica 18, Ravanusa\n\n#FratelliDiRosa #Ravanusa #ServizioH24 #OnoranzeFunebri #Agrigento #Dignità"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C2",
+              "sub_topic": "Giuseppe e Gaspare Di Rosa: due fratelli, una famiglia al servizio del territorio",
+              "media_type": "reel",
+              "caption": "Dietro ogni gesto che vedete, ci siamo noi: Giuseppe e Gaspare. Due fratelli che dal 1999 portano avanti un lavoro che è prima di tutto un servizio alla comunità. Crediamo che accompagnare sia un mestiere che si impara in famiglia, ascoltando. E non si finisce mai di imparare.\n\nSiamo qui, come siamo stati ieri, come saremo domani. 🤍\n\n#FratelliDiRosa #Famiglia #Ravanusa #OnoranzeFunebri #DalCuore #Agrigento #Territorio"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "L'amore che ci ha unito non svanisce: il ricordo come eredità",
+              "media_type": "single_image", "template": "quote",
+              "caption": "L'amore che ci ha unito non svanisce. Resta nei gesti quotidiani, nelle parole che abbiamo imparato, nei silenzi che ci hanno insegnato ad ascoltare. Il ricordo è l'eredità più autentica: si custodisce, si tramanda, si onora.\n\n🕯️\n\n#FratelliDiRosa #Memoria #Ricordo #Ravanusa #Dignità #AmoreCheResta"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "giovedì", "time": "18:00", "category": "C6",
+              "sub_topic": "1 Maggio: un pensiero a chi ha dedicato la vita al lavoro",
+              "media_type": "single_image", "template": "event",
+              "caption": "Oggi è la festa di chi ha dedicato la vita al lavoro. Di chi si è alzato prima dell'alba, di chi ha imparato un mestiere, di chi ha lasciato in eredità non solo beni ma valori: dignità, fatica, rispetto.\n\nUn pensiero a tutti coloro che non sono più con noi ma il cui lavoro continua a darci forma.\n\n#PrimoMaggio #FestaDelLavoro #Memoria #FratelliDiRosa #Ravanusa #EreditàDiValori"
+            },
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Il trasporto del feretro: mezzi propri, cura per ogni chilometro",
+              "media_type": "single_image", "template": "service",
+              "caption": "Ogni chilometro è un pezzo di viaggio che la famiglia non dovrebbe vivere da sola. I nostri mezzi sono curati, puliti, preparati ogni volta: perché accompagnare significa anche avere cura di ogni dettaglio, anche quando nessuno guarda.\n\nSiamo accanto a voi, passo dopo passo.\n\n#FratelliDiRosa #OnoranzeFunebri #Ravanusa #Dignità #CuraDelDettaglio #Agrigento"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C5",
+              "sub_topic": "Maggio è il mese della Madonna: fiori bianchi e gesti di devozione",
+              "media_type": "carousel",
+              "caption": "Maggio è il mese della Madonna. Nel nostro laboratorio componiamo con cura composizioni bianche: rose, gigli, margherite. Sono gesti di devozione, di affetto, di preghiera silenziosa.\n\n🤍 Ogni fiore ha un suo linguaggio. Noi lo impariamo ogni giorno.\n\nPer un omaggio floreale personalizzato, passate da noi.\n\n#FratelliDiRosa #MeseDellaMadonna #FioriPerLaMadonna #LaboratorioFloreale #Ravanusa #Devozione #Maggio"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C3",
+              "sub_topic": "La nostra sede in Via Olimpica 18 a Ravanusa: un ambiente accogliente per chi ha bisogno",
+              "media_type": "single_image", "template": "service",
+              "caption": "In Via Olimpica 18, a Ravanusa, c'è la nostra casa. Abbiamo voluto che fosse un luogo accogliente, non freddo. Perché chi entra da noi vive un momento difficile, e merita di essere accolto con cura, discrezione, rispetto.\n\nVi aspettiamo. Anche solo per una parola.\n\n#FratelliDiRosa #Ravanusa #ViaOlimpica #Accoglienza #OnoranzeFunebri #Agrigento"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Dietro ogni corona: l'arte artigianale del nostro laboratorio floreale interno",
+              "media_type": "reel",
+              "caption": "Le corone che vedete partire da noi nascono in un laboratorio interno, fatto a mano, una per una. Non esistono due composizioni uguali: ogni fiore è scelto, ogni forma pensata, ogni dettaglio controllato. Perché dietro ogni corona c'è un ricordo unico, e merita di essere onorato come tale.\n\n🌹 Il fiore parla quando le parole finiscono.\n\n#FratelliDiRosa #LaboratorioFloreale #Artigianato #FioriPerIlRicordo #Ravanusa #Dignità"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C1",
+              "sub_topic": "Tanoestetica: restituire dignità e pace ai volti dei nostri cari",
+              "media_type": "single_image", "template": "service",
+              "caption": "La tanoestetica è un gesto di cura profonda: restituire dignità e serenità ai volti di chi abbiamo amato. È un lavoro silenzioso, attento, che permette alle famiglie un ultimo saluto più dolce.\n\nLo facciamo con rispetto, sempre.\n\n#FratelliDiRosa #Tanoestetica #Dignità #OnoranzeFunebri #Ravanusa #UltimoSaluto"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C4",
+              "sub_topic": "Un ultimo saluto, con rispetto e dignità: la nostra promessa",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Un ultimo saluto, con rispetto e dignità. È la promessa che facciamo a ogni famiglia che entra da noi. Non è uno slogan: è il modo in cui scegliamo di lavorare, ogni giorno.\n\n🕊️\n\n#FratelliDiRosa #Dignità #Rispetto #UltimoSaluto #Ravanusa #OnoranzeFunebri #LaNostraPromessa"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C1",
+              "sub_topic": "Disbrigo pratiche burocratiche: pensiamo noi ai documenti, voi pensate agli affetti",
+              "media_type": "carousel",
+              "caption": "Quando arriva il dolore, l'ultima cosa che serve è la burocrazia. Ci pensiamo noi: certificati, autorizzazioni al trasporto, pratiche cimiteriali, tutto il necessario. Voi dedicate il tempo agli affetti, ai ricordi, a chi vi sta accanto.\n\nÈ il nostro modo di alleggerire un peso.\n\n#FratelliDiRosa #DisbrigoPratiche #Burocrazia #ServizioCompleto #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C6",
+              "sub_topic": "Maggio della Madonna: portiamo un fiore sulla tomba dei nostri cari",
+              "media_type": "story",
+              "caption": "Maggio è il mese di Maria. Porta un fiore sulla tomba dei tuoi cari: è un gesto semplice, ma resta. 🤍"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 2,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Allestimento camera ardente: un luogo raccolto per gli ultimi saluti",
+              "media_type": "single_image", "template": "service",
+              "caption": "La camera ardente è il luogo degli ultimi saluti. Ogni dettaglio conta: la luce, i fiori, il silenzio. La prepariamo con cura perché sia uno spazio raccolto, rispettoso, accogliente per chi arriva a salutare.\n\nUna soglia da attraversare con dignità.\n\n#FratelliDiRosa #CameraArdente #UltimoSaluto #Ravanusa #OnoranzeFunebri #Accoglienza"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C2",
+              "sub_topic": "Dal 1999 al servizio del territorio: la nostra storia familiare",
+              "media_type": "reel",
+              "caption": "Tutto è iniziato nel 1999. Dal 2018 siamo un'attività autonoma, ma la storia viene da più lontano: dalla tradizione familiare di chi ci ha preceduto, da chi ci ha insegnato questo mestiere con le mani e con il cuore.\n\nSiamo ancora qui, perché il territorio ci ha dato fiducia. Proveremo a meritarla ogni giorno.\n\n🤍\n\n#FratelliDiRosa #Dal1999 #StoriaFamiliare #Ravanusa #Tradizione #Agrigento #Territorio"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "Ogni vita merita un commiato curato in ogni dettaglio",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Ogni vita merita un commiato curato in ogni dettaglio. Non esiste un funerale piccolo o un funerale grande: esiste il funerale di una persona, e una persona merita sempre rispetto, sempre cura, sempre dignità.\n\n🕯️\n\n#FratelliDiRosa #Dignità #Commiato #Rispetto #Ravanusa #OgniVitaConta"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "venerdì", "time": "10:00", "category": "C6",
+              "sub_topic": "13 giugno, Sant'Antonio: il santo dei miracoli e di chi cerca conforto",
+              "media_type": "single_image", "template": "event",
+              "caption": "Oggi è Sant'Antonio, il santo dei miracoli, il santo di chi ha perso e chi cerca. In una giornata come questa, i nostri pensieri vanno a chi sente il bisogno di conforto, di un segno, di una speranza.\n\n🕯️ Un cero acceso, una preghiera: gesti semplici, ma mai vuoti.\n\n#SantAntonio #13Giugno #FratelliDiRosa #Ravanusa #Devozione #Fede #Conforto"
+            },
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Trasporto nazionale e internazionale: riportare a casa chi è partito lontano",
+              "media_type": "carousel",
+              "caption": "A volte chi abbiamo amato ci lascia lontano da casa. Noi ci occupiamo di riportarlo qui, tra le persone e i luoghi che ha amato. Trasporti in tutta Italia e all'estero, con tutte le pratiche consolari e documentali curate da noi.\n\nPerché casa, alla fine, resta il posto da cui si è partiti.\n\n#FratelliDiRosa #TrasportoFunebre #TrasportiEsteri #EmigrazioneSiciliana #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "domenica", "time": "09:00", "category": "C6",
+              "sub_topic": "15 giugno, San Vito protettore di Ravanusa: la nostra comunità in festa e in ricordo",
+              "media_type": "reel",
+              "caption": "Oggi Ravanusa festeggia San Vito, il suo patrono. È la nostra festa: quella del paese, delle strade che conosciamo, delle famiglie che abbiamo accompagnato. 🕊️\n\nIn questa giornata, il nostro pensiero va a tutti i ravanusani che non sono più qui a festeggiare con noi — ma che di questo paese, e di questa festa, hanno fatto parte e sempre faranno parte.\n\nBuona festa di San Vito a tutta la nostra comunità.\n\n#SanVito #15Giugno #Ravanusa #PatronoDiRavanusa #FratelliDiRosa #FestaPatronale #Tradizione #Territorio"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C3",
+              "sub_topic": "Le nostre attrezzature: tecnologia al servizio della dignità",
+              "media_type": "single_image", "template": "service",
+              "caption": "Dietro il rispetto c'è anche la tecnologia: attrezzature moderne, ambienti puliti, strumenti professionali per la conservazione. Non sono dettagli visibili, ma sono quelli che permettono alle famiglie un commiato sereno.\n\nLa dignità si costruisce anche con la competenza.\n\n#FratelliDiRosa #Professionalità #Attrezzature #Dignità #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Fiori d'estate: gerbere, gigli, rose — la nostra selezione stagionale",
+              "media_type": "carousel",
+              "caption": "Gerbere arancioni come il sole, gigli bianchi come la memoria, rose rosse come l'amore che non finisce. I fiori d'estate parlano una lingua calda, intensa, generosa.\n\n🌹 Nel nostro laboratorio li scegliamo freschi ogni settimana. Se cercate una composizione pensata, chiedeteci: la costruiamo insieme.\n\n#FratelliDiRosa #FioriDEstate #LaboratorioFloreale #Gerbere #Gigli #Rose #Ravanusa"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "Piangere insieme è già un primo passo: noi ci siamo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Piangere insieme è già un primo passo. Non è debolezza, non è esagerazione: è il modo in cui l'essere umano impara a convivere con l'assenza. E nessuno dovrebbe piangere da solo.\n\nNoi ci siamo. In silenzio, se serve. Con una parola, se serve.\n\n🕯️\n\n#FratelliDiRosa #Lutto #Conforto #Empatia #Ravanusa #NonSeteSoli"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Cremazione: una scelta delicata, accompagnata con cura fino all'ultimo",
+              "media_type": "single_image", "template": "service",
+              "caption": "La cremazione è una scelta intima, e come tutte le scelte intime merita di essere accompagnata con delicatezza. Vi guidiamo in ogni passaggio: autorizzazioni, trasporto, consegna delle ceneri alla famiglia. Con cura, senza fretta.\n\n🕊️ Una scelta che resta in famiglia.\n\n#FratelliDiRosa #Cremazione #Delicatezza #OnoranzeFunebri #Ravanusa #CuraDeiDettagli"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C7",
+              "sub_topic": "Un numero che non dorme mai: 24 ore su 24, 7 giorni su 7",
+              "media_type": "single_image", "template": "service",
+              "caption": "Un numero che non dorme mai. 24 ore su 24, 7 giorni su 7, festivi compresi. Non è una promessa di marketing: è il modo in cui scegliamo di esserci, perché il dolore non ha orari.\n\n📞 +39 328 968 5570 — salvatelo. Sperate di non usarlo mai. Ma se vi servirà, noi rispondiamo.\n\n#FratelliDiRosa #ServizioH24 #SempreReperibili #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "Ravanusa, la nostra terra: tra queste strade viviamo e accompagniamo",
+              "media_type": "reel",
+              "caption": "Ravanusa è la nostra terra. Conosciamo le strade, le chiese, le piazze. Abbiamo accompagnato famiglie di ogni contrada, e ogni volta è stato un onore. È questo il senso di essere un'agenzia del territorio: appartenere, non solo lavorare.\n\n🤍 Ravanusa, grazie.\n\n#FratelliDiRosa #Ravanusa #TerraNostra #Appartenenza #Territorio #Agrigento #SiciliaDelCuore"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 3,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Portantini esperti: ogni gesto accompagnato con misura e rispetto",
+              "media_type": "single_image", "template": "service",
+              "caption": "Sollevare un feretro non è solo un gesto tecnico: è un gesto che porta peso, simbolico e reale. Per questo abbiamo portantini esperti, formati, attenti a ogni passaggio. Perché ogni movimento sia misurato, rispettoso, sicuro.\n\nAccompagnare è prima di tutto portare con cura.\n\n#FratelliDiRosa #Portantini #Professionalità #Rispetto #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C2",
+              "sub_topic": "Il team dietro le quinte: ogni dettaglio preparato con attenzione",
+              "media_type": "reel",
+              "caption": "Quello che vedete il giorno del funerale è solo la superficie. Dietro c'è un team che prepara, allestisce, pulisce, controlla. Ore di lavoro silenzioso perché tutto, il giorno dopo, sia impeccabile.\n\nÈ il nostro modo di rispettare chi non c'è più.\n\n🤍\n\n#FratelliDiRosa #DietroLeQuinte #TeamAlLavoro #Dedizione #Ravanusa #Professionalità"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "Il dolore non si misura, ma si accoglie — e noi siamo qui per accoglierlo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Il dolore non si misura. Ognuno lo vive nel suo tempo, nel suo modo, con i suoi silenzi. Il nostro compito non è accelerarlo o normalizzarlo: è accoglierlo, così com'è.\n\n🕯️ Qui si può piangere. Qui si può anche solo restare zitti.\n\n#FratelliDiRosa #Lutto #Empatia #Accoglienza #Ravanusa #NonSiAmMisura"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Il trasporto salma: cura e discrezione per ogni passaggio",
+              "media_type": "single_image", "template": "service",
+              "caption": "Il primo passaggio è il più delicato: il trasporto della salma dal luogo del decesso alla camera ardente. Lo facciamo con discrezione, attenzione, rapidità. Sempre con un riguardo assoluto per la famiglia e per chi abbiamo davanti.\n\nLa discrezione è un gesto d'amore.\n\n#FratelliDiRosa #TrasportoSalma #Discrezione #Rispetto #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Ogni composizione raccoglie un pensiero: i fiori sono un messaggio",
+              "media_type": "carousel",
+              "caption": "Ogni fiore porta un messaggio. La rosa racconta amore, il giglio parla di purezza, il crisantemo è il fiore del ricordo, il garofano bianco dice stima, la margherita trasmette semplicità. Nel nostro laboratorio scegliamo i fiori in base a ciò che volete dire.\n\n🌹 Perché a volte, dove le parole non bastano, un fiore arriva meglio.\n\nOrdina la tua composizione personalizzata.\n\n#FratelliDiRosa #LinguaggioDeiFiori #LaboratorioFloreale #Composizioni #Ravanusa #FioriCheParlano"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "Una voce che conforta quando tutto tace: basta una telefonata",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Quando la notte è lunga e il silenzio diventa pesante, a volte serve solo una voce. Una voce che ascolti, che non abbia fretta, che sappia cosa dire — e cosa non dire. Basta una telefonata.\n\n📞 Ci siamo, anche alle tre di notte. Anche solo per parlare.\n\n#FratelliDiRosa #ServizioH24 #Conforto #VicinoANoi #Ravanusa #UnaVoce"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C3",
+              "sub_topic": "Una struttura pensata per la famiglia: dalla camera ardente alla sala del commiato",
+              "media_type": "carousel",
+              "caption": "La nostra sede è pensata per voi. L'ingresso accoglie, la sala del commiato raccoglie, la camera ardente custodisce. Ogni ambiente è stato studiato per essere dignitoso e funzionale, perché la famiglia trovi il suo spazio, il suo tempo, il suo silenzio.\n\nVi aspettiamo in Via Olimpica 18.\n\n#FratelliDiRosa #Sede #ViaOlimpica #Ravanusa #Accoglienza #OnoranzeFunebri"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C1",
+              "sub_topic": "Manifesti di partecipazione al lutto: un gesto comunitario ancora importante",
+              "media_type": "single_image", "template": "service",
+              "caption": "I manifesti di partecipazione sono una tradizione che in Sicilia resta viva, e ha un suo valore: è il modo in cui una comunità riconosce pubblicamente il dolore di una famiglia. Noi li curiamo nei testi, nei tempi, nell'affissione.\n\nUn gesto collettivo che aiuta a non sentirsi soli.\n\n#FratelliDiRosa #Manifesti #Tradizione #Comunità #Ravanusa #Sicilia #PartecipazioneAlLutto"
+            },
+            {
+              "day": "domenica", "time": "09:00", "category": "C4",
+              "sub_topic": "Estate a Ravanusa: anche nei mesi caldi, siamo qui per voi",
+              "media_type": "reel",
+              "caption": "L'estate a Ravanusa è calda, lunga, a volte pesante. Ma per noi l'orario non cambia: 24 ore su 24, tutti i giorni. Ci adattiamo ai ritmi, lavoriamo nelle ore più fresche quando possiamo, ma ci siamo sempre.\n\n🤍 Buona estate a tutti — e se ci servirà, sappiate che siamo qui.\n\n#FratelliDiRosa #EstateARavanusa #SempreAperti #ServizioH24 #Ravanusa #Sicilia"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C7",
+              "sub_topic": "Estate o inverno, giorno o notte: il nostro numero resta sempre attivo",
+              "media_type": "single_image", "template": "service",
+              "caption": "Estate o inverno, giorno o notte, festivi o feriali: il numero resta lo stesso e qualcuno risponde sempre. È il patto silenzioso che abbiamo con chi ci sceglie.\n\n📞 +39 328 968 5570 — tenetelo a portata di mano.\n\n#FratelliDiRosa #ServizioH24 #SempreReperibili #Ravanusa #OnoranzeFunebri #Agrigento"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Girasoli e fiori d'estate: la luce della memoria nelle giornate lunghe",
+              "media_type": "reel",
+              "caption": "I girasoli hanno un nome che dice tutto: seguono il sole. Sono il simbolo della luce che resta, anche quando una persona cara se ne va. Insieme a gladioli e margherite, compongono le nostre creazioni estive più calde e luminose.\n\n🌻 Se cercate una composizione solare per un ricordo luminoso, passate da noi.\n\n#FratelliDiRosa #Girasoli #FioriDEstate #LaboratorioFloreale #Luce #Ravanusa"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "Chi lasciamo andare resta con noi, nelle cose piccole che amava",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Chi lasciamo andare resta con noi, nelle cose piccole che amava. Una tazza, un libro aperto, una sedia vuota che però continua a occupare il suo posto. Il ricordo è fatto di questi dettagli quotidiani, e si onora vivendoli.\n\n🕯️\n\n#FratelliDiRosa #Memoria #Ricordo #Ravanusa #CoseCheRestano #Dignità"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 4,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Allestimento camera ardente a domicilio: se preferite restare a casa",
+              "media_type": "single_image", "template": "service",
+              "caption": "A volte le famiglie preferiscono che l'ultimo saluto avvenga a casa, tra le mura familiari, tra gli oggetti di sempre. Noi lo allestiamo con cura: fiori, candele, luci soffuse, tutto ciò che serve perché la camera ardente domestica sia dignitosa come in una sede dedicata.\n\nLa casa resta la casa, anche nell'addio.\n\n#FratelliDiRosa #CameraArdenteADomicilio #Casa #Dignità #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C2",
+              "sub_topic": "Agosto: restiamo aperti per voi, come sempre",
+              "media_type": "single_image", "template": "event",
+              "caption": "Agosto è il mese delle vacanze per molti, ma per noi è un mese come gli altri. Restiamo aperti, attivi, reperibili. Perché il servizio a cui abbiamo scelto di dedicarci non va mai in ferie.\n\n🤍 Se ci servirete, ci saremo.\n\n#FratelliDiRosa #AgostoAperti #ServizioH24 #Ravanusa #SempreReperibili #SenzaFerie"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C5",
+              "sub_topic": "Fiori d'estate: gelsomini, oleandri, fiori del sud — la nostra terra",
+              "media_type": "carousel",
+              "caption": "Gelsomini che profumano le sere d'agosto, oleandri rosa lungo le strade, fiori di cappero tra le pietre. Sono i fiori della nostra terra, quelli che raccontano la Sicilia di luglio e agosto. Nel nostro laboratorio li valorizziamo: composizioni locali, autentiche, che sanno di casa.\n\n🌸\n\n#FratelliDiRosa #FioriDelSud #Gelsomini #Oleandri #Sicilia #LaboratorioFloreale #TerraNostra"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C6",
+              "sub_topic": "Verso il 15 agosto: Maria SS. Assunta, la Madre che ha accompagnato ogni partenza",
+              "media_type": "single_image", "template": "event",
+              "caption": "Tra pochi giorni sarà Maria SS. Assunta. È la Madre che nelle case siciliane ha accompagnato ogni partenza, ogni ritorno, ogni lutto. Una figura che ancora oggi dà conforto silenzioso alle famiglie in difficoltà.\n\n🤍 Pensiamoci insieme, nei giorni che ci portano al 15.\n\n#Assunta #15Agosto #MariaAssunta #FratelliDiRosa #Ravanusa #Devozione #Sicilia"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C4",
+              "sub_topic": "Agosto ci ricorda le partenze: chi resta, chi torna, chi resterà sempre",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Agosto è il mese delle partenze. Chi parte per le vacanze, chi torna al paese, chi resta. E poi c'è chi è partito per sempre, e in questo mese sentiamo la loro assenza un po' più forte — forse perché intorno tutti si ritrovano, tranne loro.\n\nIl ricordo è la loro presenza che continua.\n\n🕯️\n\n#FratelliDiRosa #Agosto #Memoria #Partenze #Ravanusa #ChiResta #ChiParte"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C5",
+              "sub_topic": "Per l'Assunta: composizioni di gigli bianchi e rose per la Madre",
+              "media_type": "reel",
+              "caption": "Per l'Assunta, i gigli bianchi sono tradizione. Bianco come la purezza, bianco come il cielo al mattino. Nel nostro laboratorio prepariamo composizioni mariane per portare al cimitero, per la Madonna delle chiese di quartiere, per le cappelle di famiglia.\n\n🤍 Se volete un omaggio floreale per il 15 agosto, prenotatelo con qualche giorno di anticipo.\n\n#FratelliDiRosa #GigliBianchi #Assunta #15Agosto #LaboratorioFloreale #Ravanusa #Devozione"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "venerdì", "time": "09:00", "category": "C6",
+              "sub_topic": "15 Agosto — Maria SS. Assunta: la festa di chi guarda al cielo e ricorda",
+              "media_type": "carousel",
+              "caption": "Oggi è l'Assunta. In Sicilia è uno dei giorni più sentiti dell'anno: il cielo è alto, le case si aprono ai parenti, le famiglie si ritrovano. Ma è anche il giorno in cui molti vanno al cimitero, a portare un fiore, ad accendere una candela, a fermarsi un momento.\n\n🤍 Buona festa a chi festeggia, e un pensiero sincero a chi oggi sente un'assenza. La Madre che oggi si celebra è anche la Madre che consola.\n\n#Assunta #15Agosto #MariaAssunta #Ravanusa #FratelliDiRosa #Festa #Memoria #Sicilia"
+            },
+            {
+              "day": "martedì", "time": "14:30", "category": "C3",
+              "sub_topic": "Le nostre sale d'estate: aria condizionata e luce soffusa per chi resta a vegliare",
+              "media_type": "single_image", "template": "service",
+              "caption": "Vegliare in estate non è come in inverno: il caldo pesa, le ore si allungano. Le nostre sale sono climatizzate, con luci soffuse, ambiente pulito e fresco. Perché la veglia sia un tempo raccolto, non un'attesa faticosa.\n\nVi aspettiamo, in ogni stagione.\n\n#FratelliDiRosa #SaleClimatizzate #Sede #Ravanusa #Accoglienza #Veglia"
+            },
+            {
+              "day": "domenica", "time": "20:00", "category": "C4",
+              "sub_topic": "Dopo l'Assunta, il ricordo continua: ogni fiore portato è un gesto d'amore",
+              "media_type": "reel",
+              "caption": "Dopo il 15 agosto, il cimitero di Ravanusa torna tranquillo. Ma i fiori freschi restano, a testimoniare che qualcuno è passato, si è fermato, ha ricordato. È in questi gesti silenziosi — un fiore, una candela, una breve sosta — che il ricordo continua.\n\n🕊️\n\n#FratelliDiRosa #Ricordo #CimiteroDiRavanusa #DopoAssunta #Memoria #Ravanusa"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Lavori cimiteriali: marmo, incisioni, manutenzione — curiamo anche il dopo",
+              "media_type": "carousel",
+              "caption": "Curare il dopo è importante quanto curare il momento. Ci occupiamo anche di lavori cimiteriali: pulizia di lapidi, restauro di marmi, nuove incisioni, manutenzione delle tombe di famiglia. Perché il luogo del riposo resti dignitoso negli anni.\n\nPer un sopralluogo o un preventivo, contattateci.\n\n#FratelliDiRosa #LavoriCimiteriali #Lapidi #RestauroMarmi #Ravanusa #Dignità"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C7",
+              "sub_topic": "Il numero che in agosto non prende ferie: siamo qui anche il 15 agosto",
+              "media_type": "single_image", "template": "service",
+              "caption": "Mentre molti chiudono per ferie, noi restiamo. Il 15 agosto, il Ferragosto, la settimana prima e la settimana dopo: per noi sono giorni di servizio come tutti gli altri.\n\n📞 +39 328 968 5570 — sempre attivo, sempre reperibile.\n\n#FratelliDiRosa #FerragostoAperti #ServizioH24 #SempreAperti #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C2",
+              "sub_topic": "Una famiglia che accompagna le famiglie: i Di Rosa da tre generazioni",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Una famiglia che accompagna le famiglie. È questa la cosa che più ci rappresenta. Da tre generazioni il lavoro si tramanda: prima chi ci ha insegnato, poi noi, forse un giorno chi verrà dopo di noi. La continuità è il nostro modo di dire grazie.\n\n🤍 Fratelli Di Rosa — Ravanusa.\n\n#FratelliDiRosa #TreGenerazioni #Famiglia #Continuità #Ravanusa #Tradizione #Dal1999"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 5,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C4",
+              "sub_topic": "Settembre: la dolcezza dei giorni che si accorciano e dei pensieri che restano",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Settembre ha una luce speciale: dorata, soffusa, malinconica. I giorni si accorciano, ma ci regalano ombre più lunghe, sere più riflessive. È il mese dei pensieri che tornano, dei nomi che si dicono a bassa voce, dei ricordi che si fanno più nitidi.\n\n🕯️\n\n#FratelliDiRosa #Settembre #Malinconia #Ricordo #Ravanusa #LuceDoro"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C2",
+              "sub_topic": "Settembre ci rimette al lavoro: ma per noi il servizio non si è mai fermato",
+              "media_type": "reel",
+              "caption": "Per molti settembre è il ritorno al lavoro. Per noi è solo la continuazione: perché il nostro servizio non si è mai fermato, nemmeno ad agosto. Ma anche noi sentiamo l'aria di nuovo inizio, di ripartenza, di impegni che riprendono il loro ritmo.\n\nSiamo qui, come sempre.\n\n#FratelliDiRosa #Settembre #RitornoAlLavoro #Ravanusa #SempreAperti #OnoranzeFunebri"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C1",
+              "sub_topic": "Il servizio H24: una scelta, non uno slogan",
+              "media_type": "single_image", "template": "service",
+              "caption": "\"Siamo aperti 24 ore su 24\" è facile da scrivere. Ma essere davvero reperibili significa rinunciare a un sonno tranquillo, accettare di essere disturbati a Natale, lasciare una cena a metà se squilla il telefono. È una scelta, non uno slogan.\n\nL'abbiamo fatta consapevolmente, perché il dolore non guarda l'orologio.\n\n#FratelliDiRosa #ServizioH24 #ScelteVere #Ravanusa #OnoranzeFunebri #SempreReperibili"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C3",
+              "sub_topic": "I nostri mezzi funebri: pulizia, discrezione, rispetto su ogni strada",
+              "media_type": "carousel",
+              "caption": "Ogni carro funebre viene pulito, controllato, preparato prima di ogni servizio. Non è un dettaglio tecnico: è un segno di rispetto. Perché il mezzo con cui accompagniamo i nostri cari deve essere all'altezza del gesto.\n\n#FratelliDiRosa #MezziFunebri #Cura #Ravanusa #Professionalità #OnoranzeFunebri"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Fiori d'autunno: crisantemi, dalie, gerbere — i colori del ricordo",
+              "media_type": "reel",
+              "caption": "Crisantemi nei loro mille colori, dalie che sembrano dipinte, gerbere vivaci: l'autunno ha una tavolozza tutta sua. Nel nostro laboratorio li scegliamo freschi ogni settimana, per composizioni che sanno di stagione e di memoria.\n\n🍂 Venite a trovarci per vedere le composizioni di settembre.\n\n#FratelliDiRosa #FioriDAutunno #Crisantemi #Dalie #LaboratorioFloreale #Ravanusa #Settembre"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "Il crisantemo: simbolo di verità, non di tristezza — ogni cultura lo vive a modo suo",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Il crisantemo in Italia è il fiore del ricordo, ed è così che lo trattiamo. Ma in altre culture è simbolo di verità, di lealtà, di gioia. È un fiore antico, resistente, che fiorisce quando molti altri hanno finito. Forse per questo lo scegliamo per ricordare: perché parla di ciò che resta.\n\n🌼\n\n#FratelliDiRosa #Crisantemi #SimboloDelRicordo #LaboratorioFloreale #Ravanusa #FioriCheRestano"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Disbrigo pratiche: dalla burocrazia all'affido, senza pesi aggiunti",
+              "media_type": "single_image", "template": "service",
+              "caption": "Dalla burocrazia all'affido, ogni pratica viene curata da noi. Certificati, autorizzazioni, iscrizioni cimiteriali, trasporti: non dovete pensare a nulla. Perché in quei giorni, la mente è già occupata altrove — e deve esserlo.\n\nLasciate fare a noi.\n\n#FratelliDiRosa #DisbrigoPratiche #ServizioCompleto #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C3",
+              "sub_topic": "La nostra sala del commiato: spazio raccolto per abbracci e silenzi",
+              "media_type": "single_image", "template": "service",
+              "caption": "La sala del commiato è il luogo degli abbracci silenziosi, delle lacrime condivise, dei ricordi detti a fatica. L'abbiamo pensata raccolta, con luci basse, sedie comode, un altare semplice per i fiori. Perché ogni famiglia trovi il suo spazio per salutare.\n\nUn luogo di addio, e di incontro.\n\n#FratelliDiRosa #SalaDelCommiato #Sede #Ravanusa #UltimoSaluto #Accoglienza"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C4",
+              "sub_topic": "Chi siamo stati, chi saremo, chi ricordiamo: un filo che non si spezza",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Chi siamo stati, chi saremo, chi ricordiamo: un filo che non si spezza. Siamo fatti di quello che abbiamo ricevuto — parole, gesti, valori — e di quello che proveremo a lasciare dopo di noi. Il ricordo è il ponte tra queste generazioni.\n\n🕯️\n\n#FratelliDiRosa #Memoria #Generazioni #FiloChNonSiSpezza #Ravanusa #Ricordo"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C1",
+              "sub_topic": "Trasporti esteri: quando una famiglia è divisa tra due terre",
+              "media_type": "carousel",
+              "caption": "La Sicilia è una terra di emigrazione. Tante famiglie hanno parenti in Germania, in Belgio, in America, in Australia. Quando uno dei loro ci lascia, capita di doverlo riportare qui, nella terra d'origine — o di doverlo accompagnare lì, dove ha costruito la sua vita.\n\nCi occupiamo di tutto: documenti consolari, trasporti internazionali, pratiche dogana. Per riunire le famiglie anche nel momento dell'addio.\n\n#FratelliDiRosa #TrasportiEsteri #EmigrazioneSiciliana #Ravanusa #OnoranzeFunebri #InternazionaleÈPossibile"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C6",
+              "sub_topic": "Verso novembre: il mese che ricorda tutti, anche chi è partito lontano",
+              "media_type": "single_image", "template": "event",
+              "caption": "Ottobre è alle porte, e dietro di lui si intravede già novembre: il mese che in Italia si dedica al ricordo di tutti. Iniziamo a pensarci da ora — ai fiori, alle visite, alle famiglie lontane che tornano. Il ricordo è un gesto che si prepara.\n\n🕯️\n\n#FratelliDiRosa #VersoNovembre #2Novembre #Ricordo #Ravanusa #CommemorazioneDefunti"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C2",
+              "sub_topic": "Dietro il nostro lavoro, tre generazioni di ascolto",
+              "media_type": "reel",
+              "caption": "Dietro ogni gesto che facciamo ci sono tre generazioni di persone che hanno imparato a fare questo mestiere ascoltando. Il nonno, il padre, i figli: ognuno ha aggiunto qualcosa, ognuno ha ricevuto qualcosa. L'ascolto non è un'abilità: è un'eredità.\n\n🤍\n\n#FratelliDiRosa #TreGenerazioni #Ascolto #TradizioneFamiliare #Ravanusa #Dignità"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "month_number": 6,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C4",
+              "sub_topic": "Ottobre accende le candele: il mese che prepara al ricordo di tutti",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Ottobre accende le candele. È il mese che prepara al ricordo, quello dei gesti che si ripetono ogni anno: la visita al cimitero, i fiori che si portano, le candele che si accendono alla sera. Un mese raccolto, riflessivo, dolce.\n\n🕯️\n\n#FratelliDiRosa #Ottobre #Candele #Ricordo #Ravanusa #MeseDelRicordo"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C3",
+              "sub_topic": "Il cimitero di Ravanusa: un luogo che merita rispetto e cura costante",
+              "media_type": "reel",
+              "caption": "Il cimitero di Ravanusa è un luogo che conosciamo bene: ogni viale, ogni angolo, ogni famiglia che riposa qui. Merita rispetto, cura costante, attenzione. In questo periodo lo visitiamo spesso, per preparare il 2 novembre.\n\n🤍 Un luogo dove si torna, si porta, si ricorda.\n\n#FratelliDiRosa #CimiteroDiRavanusa #Ravanusa #Rispetto #LuogoDelRicordo #Ottobre"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C1",
+              "sub_topic": "Lavori cimiteriali: puliamo, restauriamo, incidiamo — prepariamo al 2 novembre",
+              "media_type": "carousel",
+              "caption": "Ottobre è il mese dei lavori cimiteriali. Puliamo le lapidi, restauriamo il marmo, facciamo nuove incisioni, rinnoviamo le decorazioni. Perché il 2 novembre, quando le famiglie arriveranno con i loro fiori, trovino una tomba dignitosa, curata, onorata.\n\nSe volete preparare la tomba dei vostri cari per la commemorazione, chiedeteci con qualche settimana di anticipo.\n\n#FratelliDiRosa #LavoriCimiteriali #2Novembre #Ravanusa #Lapidi #Preparazione"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C6",
+              "sub_topic": "Il 2 novembre si avvicina: preparare il ricordo è già un gesto d'amore",
+              "media_type": "single_image", "template": "event",
+              "caption": "Tra poche settimane sarà il 2 novembre. È il giorno in cui l'Italia si ferma a ricordare, a portare un fiore, ad accendere una candela. Prepararsi è già un gesto d'amore: pensare a chi visiteremo, cosa porteremo, cosa vogliamo dirgli nel silenzio.\n\n🕊️\n\n#FratelliDiRosa #2Novembre #CommemorazioneDefunti #Ravanusa #Preparazione #GestoDAmore"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Crisantemi: non li diciamo tristi, li diciamo fedeli",
+              "media_type": "reel",
+              "caption": "I crisantemi fioriscono quando quasi tutti gli altri fiori hanno finito. Resistono al freddo, tengono a lungo, tornano ogni anno. Non li diciamo tristi: li diciamo fedeli. Sono il fiore che non abbandona, che aspetta, che ricorda.\n\n🌼 Nel nostro laboratorio ne abbiamo di ogni colore. Passate a scegliere il vostro.\n\n#FratelliDiRosa #Crisantemi #Fedeltà #LaboratorioFloreale #Ravanusa #FioriCheRestano"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C5",
+              "sub_topic": "Le nostre corone per il 2 novembre: prenota il tuo omaggio floreale",
+              "media_type": "carousel",
+              "caption": "Per il 2 novembre prepariamo corone e composizioni su richiesta. Ogni creazione viene pensata con la famiglia: fiori preferiti dal vostro caro, colori della cappella di famiglia, misure specifiche. È un modo per dare al ricordo una forma personale.\n\n🌹 Prenota la tua corona entro il 28 ottobre — ci diamo il tempo di farla bene.\n\n#FratelliDiRosa #CoronePer2Novembre #LaboratorioFloreale #Commemorazione #Ravanusa #Ricordo"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C2",
+              "sub_topic": "Un'agenzia familiare significa che sentiamo ogni dolore come se fosse il nostro",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Un'agenzia familiare significa che ogni dolore che incontriamo lo sentiamo un po' anche nostro. Non riusciamo a trattare ogni servizio come una pratica tra le altre: conosciamo i nomi, le storie, le strade di Ravanusa. Per noi non è mai solo lavoro.\n\n🤍 È per questo che siamo qui, dal 1999.\n\n#FratelliDiRosa #AgenziaFamiliare #Empatia #Ravanusa #DalCuore #Dal1999"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C7",
+              "sub_topic": "Verso il 2 novembre restiamo sempre raggiungibili: il nostro numero è qui",
+              "media_type": "single_image", "template": "service",
+              "caption": "In questo mese il pensiero va a chi non c'è più. Noi restiamo raggiungibili come sempre, anche nei giorni della commemorazione. Il 1° novembre, il 2, il weekend seguente: il numero non cambia, la disponibilità nemmeno.\n\n📞 +39 328 968 5570 — H24.\n\n#FratelliDiRosa #ServizioH24 #2Novembre #SempreAperti #Ravanusa #OnoranzeFunebri"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C5",
+              "sub_topic": "Nel nostro laboratorio: ogni corona per ottobre nasce a mano, una per una",
+              "media_type": "reel",
+              "caption": "In questi giorni il laboratorio è pieno di corone per il 2 novembre. Ogni composizione viene fatta a mano, una per una, senza scorciatoie. Scegliamo ogni fiore, tagliamo ogni gambo, leghiamo ogni nastro. È il nostro modo di onorare il lavoro, e la memoria di chi riceverà quel fiore.\n\n🌹\n\n#FratelliDiRosa #LaboratorioFloreale #FattoAMano #CoronePer2Novembre #Ravanusa #Artigianato"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì", "time": "14:30", "category": "C4",
+              "sub_topic": "Ottobre ci prepara: a guardare indietro con gratitudine",
+              "media_type": "single_image", "template": "quote",
+              "caption": "Ottobre ci prepara a guardare indietro con gratitudine. Per chi abbiamo avuto, per chi abbiamo amato, per chi ancora ci accompagna nei pensieri. Gratitudine, non solo nostalgia: perché chi abbiamo avuto ci ha resi quello che siamo.\n\n🍂\n\n#FratelliDiRosa #Ottobre #Gratitudine #Memoria #Ravanusa #Ricordo"
+            },
+            {
+              "day": "giovedì", "time": "18:00", "category": "C3",
+              "sub_topic": "Ravanusa d'autunno: le nostre strade, le nostre case, i nostri ricordi",
+              "media_type": "reel",
+              "caption": "Ravanusa d'autunno ha una bellezza quieta: le strade meno affollate, le luci più basse, l'aria che profuma di camino. Sono le nostre strade, le nostre case, i nostri ricordi — e quelli di tutti coloro che qui hanno vissuto e che qui riposano.\n\n🤍 Il paese è casa, sempre.\n\n#FratelliDiRosa #Ravanusa #Autunno #Paese #TerraNostra #Sicilia #Territorio"
+            },
+            {
+              "day": "sabato", "time": "10:00", "category": "C6",
+              "sub_topic": "Fra pochi giorni sarà il 2 novembre: noi siamo pronti, voi prendetevi il tempo",
+              "media_type": "single_image", "template": "event",
+              "caption": "Fra pochi giorni sarà il 2 novembre. Se avete bisogno di una corona, di una composizione, di una pulizia di lapide, di un sopralluogo in cimitero — noi siamo pronti. Voi, prendetevi il vostro tempo.\n\n🕯️ Ci siamo, come ogni anno.\n\n#FratelliDiRosa #2Novembre #CommemorazioneDefunti #Preparazione #Ravanusa #Ricordo #SiamoPronti"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

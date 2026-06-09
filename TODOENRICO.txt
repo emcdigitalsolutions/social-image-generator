@@ -1,0 +1,11 @@
+0) Quando invio al cliente il piano da approvare bisogna il sistema che invii una singola email con il resoconto delle approvazioni, attualmente mi arriva una mail ogni volta che approva un singolo post.
+1) Qualche giorno prima della scadenza del mese di ogni cliente vorrei mi arrivasse una mail di promemoria. Nella mail bisogna che ci sia scritto se va creato il piano del mese successivo oppure lo stato del piano (se deve essere approvato ecc.). Se il piano del mese successivo è già stato creato e siamo in attesa di approvazione da parte del cliente, invia una mail anche al cliente per dirgli con il link del piano da approvare per dirgli di approvarlo
+2) dentro i clienti, ci sono Profilo, impostazioni, questionario, piano editoriale e POST. A che serve POST? si può eliminare?
+3) dentro Piano Editoriale eliminare il pulsante "DISATTIVA" posizionato al tasto Elimina di ogni riga
+4) Nella visualizzazione da smartphone, quando clicco sul menu hamburgher della navbar esce solo la sfocatura dello sfondo senza vedere le voci del menu
+5) Nel piano editoriale, dammi la possibilità di restringere le sezioni (lasciale aperte alla prima apertura) ma dammi la possibilità di poter chiudere le sezioni (esempio Categoria dovrei poterla chiudere ed aprire), anche approvazioni clienti, ecc
+6) Dentro il profilo del cliente, nello stato ho la possibilità di archiviare un cliente. Il cliente Archiviato va messo in una lista a parte da aggiungere nel menu di sinistra così da poterlo riattivare quando sottoscrive nuovamente l'abbonamento
+7) quando genero la caption con Gemini, non fargli mettere il commento iniziale "Ecco una proposta di post per Facebook/Instagram", e neanche i commenti come "link al sito" ma direttamente il sito che deve essere sempre con protocollo https e www, es. https://www.terredimiele.it
+8) Quando genera una immagine, con il pulsante "genera da template" crea due immagini, della quale una quando la elimino mi dice "media not found"
+9) quando sono dentro la modifica del post, dammi la possibilità di andare avanti al post successivo e indietro al post precedente, e indietro tornando al mese che sto modificando in cui si vedono tutti i post
+10) AUDIT LOG + LOG quando il cliente approva il piano editoriale

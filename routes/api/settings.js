@@ -180,4 +180,89 @@ router.post('/test-google-script', async (req, res) => {
   }
 });
 
+// POST - verifica stato/credito dei provider AI con una chiamata reale minima.
+// Google NON espone il saldo in € via API: questo test dice se la generazione
+// funziona (credito attivo) o perché fallisce (credito esaurito / key non valida / rate limit).
+function pingGemini(key) {
+  const https = require('https');
+  const body = JSON.stringify({
+    contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
+    generationConfig: { maxOutputTokens: 5, thinkingConfig: { thinkingBudget: 0 } }
+  });
+  return new Promise((resolve) => {
+    const r = https.request({
+      hostname: 'generativelanguage.googleapis.com',
+      path: '/v1beta/models/gemini-2.5-flash:generateContent?key=' + encodeURIComponent(key),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    }, (res) => {
+      let d = ''; res.on('data', c => d += c);
+      res.on('end', () => {
+        let json = {}; try { json = JSON.parse(d); } catch (_) {}
+        const status = res.statusCode;
+        if (status === 200 && json.candidates) {
+          return resolve({ provider: 'Gemini', level: 'ok', status, message: 'Operativo — credito attivo, la generazione funziona.' });
+        }
+        const msg = (json.error && json.error.message) || ('HTTP ' + status);
+        const low = msg.toLowerCase();
+        if (low.includes('prepayment') || low.includes('deplet') || low.includes('billing') || (low.includes('credit') && low.includes('exhaust'))) {
+          return resolve({ provider: 'Gemini', level: 'error', status, message: 'Credito esaurito (piano prepagato Google). Ricarica su ai.studio/projects.' });
+        }
+        if (status === 429) return resolve({ provider: 'Gemini', level: 'warn', status, message: 'Limite di frequenza temporaneo — riprova tra qualche minuto.' });
+        if (status === 400 || status === 403 || low.includes('api key not valid') || low.includes('unsupported')) {
+          return resolve({ provider: 'Gemini', level: 'error', status, message: 'Chiave non valida o non autorizzata: ' + msg });
+        }
+        resolve({ provider: 'Gemini', level: 'error', status, message: msg });
+      });
+    });
+    r.on('error', (e) => resolve({ provider: 'Gemini', level: 'error', status: 0, message: 'Connessione fallita: ' + e.message }));
+    r.setTimeout(15000, () => r.destroy(new Error('timeout')));
+    r.write(body); r.end();
+  });
+}
+
+function pingClaude(key) {
+  const https = require('https');
+  const body = JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 5, messages: [{ role: 'user', content: 'ping' }] });
+  return new Promise((resolve) => {
+    const r = https.request({
+      hostname: 'api.anthropic.com', path: '/v1/messages', method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'Content-Length': Buffer.byteLength(body) }
+    }, (res) => {
+      let d = ''; res.on('data', c => d += c);
+      res.on('end', () => {
+        let json = {}; try { json = JSON.parse(d); } catch (_) {}
+        const status = res.statusCode;
+        if (status === 200 && json.content) return resolve({ provider: 'Claude', level: 'ok', status, message: 'Operativo — credito attivo.' });
+        const msg = (json.error && json.error.message) || ('HTTP ' + status);
+        const low = msg.toLowerCase();
+        if (low.includes('credit balance') || low.includes('billing') || low.includes('insufficient')) {
+          return resolve({ provider: 'Claude', level: 'error', status, message: 'Credito Anthropic insufficiente. Ricarica su console.anthropic.com.' });
+        }
+        if (status === 401 || low.includes('authentication') || low.includes('api key')) {
+          return resolve({ provider: 'Claude', level: 'error', status, message: 'Chiave Anthropic non valida.' });
+        }
+        resolve({ provider: 'Claude', level: 'error', status, message: msg });
+      });
+    });
+    r.on('error', (e) => resolve({ provider: 'Claude', level: 'error', status: 0, message: 'Connessione fallita: ' + e.message }));
+    r.setTimeout(15000, () => r.destroy(new Error('timeout')));
+    r.write(body); r.end();
+  });
+}
+
+router.post('/test-ai', async (req, res) => {
+  try {
+    const results = [];
+    const gkey = settings.getGeminiKey();
+    results.push(gkey ? await pingGemini(gkey) : { provider: 'Gemini', level: 'warn', status: 0, message: 'Nessuna chiave Gemini configurata.' });
+    const akey = settings.getAnthropicKey();
+    if (akey) results.push(await pingClaude(akey));
+    else results.push({ provider: 'Claude', level: 'muted', status: 0, message: 'Non configurato (nessuna chiave Anthropic).' });
+    res.json({ results });
+  } catch (err) {
+    res.status(500).json({ error: 'Errore test AI: ' + err.message });
+  }
+});
+
 module.exports = router;

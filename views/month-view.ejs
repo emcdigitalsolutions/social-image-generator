@@ -603,7 +603,7 @@
     if (btn) btn.disabled = true;
     try {
       const res = await apiFetch('/dashboard/api/posts/' + postId + '/generate-caption', { method: 'POST' });
-      if (res && res.error) throw new Error(res.error);
+      if (res && res.error) throw new Error(res.details || res.error);
       const newCaption = (res && res.caption) || (res && res.post && res.post.caption) || '';
       const ta = tr ? tr.querySelector('textarea') : null;
       if (ta) {
@@ -873,7 +873,7 @@
         try {
           const r = await apiFetch('/dashboard/api/posts/' + postId + '/generate-caption', { method: 'POST' });
           if (r && !r.error) captionsOk++;
-          else { errors++; errLines.push(postId.substring(0, 8) + ': caption — ' + (r && r.error || 'unknown')); }
+          else { errors++; errLines.push(postId.substring(0, 8) + ': caption — ' + (r && (r.details || r.error) || 'unknown')); }
         } catch (err) {
           errors++;
           errLines.push(postId.substring(0, 8) + ': caption — ' + err.message);
@@ -1115,7 +1115,7 @@
         const captionRes = await apiFetch('/dashboard/api/posts/' + created.id + '/generate-caption', { method: 'POST' });
         if (captionRes && captionRes.error) {
           // Post creato comunque, segnalo solo l'errore caption
-          toast('Post creato, ma caption AI fallita: ' + captionRes.error);
+          toast('Post creato, ma caption AI fallita: ' + (captionRes.details || captionRes.error));
         } else {
           toast('Post creato + caption AI generata');
         }
