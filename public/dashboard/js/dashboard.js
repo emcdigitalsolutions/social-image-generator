@@ -27,6 +27,18 @@ async function apiFetch(url, options = {}) {
     throw new Error('Session expired');
   }
 
+  // Risposta non-JSON: tipicamente il proxy (Traefik/Coolify) risponde con una pagina
+  // HTML di errore (502/503/504) mentre il container si sta riavviando durante un deploy.
+  // Senza questo controllo, res.json() lancerebbe il criptico "Unexpected token '<'".
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    await res.text().catch(() => '');
+    if (res.status === 502 || res.status === 503 || res.status === 504) {
+      throw new Error('Server momentaneamente non disponibile (probabile aggiornamento in corso). Attendi qualche secondo e riprova — i tuoi dati non sono stati persi.');
+    }
+    throw new Error('Risposta inattesa dal server (HTTP ' + res.status + '). Ricarica la pagina e riprova tra poco.');
+  }
+
   return res.json();
 }
 
