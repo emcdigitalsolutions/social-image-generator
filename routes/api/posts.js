@@ -320,7 +320,7 @@ Non aggiungere spiegazioni, non parafrasare in modo eccessivo: l'obiettivo è ch
   }
 });
 
-// Generate AI image via Gemini Flash Image (Nano-Banana, gratuito).
+// Generate AI image via Gemini Flash Image (NanoBanana2 = gemini-3.1-flash-image).
 // Differente da /generate-image: niente template HTML, l'immagine è generata
 // dall'AI a partire dalla caption + brand. Aspect ratio configurabile.
 router.post('/:id/generate-ai-image', async (req, res) => {
