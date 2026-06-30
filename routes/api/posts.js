@@ -1898,16 +1898,19 @@ router.post('/bulk-distribute-dates', (req, res) => {
     // Distribuisci i post sui candidati, evenly spaced
     const target = posts.filter(p => !only_unscheduled || !p.scheduled_date);
     const N = target.length;
+    const assignments = [];
     const tx = db.transaction(() => {
       for (let i = 0; i < N; i++) {
         const idx = N === 1 ? 0 : Math.round(i * (candidates.length - 1) / Math.max(N - 1, 1));
         const d = candidates[Math.min(idx, candidates.length - 1)];
-        upd.run(fmt(d), target[i].id);
+        const ds = fmt(d);
+        upd.run(ds, target[i].id);
+        assignments.push({ id: target[i].id, scheduled_date: ds });
         updated++;
       }
     });
     tx();
-    return res.json({ updated, total: posts.length, mode: 'calendar_month', calendar_month: cal.label, candidates_count: candidates.length });
+    return res.json({ updated, total: posts.length, mode: 'calendar_month', calendar_month: cal.label, candidates_count: candidates.length, assignments });
   }
 
   // Modalità 'weeks' (legacy)
@@ -1925,6 +1928,7 @@ router.post('/bulk-distribute-dates', (req, res) => {
     indexInWeek.set(p.id, counters[w]++);
   }
 
+  const assignments = [];
   const tx = db.transaction(() => {
     for (const p of posts) {
       if (only_unscheduled && p.scheduled_date) continue;
@@ -1933,12 +1937,14 @@ router.post('/bulk-distribute-dates', (req, res) => {
       const week = (p.week_number || 1) - 1;
       const d = new Date(startMonday);
       d.setDate(d.getDate() + week * 7 + (weekday - 1));
-      upd.run(fmt(d), p.id);
+      const ds = fmt(d);
+      upd.run(ds, p.id);
+      assignments.push({ id: p.id, scheduled_date: ds });
       updated++;
     }
   });
   tx();
-  res.json({ updated, total: posts.length, mode: 'weeks' });
+  res.json({ updated, total: posts.length, mode: 'weeks', assignments });
 });
 
 // Segna in stato 'ready' tutti i post indicati che soddisfano le pre-condizioni:

@@ -1567,8 +1567,13 @@
         body: { plan_id: PLAN_ID, month: MONTH }
       });
       if (res.error) { await showAlert(res.error); return; }
+      // Aggiorna in-place: i post non pubblicati perdono la data (niente reload).
+      POSTS.forEach(p => { if (p.status !== 'published') p.scheduled_date = null; });
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) backdrop.remove();
+      updateCounts();
+      renderViews();
       toast(res.cleared + ' date cancellate');
-      window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     }
@@ -1597,10 +1602,21 @@
           : 'Nessun post da distribuire in questo mese.');
         return;
       }
+      // Aggiorna le date in memoria e ri-renderizza SUBITO (niente reload: il
+      // reload poteva essere servito dalla cache → l'utente vedeva i post solo
+      // dopo un refresh manuale).
+      if (Array.isArray(res.assignments)) {
+        const byId = {};
+        res.assignments.forEach(a => { byId[a.id] = a.scheduled_date; });
+        POSTS.forEach(p => { if (byId[p.id]) p.scheduled_date = byId[p.id]; });
+      }
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) backdrop.remove();
+      updateCounts();
+      renderViews();
       const suffix = res.calendar_month ? ` (${res.calendar_month})` : '';
       const scopeMsg = onlyEmpty ? 'solo post senza data' : 'tutti i post';
       toast(res.updated + ' post programmati (' + scopeMsg + ')' + suffix);
-      window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
     }
