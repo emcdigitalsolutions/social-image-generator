@@ -270,7 +270,7 @@
 <% } %>
 
 <% if (plan.plan_data && plan.plan_data.categories) { %>
-<div class="card card-collapsible" data-section="categorie" style="margin-bottom:24px">
+<div class="card card-collapsible card-collapsed" data-section="categorie" style="margin-bottom:24px">
   <div class="card-header">
     <h3>Categorie</h3>
     <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();addCategory()">+ Aggiungi categoria</button>
@@ -919,7 +919,10 @@
       const key = sec.dataset.section;
       if (!key) return;
       const collapsedClass = sec.classList.contains('card-collapsible') ? 'card-collapsed' : 'section-collapsed';
-      if (saved[key]) sec.classList.add(collapsedClass);
+      // Preferenza utente esplicita → vince. Senza preferenza salvata si usa il
+      // default dichiarato in HTML (es. "Categorie" parte chiusa con .card-collapsed).
+      if (saved[key] === true) sec.classList.add(collapsedClass);
+      else if (saved[key] === false) sec.classList.remove(collapsedClass);
       const header = sec.querySelector(':scope > .card-header, :scope > .section-header');
       if (!header) return;
       header.addEventListener('click', (e) => {
