@@ -103,11 +103,69 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .page-header.plan-header .plan-actions {
-    display:flex; gap:6px; flex:0 0 auto; flex-wrap:wrap; justify-content:flex-end;
+    display:flex; align-items:center; gap:10px; flex:0 0 auto; flex-wrap:wrap; justify-content:flex-end;
   }
   @media (max-width:720px) {
     .page-header.plan-header { flex-direction:row; flex-wrap:wrap; }
     .page-header.plan-header .plan-actions { width:100%; justify-content:flex-start; }
+  }
+
+  /* ── Toolbar azioni piano: icon-button raggruppati + primario pill ── */
+  .ptoolbar {
+    display:inline-flex; align-items:center; gap:2px;
+    background:var(--gray-50); border:1px solid var(--gray-200);
+    border-radius:11px; padding:3px;
+  }
+  .icon-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:36px; height:36px; padding:0;
+    border:none; background:transparent; border-radius:8px;
+    color:var(--gray-500); cursor:pointer;
+    transition:background .12s, color .12s, box-shadow .12s;
+  }
+  .icon-btn:hover { background:white; color:var(--gray-900); box-shadow:0 1px 3px rgba(15,23,42,.12); }
+  .icon-btn:active { transform:translateY(.5px); }
+  .icon-btn svg { width:18px; height:18px; stroke-width:2; }
+  .icon-btn .caret { width:11px; height:11px; margin-left:1px; opacity:.55; }
+  .icon-btn.has-caret { width:auto; padding:0 8px; gap:1px; }
+
+  .ptb-dropdown { position:relative; display:inline-flex; }
+  .ptb-menu {
+    position:absolute; top:calc(100% + 7px); right:0; min-width:186px;
+    background:white; border:1px solid var(--gray-200); border-radius:11px;
+    box-shadow:0 12px 34px rgba(15,23,42,.16); padding:6px; z-index:40;
+    display:none; animation:ptbIn .12s ease;
+  }
+  .ptb-menu.open { display:block; }
+  @keyframes ptbIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+  .ptb-menu button {
+    display:flex; align-items:center; gap:10px; width:100%;
+    padding:9px 11px; border:none; background:transparent; border-radius:7px;
+    font-family:inherit; font-size:13px; font-weight:500; color:var(--gray-700);
+    cursor:pointer; text-align:left; white-space:nowrap;
+  }
+  .ptb-menu button:hover { background:var(--gray-50); color:var(--gray-900); }
+  .ptb-menu button svg { width:16px; height:16px; stroke-width:2; color:var(--gray-400); flex:0 0 auto; }
+
+  .ptb-sep { width:1px; align-self:stretch; min-height:26px; background:var(--gray-200); margin:0 2px; }
+
+  .btn-pill {
+    display:inline-flex; align-items:center; gap:7px; height:38px; padding:0 17px;
+    border:none; border-radius:10px; font-family:inherit; font-size:13px; font-weight:600;
+    cursor:pointer; transition:background .12s, box-shadow .12s, transform .05s;
+  }
+  .btn-pill svg { width:16px; height:16px; stroke-width:2.25; }
+  .btn-pill.primary {
+    background:var(--blue); color:white; box-shadow:0 1px 2px rgba(37,99,235,.35);
+  }
+  .btn-pill.primary:hover { filter:brightness(.94); box-shadow:0 5px 14px rgba(37,99,235,.32); }
+  .btn-pill.primary:active { transform:translateY(1px); }
+  .btn-pill.ghost {
+    background:white; color:var(--gray-700); border:1px solid var(--gray-200);
+  }
+  .btn-pill.ghost:hover { background:var(--gray-50); color:var(--gray-900); }
+  @media (max-width:720px) {
+    .ptoolbar { flex-wrap:wrap; }
   }
 
   /* Sezioni collassabili: click sull'header per chiudere/riaprire.
@@ -162,15 +220,44 @@
     </div>
   </div>
   <div class="plan-actions">
-    <button class="btn btn-secondary" onclick="renamePlan()" title="Cambia il nome del piano editoriale">&#9998; Rinomina</button>
-    <button class="btn btn-secondary" onclick="duplicatePlan()" title="Crea una copia del piano con tutti i post (senza media e in stato draft)">&#9112; Duplica</button>
-    <button class="btn btn-secondary" onclick="exportJson()" title="Scarica il piano come file JSON (re-importabile, con caption correnti)">&#8595; Esporta JSON</button>
-    <button class="btn btn-secondary" onclick="exportPdf()" title="Scarica un PDF stampabile del piano">&#8595; Esporta PDF</button>
-    <button class="btn btn-secondary" onclick="saveAsTemplate()" title="Salva la struttura di questo piano come template riusabile per altri clienti dello stesso settore">&#9881; Salva come template</button>
+    <div class="ptoolbar" role="toolbar" aria-label="Azioni piano">
+      <button class="icon-btn" onclick="renamePlan()" aria-label="Rinomina" title="Rinomina &mdash; cambia il nome del piano editoriale">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+      </button>
+      <button class="icon-btn" onclick="duplicatePlan()" aria-label="Duplica" title="Duplica &mdash; crea una copia del piano con tutti i post (senza media, in stato draft)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+      <div class="ptb-dropdown">
+        <button class="icon-btn has-caret" onclick="toggleExportMenu(event)" aria-label="Esporta" aria-haspopup="true" aria-expanded="false" title="Esporta &mdash; scarica il piano in JSON o PDF">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="ptb-menu" id="export-menu" role="menu">
+          <button role="menuitem" onclick="exportJson();closeExportMenu()" title="Scarica il piano come file JSON (re-importabile, con caption correnti)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2 2 2 0 0 0-2 2v5a2 2 0 0 1-2 2h-1"/></svg>
+            Esporta JSON
+          </button>
+          <button role="menuitem" onclick="exportPdf();closeExportMenu()" title="Scarica un PDF stampabile del piano">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Esporta PDF
+          </button>
+        </div>
+      </div>
+      <button class="icon-btn" onclick="saveAsTemplate()" aria-label="Salva come template" title="Salva come template &mdash; struttura riusabile per altri clienti dello stesso settore">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7" rx="1"/><rect x="3" y="14" width="9" height="7" rx="1"/><rect x="16" y="14" width="5" height="7" rx="1"/></svg>
+      </button>
+    </div>
+    <span class="ptb-sep" aria-hidden="true"></span>
     <% if (plan.status !== 'active') { %>
-      <button class="btn btn-primary" onclick="activatePlan()" title="Attiva il piano: da questo momento i post con status 'ready' e scheduled_date passata verranno pubblicati automaticamente su FB/IG ogni 60s.">▶ Attiva piano</button>
+      <button class="btn-pill primary" onclick="activatePlan()" title="Attiva il piano: da questo momento i post con status 'ready' e scheduled_date passata verranno pubblicati automaticamente su FB/IG ogni 60s.">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+        Attiva piano
+      </button>
     <% } else { %>
-      <button class="btn btn-secondary" onclick="deactivatePlan()" title="Disattiva l'auto-publish (il piano torna a 'confirmed').">⏸ Disattiva</button>
+      <button class="btn-pill ghost" onclick="deactivatePlan()" title="Disattiva l'auto-publish (il piano torna a 'confirmed').">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+        Disattiva
+      </button>
     <% } %>
   </div>
 </div>
@@ -801,6 +888,24 @@
       await showAlert('Errore: ' + err.message);
     }
   }
+
+  // ── Dropdown "Esporta" (JSON / PDF) ──
+  function _exportMenu() { return document.getElementById('export-menu'); }
+  function _exportTrigger() { return document.querySelector('.icon-btn.has-caret'); }
+  function closeExportMenu() {
+    const m = _exportMenu(); if (m) m.classList.remove('open');
+    const t = _exportTrigger(); if (t) t.setAttribute('aria-expanded', 'false');
+  }
+  function toggleExportMenu(e) {
+    if (e) e.stopPropagation();
+    const m = _exportMenu(); if (!m) return;
+    const open = m.classList.toggle('open');
+    const t = _exportTrigger(); if (t) t.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.ptb-dropdown')) closeExportMenu();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeExportMenu(); });
 
   // Sezioni collassabili: click sull'header chiude/riapre. Stato salvato per
   // piano in localStorage così ciascun utente mantiene le sue preferenze.
