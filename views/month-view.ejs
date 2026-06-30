@@ -1445,6 +1445,9 @@
     POSTS.forEach(p => { const w = p.week_number || 1; byWeek[w] = (byWeek[w] || 0) + 1; });
     const maxPerWeek = Math.max(...Object.values(byWeek), 1);
     const avgPerWeek = (POSTS.length / Math.max(Object.keys(byWeek).length, 1)).toFixed(1);
+    // Conteggi per la scelta "quali post distribuire"
+    const withoutDate = POSTS.filter(p => !p.scheduled_date).length;
+    const withDate = POSTS.length - withoutDate;
 
     const WEEKDAYS = [
       { n: 1, label: 'Lun' }, { n: 2, label: 'Mar' }, { n: 3, label: 'Mer' },
@@ -1510,8 +1513,20 @@
         <div style="font-size:11px;color:var(--gray-500);margin-bottom:8px">Seleziona almeno <strong>${maxPerWeek}</strong> giorni (tanti quanti i post della settimana più piena)</div>
         <div id="dm-weekdays" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${wdHtml}</div>
 
-        <div class="modal-row">
-          <label><input type="checkbox" id="dm-only-empty" checked> Applica solo ai post senza data già impostata</label>
+        <div style="font-size:13px;font-weight:600;margin:12px 0 6px">Quali post distribuire?</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px;font-size:13px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+            <input type="radio" name="dm-scope" value="empty" ${withoutDate ? 'checked' : ''}>
+            <span><strong>Solo i post senza data</strong> (${withoutDate})
+              <div style="font-size:11px;color:var(--gray-500);font-weight:400">${withDate} post già programmati restano invariati.</div>
+            </span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+            <input type="radio" name="dm-scope" value="all" ${withoutDate ? '' : 'checked'}>
+            <span><strong>Tutti i post del mese</strong> (${POSTS.length})
+              <div style="font-size:11px;color:var(--gray-500);font-weight:400">${withDate ? 'Riassegna le date a tutti, sovrascrivendo anche i ' + withDate + ' già programmati.' : 'Riassegna le date a tutti i post.'}</div>
+            </span>
+          </label>
         </div>
 
         <div class="modal-actions" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1562,7 +1577,8 @@
   async function applyBulkDistributeDates() {
     const modeEl = document.querySelector('input[name="dm-mode"]:checked');
     const mode = modeEl ? modeEl.value : 'weeks';
-    const onlyEmpty = document.getElementById('dm-only-empty').checked;
+    const scopeEl = document.querySelector('input[name="dm-scope"]:checked');
+    const onlyEmpty = !scopeEl || scopeEl.value === 'empty';
     const weekdays = Array.from(document.querySelectorAll('#dm-weekdays input:checked')).map(i => parseInt(i.value, 10));
     if (!weekdays.length) { showAlert('Seleziona almeno un giorno della settimana.'); return; }
     const body = { plan_id: PLAN_ID, month: MONTH, weekdays, only_unscheduled: onlyEmpty, mode };
@@ -1574,8 +1590,16 @@
     try {
       const res = await apiFetch('/dashboard/api/posts/bulk-distribute-dates', { method: 'POST', body });
       if (res.error) { await showAlert(res.error); return; }
+      if (!res.updated) {
+        // Nessun post aggiornato: spiega perché e lascia il modal aperto per cambiare scelta.
+        await showAlert(onlyEmpty
+          ? 'Nessun post aggiornato: tutti i post del mese hanno già una data.\n\nPer ridistribuirli scegli "Tutti i post del mese", oppure usa "🗑 Cancella date del mese" e riprova.'
+          : 'Nessun post da distribuire in questo mese.');
+        return;
+      }
       const suffix = res.calendar_month ? ` (${res.calendar_month})` : '';
-      toast(res.updated + ' post distribuiti su ' + weekdays.length + ' giorni settimanali' + suffix);
+      const scopeMsg = onlyEmpty ? 'solo post senza data' : 'tutti i post';
+      toast(res.updated + ' post programmati (' + scopeMsg + ')' + suffix);
       window.location.reload();
     } catch (err) {
       await showAlert('Errore: ' + err.message);
