@@ -32,6 +32,12 @@
   .cal-post.s-failed          { border-left-color:#dc2626; background:#fef2f2; }
 
   .unscheduled-bar { margin-top:24px; padding:12px; background:#fef9c3; border:1px solid #fde047; border-radius:6px; font-size:13px; }
+  .cal-unscheduled { margin-bottom:14px; padding:12px 14px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; }
+  .cal-unsched-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; font-weight:600; color:#92400e; margin-bottom:10px; }
+  .cal-unsched-head .count { background:#f59e0b; color:white; border-radius:10px; padding:1px 8px; font-size:12px; }
+  .cal-unsched-head .btn { margin-left:auto; }
+  .cal-unsched-list { display:flex; flex-wrap:wrap; gap:6px; }
+  .cal-unsched-list .cal-post { min-width:120px; max-width:220px; }
 
   /* Drag & drop tra settimane e riordino interno */
   .post-card[draggable="true"] { cursor:grab; }
@@ -353,13 +359,45 @@
   function parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
   function fmtIso(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 
+  // Fascia "Da programmare": i post (del filtro corrente) privi di scheduled_date.
+  // Mostrata SEMPRE in cima al calendario così l'utente vede i post anche prima
+  // di distribuire le date (prima venivano nascosti del tutto se senza data).
+  function unscheduledBandHtml(posts) {
+    if (!posts.length) return '';
+    const items = posts.map(p => {
+      const label = categoryName(p.category);
+      const apClass = p.approval_status ? ' ap-' + p.approval_status : '';
+      const ratioClass = p.has_bad_ratio ? ' bad-ratio' : '';
+      let titleAttr = p.sub_topic || p.status;
+      if (p.last_client_comment) titleAttr += '\n\n✏️ Cliente: ' + p.last_client_comment;
+      return '<a href="/dashboard/posts/' + p.id + '" class="cal-post s-' + p.status + apClass + ratioClass + '" title="' + escapeHtml(titleAttr) + '">' + escapeHtml(label) + '</a>';
+    }).join('');
+    return '<div class="cal-unscheduled">'
+      + '<div class="cal-unsched-head">📌 Da programmare <span class="count">' + posts.length + '</span>'
+      + '<button class="btn btn-sm btn-secondary" onclick="openDateModal()" title="Assegna in automatico le date di pubblicazione">📅 Distribuisci date</button></div>'
+      + '<div class="cal-unsched-list">' + items + '</div></div>';
+  }
+
   // Renderizza vista calendario
   function renderCalendar() {
     const root = document.getElementById('view-cal');
     if (!root) return;
+
+    const visible = POSTS.filter(matchesFilter);
+    const unscheduled = visible.filter(p => !p.scheduled_date);
+    const bandHtml = unscheduledBandHtml(unscheduled);
+
+    // La fascia in cima sostituisce la vecchia barra-avviso testuale sotto.
+    const oldBar = document.getElementById('unscheduled');
+    if (oldBar) oldBar.style.display = 'none';
+
     const range = dateRange();
     if (!range) {
-      root.innerHTML = '<div class="empty-state"><h3>Nessun post ha una data programmata</h3><p>Imposta una <em>scheduled_date</em> da ciascun post per vederlo nel calendario.</p></div>';
+      // Nessun post ha una data: NON nascondere i post — mostra la fascia "Da
+      // programmare" con tutti i post + invito a distribuire le date.
+      root.innerHTML = bandHtml
+        + '<div class="empty-state"><h3>Nessun post ha ancora una data di pubblicazione</h3>'
+        + '<p>Clicca <strong>📅 Distribuisci date</strong> per assegnarle in automatico, oppure imposta una <em>data</em> da ciascun post. I post programmati appariranno qui nel calendario.</p></div>';
       return;
     }
     // Allarga al lunedì precedente / domenica successiva
@@ -370,7 +408,7 @@
 
     const today = fmtIso(new Date());
     const byDate = {};
-    POSTS.filter(matchesFilter).forEach(p => {
+    visible.forEach(p => {
       if (!p.scheduled_date) return;
       (byDate[p.scheduled_date] = byDate[p.scheduled_date] || []).push(p);
     });
@@ -400,17 +438,7 @@
       });
       html += '</div>';
     }
-    root.innerHTML = '<div class="cal-grid">' + html + '</div>';
-
-    // Avviso post non schedulati
-    const noDate = POSTS.filter(matchesFilter).filter(p => !p.scheduled_date).length;
-    const bar = document.getElementById('unscheduled');
-    if (noDate > 0) {
-      document.getElementById('unscheduled-count').textContent = noDate;
-      bar.style.display = 'block';
-    } else {
-      bar.style.display = 'none';
-    }
+    root.innerHTML = bandHtml + '<div class="cal-grid">' + html + '</div>';
   }
 
   // Renderizza vista lista per settimana (storica).
