@@ -1023,6 +1023,97 @@ router.post('/:id/library-attach', async (req, res) => {
   }
 });
 
+// Auto-scelta immagini da libreria: dato un post con caption, sceglie dalla
+// libreria del cliente le immagini più coerenti (vision-tagging cachato + match
+// AI) e le allega automaticamente. Solo single_image (1) e carousel (N).
+router.post('/:id/auto-pick-library-images', async (req, res) => {
+  const clientLibrary = require('../../lib/client-library');
+  const libraryMatch = require('../../lib/library-match');
+  const imageSize = require('image-size');
+  const db = getDb();
+
+  const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id);
+  if (!post) return res.status(404).json({ error: 'Post not found' });
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(post.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+
+  const apiKey = getEffectiveGeminiKey(client);
+  if (!apiKey) return res.status(400).json({ error: 'Nessuna Gemini API key disponibile (né per il cliente né globale).' });
+
+  const caption = (post.caption || '').trim();
+  if (!caption) return res.status(400).json({ error: 'Il post non ha una caption: genera o scrivi prima la caption, serve per scegliere le immagini più pertinenti.' });
+
+  const mediaType = post.media_type || 'single_image';
+  if (mediaType !== 'single_image' && mediaType !== 'carousel') {
+    return res.status(400).json({ error: 'La scelta automatica da libreria è disponibile solo per i post di tipo Singola immagine o Carousel.' });
+  }
+  const reqCount = parseInt(req.body && req.body.count, 10);
+  const count = mediaType === 'carousel'
+    ? Math.min(10, Math.max(1, Number.isFinite(reqCount) ? reqCount : 3))
+    : 1;
+
+  try {
+    const context = { brand: client.display_name, sector: client.sector };
+    const stats = await libraryMatch.ensureImageDescriptions(client.id, apiKey, context);
+
+    const picks = await libraryMatch.pickImagesForCaption({ caption, clientId: client.id, count, apiKey });
+    if (!picks.length) {
+      const msg = stats.total === 0
+        ? 'La libreria immagini di questo cliente è vuota: carica prima qualche foto.'
+        : 'Nessuna immagine della libreria risulta abbastanza coerente con la caption.';
+      return res.json({ attached: [], analyzed: stats.analyzed, remaining: stats.remaining, total: stats.total, message: msg });
+    }
+
+    const attached = [];
+    for (const pk of picks) {
+      const item = pk.item;
+      const tmpDest = path.join(os.tmpdir(), `sig-autopick-${uuidv4()}${path.extname(item.filename)}`);
+      clientLibrary.copyToPostDir({
+        libraryItem: item,
+        destDir: path.dirname(tmpDest),
+        destFilename: path.basename(tmpDest)
+      });
+      const media = postMedia.attachGeneratedFile({
+        clientId: post.client_id,
+        postId: post.id,
+        absolutePath: tmpDest,
+        source: 'library',
+        kind: 'image'
+      });
+      // Normalizza per Meta + popola width/height/bytes
+      try {
+        const dest = path.join(postMedia.postDir(post.client_id, post.id), media.filename);
+        await postMedia.normalizeImageForMeta(dest);
+        const dim = imageSize(dest);
+        if (dim && dim.width && dim.height) {
+          db.prepare('UPDATE post_media SET width = ?, height = ?, bytes = ? WHERE id = ?')
+            .run(dim.width, dim.height, fs.statSync(dest).size, media.id);
+        }
+      } catch (e) { console.warn('[auto-pick-library] post-process failed:', e.message); }
+
+      attached.push({
+        media_id: media.id,
+        library_item_id: item.id,
+        original_name: item.original_name,
+        reason: pk.reason
+      });
+    }
+
+    audit.logFromReq(req, {
+      client_id: post.client_id,
+      action: 'post.library.auto_picked',
+      entity_type: 'post',
+      entity_id: post.id,
+      details: { count: attached.length, analyzed: stats.analyzed, item_ids: attached.map(a => a.library_item_id) }
+    });
+
+    res.json({ attached, analyzed: stats.analyzed, remaining: stats.remaining, total: stats.total });
+  } catch (err) {
+    console.error('[auto-pick-library] error:', err.message);
+    res.status(500).json({ error: 'Scelta automatica da libreria fallita', details: err.message });
+  }
+});
+
 // Salva un media del post (video o immagine) nella libreria del cliente.
 // Crea una COPIA del file, così cancellare il media dal post non rompe la libreria.
 router.post('/:id/media/:mediaId/save-to-library', async (req, res) => {

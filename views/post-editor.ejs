@@ -564,6 +564,7 @@
           <button class="btn btn-sm btn-secondary" onclick="generateImage()" id="gen-image-btn" title="Renderizza un'immagine dal template HTML selezionato (poster con testo)"><span style="margin-right:3px">🖼️</span>Da template</button>
           <button class="btn btn-sm btn-secondary" onclick="openLibraryPicker('video')" id="library-picker-btn" title="Scegli un video già presente nella libreria di questo cliente"><span style="margin-right:3px">📚</span>Video da libreria</button>
           <button class="btn btn-sm btn-secondary" onclick="openLibraryPicker('image')" id="library-picker-img-btn" title="Scegli un'immagine già presente nella libreria di questo cliente"><span style="margin-right:3px">📚</span>Immagine da libreria</button>
+          <button class="btn btn-sm btn-secondary" onclick="autoPickLibrary()" id="auto-lib-btn" title="Sceglie automaticamente dalla libreria del cliente le immagini più coerenti con la caption e le allega al post (analisi AI delle immagini)"><span style="margin-right:3px">🎯</span>Scegli da libreria</button>
         </div>
       </div>
 
@@ -2409,6 +2410,39 @@
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<span style="margin-right:3px">✨</span>Genera AI';
+    }
+  }
+
+  // Sceglie automaticamente dalla libreria del cliente le immagini più coerenti
+  // con la caption e le allega al post. La prima volta le immagini vengono
+  // analizzate dall'AI (poi il risultato resta in cache).
+  async function autoPickLibrary() {
+    const btn = document.getElementById('auto-lib-btn');
+    if (!await showConfirm('Cercare nella libreria di questo cliente le immagini più coerenti con la caption e allegarle al post?\n\nLa prima volta le immagini vengono analizzate (pochi secondi ciascuna), poi il risultato è in cache.')) return;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Analisi libreria...';
+    try {
+      await saveDetails(); // persiste la caption corrente prima del match lato server
+      const res = await apiFetch('/dashboard/api/posts/' + POST_ID + '/auto-pick-library-images', { method: 'POST', body: {} });
+      if (res.error) { await showAlert(res.error + (res.details ? '\n' + res.details : '')); return; }
+      if (!res.attached || !res.attached.length) {
+        const extra = res.remaining ? '\n\n(' + res.remaining + ' immagini non ancora analizzate: riclicca per includerle)' : '';
+        await showAlert((res.message || 'Nessuna immagine pertinente trovata in libreria.') + extra);
+        return;
+      }
+      const mediaRes = await apiFetch('/dashboard/api/posts/' + POST_ID + '/media');
+      MEDIA = mediaRes.media || [];
+      renderMedia();
+      const lines = res.attached.map(a => '• ' + (a.original_name || a.library_item_id) + (a.reason ? ' — ' + a.reason : ''));
+      const extra = res.remaining ? '\n\n(' + res.remaining + ' immagini non ancora analizzate: riclicca per includerle)' : '';
+      toast(res.attached.length + ' immagine/i allegata/e dalla libreria');
+      await showAlert('Allegate ' + res.attached.length + ' immagini dalla libreria:\n\n' + lines.join('\n') + extra);
+    } catch (err) {
+      await showAlert('Errore: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
     }
   }
 
