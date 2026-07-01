@@ -2468,11 +2468,15 @@
       // Audio sources: prefisso "client:" identifica audio dalla libreria cliente,
       // valori senza prefisso sono filename della libreria globale /music/.
       // Backend distingue dal prefisso.
+      const escAttr = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+      // Ogni <option> porta un data-url pronto per l'anteprima: audio cliente →
+      // a.url; audio globale → /music/<filename urlencoded>. La preview legge il
+      // data-url (come il modale "Anima immagine"), così funziona per entrambi.
       const clientOpts = clientAudio.length
-        ? '<optgroup label="📚 Libreria del cliente">' + clientAudio.map(a => `<option value="client:${a.id}">${(a.original_name || a.filename).replace(/[<>"]/g, '')} (${(a.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+        ? '<optgroup label="📚 Libreria del cliente">' + clientAudio.map(a => `<option value="client:${a.id}" data-url="${escAttr(a.url)}">${escAttr(a.original_name || a.filename)} (${(a.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
         : '';
       const globalOpts = library.tracks.length
-        ? '<optgroup label="🌐 Libreria globale">' + library.tracks.map(t => `<option value="${t.filename}">${t.filename} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+        ? '<optgroup label="🌐 Libreria globale">' + library.tracks.map(t => `<option value="${escAttr(t.filename)}" data-url="/music/${encodeURIComponent(t.filename)}">${escAttr(t.filename)} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
         : '';
       const tracksOptions = (clientOpts || globalOpts)
         ? clientOpts + globalOpts
@@ -2589,23 +2593,29 @@
       const trackSel = overlay.querySelector('#vc-audio-track');
       const audioPreview = overlay.querySelector('#vc-audio-preview');
       const updatePreview = () => {
-        const v = trackSel.value;
-        if (audioPreview && v) audioPreview.src = '/music/' + v;
-        else if (audioPreview) audioPreview.removeAttribute('src');
+        if (!audioPreview) return;
+        const opt = trackSel && trackSel.options[trackSel.selectedIndex];
+        const url = opt && opt.dataset ? opt.dataset.url : '';
+        if (url) { audioPreview.src = url; audioPreview.load(); }
+        else audioPreview.removeAttribute('src');
       };
       if (trackSel) trackSel.onchange = updatePreview;
       updatePreview();
 
-      // Refresh libreria
+      // Refresh libreria (ri-carica sia globale sia audio del cliente, con data-url)
       overlay.querySelector('#vc-audio-refresh-btn').onclick = async () => {
         try {
-          const lib = await apiFetch('/dashboard/api/music');
-          if (lib && Array.isArray(lib.tracks)) {
-            trackSel.innerHTML = lib.tracks.length
-              ? lib.tracks.map(t => `<option value="${t.filename}">${t.filename} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('')
-              : '<option value="">— Libreria vuota —</option>';
-            updatePreview();
-          }
+          let tracks = [], cAudio = [];
+          try { const lib = await apiFetch('/dashboard/api/music'); if (lib && Array.isArray(lib.tracks)) tracks = lib.tracks; } catch (_) {}
+          try { const cl = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/library?kind=audio'); if (cl && Array.isArray(cl.items)) cAudio = cl.items; } catch (_) {}
+          const cOpts = cAudio.length
+            ? '<optgroup label="📚 Libreria del cliente">' + cAudio.map(a => `<option value="client:${a.id}" data-url="${escAttr(a.url)}">${escAttr(a.original_name || a.filename)} (${(a.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+            : '';
+          const gOpts = tracks.length
+            ? '<optgroup label="🌐 Libreria globale">' + tracks.map(t => `<option value="${escAttr(t.filename)}" data-url="/music/${encodeURIComponent(t.filename)}">${escAttr(t.filename)} (${(t.bytes/1024).toFixed(0)} KB)</option>`).join('') + '</optgroup>'
+            : '';
+          trackSel.innerHTML = (cOpts || gOpts) ? cOpts + gOpts : '<option value="">— Nessuna traccia disponibile —</option>';
+          updatePreview();
         } catch (e) { console.warn('Refresh libreria fallito', e); }
       };
 

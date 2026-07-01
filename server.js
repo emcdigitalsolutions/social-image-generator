@@ -102,9 +102,22 @@ app.use('/music', express.static(path.join(__dirname, 'public', 'music'), {
   maxAge: '1h',
   etag: true,
   lastModified: true,
-  setHeaders: (res) => {
+  // acceptRanges:false: dietro il proxy Traefik/Coolify il Range header viene
+  // rimaneggiato → 206 con Content-Range malformato → il player <audio> del
+  // browser non parte (anteprima muta, durata 0:00). Stessa lezione di /library.
+  acceptRanges: false,
+  setHeaders: (res, filePath) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    // Forza Content-Type esplicito (alcuni proxy strippano la deduzione mime)
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeMap = {
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
+      '.m4a': 'audio/mp4',
+      '.ogg': 'audio/ogg'
+    };
+    if (mimeMap[ext]) res.setHeader('Content-Type', mimeMap[ext]);
   }
 }));
 
