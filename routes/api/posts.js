@@ -746,18 +746,23 @@ router.post('/:id/publish', async (req, res) => {
     channels = detectChannels(client); // auto-rileva, coerente con lo scheduler
   }
 
-  // Re-entrancy guard: condiviso con lo scheduler tramite `inFlightPosts`.
+  // Re-entrancy guard via claim atomico su DB (status → 'publishing'), lo STESSO
+  // meccanismo dello scheduler → anti-doppione affidabile anche tra container.
   // Senza questo:
   //  - admin clicca "Pubblica" → publishPost gira 30-90s (es. video IG con polling)
   //  - tick scheduler (ogni 60s) trova lo stesso post in 'ready' e lo pubblica di nuovo
   //  → doppia pubblicazione su FB/IG.
-  // Già il blocco status='published' al termine impedisce ulteriori tentativi,
-  // ma durante il publish manuale lo status DB è ancora 'ready'.
-  const { inFlightPosts } = require('../../lib/scheduler');
-  if (inFlightPosts.has(post.id)) {
+  // Lo scheduler claima solo da 'ready'; qui claimiamo da qualsiasi stato ≠ 'publishing'
+  // (il publish manuale può partire anche da draft/failed). Se il post è già
+  // 'publishing' (in corso da scheduler o da un altro click) → changes===0 → 409.
+  // Un post lasciato 'publishing' da un crash lo recupera lo scheduler dopo
+  // PUBLISHING_STALE_MIN (lo riporta a 'ready').
+  const claim = db.prepare(
+    "UPDATE posts SET status='publishing', updated_at=datetime('now') WHERE id=? AND status!='publishing'"
+  ).run(post.id);
+  if (claim.changes === 0) {
     return res.status(409).json({ error: 'Pubblicazione già in corso per questo post — attendi qualche secondo e ricarica la pagina.' });
   }
-  inFlightPosts.add(post.id);
 
   try {
     const result = await publishPost(client, { ...post, media_type: mediaType }, media, { channels });
@@ -815,12 +820,19 @@ router.post('/:id/publish', async (req, res) => {
     const updated = db.prepare('SELECT * FROM posts WHERE id = ?').get(post.id);
     res.json({ post: updated, publish_result: result });
   } catch (err) {
-    // Eccezione non catturata dal flusso normale (es. crash Puppeteer, errore DB)
+    // Eccezione non catturata dal flusso normale (es. crash Puppeteer, errore DB).
+    // Rilascia il claim segnando 'failed' — ma SOLO se lo status è ancora
+    // 'publishing' (il percorso di successo l'ha già portato a published/failed,
+    // quindi non lo sovrascriviamo: un post davvero pubblicato non deve tornare failed).
+    try {
+      db.prepare("UPDATE posts SET status='failed', publish_error=?, updated_at=datetime('now') WHERE id=? AND status='publishing'")
+        .run('Exception: ' + err.message, post.id);
+    } catch (dbErr) {
+      console.error('[publish] reset status failed:', dbErr.message);
+    }
     notifyPublishFailed(post, client, 'Exception: ' + err.message)
       .catch(e => console.error('[notifier] publish exception notify error:', e.message));
     res.status(500).json({ error: 'Publishing failed', details: err.message });
-  } finally {
-    inFlightPosts.delete(post.id);
   }
 });
 

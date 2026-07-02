@@ -68,7 +68,7 @@ describe('set e costanti esportate', () => {
 
   test('limiti dimensioni sono coerenti con vincoli Meta', () => {
     expect(MAX_IMAGE_BYTES).toBe(8 * 1024 * 1024);
-    expect(MAX_VIDEO_BYTES).toBe(100 * 1024 * 1024);
+    expect(MAX_VIDEO_BYTES).toBe(250 * 1024 * 1024);
     expect(MAX_CAROUSEL_ITEMS).toBe(10);
   });
 });
