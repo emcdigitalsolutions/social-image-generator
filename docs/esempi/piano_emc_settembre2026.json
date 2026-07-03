@@ -1,0 +1,121 @@
+{
+  "title": "EMC — Settembre 2026",
+  "categories": [
+    { "code": "C1", "name": "Servizi", "frequency": "settimanale", "description": "Siti web, e-commerce, WhatsApp Business, prenotazioni online" },
+    { "code": "C3", "name": "Consigli & Digitalizzazione", "frequency": "1-2/mese", "description": "Content marketing, analytics, buone pratiche digitali" },
+    { "code": "C4", "name": "Case Study", "frequency": "1/mese", "description": "Progetti reali e risultati ottenuti" },
+    { "code": "C5", "name": "Dietro le quinte & Brand", "frequency": "1-2/mese", "description": "Come lavoriamo, studio, identità EMC" },
+    { "code": "C6", "name": "Mission & Valori", "frequency": "1/mese", "description": "Vicinanza ai clienti e crescita del territorio" }
+  ],
+  "months": [
+    {
+      "month_number": 1,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C6",
+              "sub_topic": "Settembre si riparte: rilancia la tua presenza digitale",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Immagine stagionale: tono autunnale + ripartenza, palette EMC.",
+              "caption": "🍂 Settembre: tempo di ripartenze.\n\nDopo l'estate è il momento perfetto per rilanciare la tua attività online: nuovo sito, social più curati, obiettivi chiari per la stagione che arriva.\n\nRipartiamo insieme, con il piede giusto. 🚀\n\n#Settembre #Ripartenza #EMCDigitalSolutions #Sicilia #Digitalizzazione"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C1",
+              "sub_topic": "E-commerce pronto per autunno e Natale",
+              "media_type": "single_image", "template": "service",
+              "notes": "Immagine servizio: carrello/shop + tono autunnale, palette EMC.",
+              "caption": "🛍️ Il Natale si prepara adesso.\n\nSe vendi online, l'autunno è il momento di sistemare il tuo e-commerce: schede prodotto curate, pagamenti sicuri e sito veloce, per arrivare pronti alla stagione più importante dell'anno.\n\nPartiamo per tempo? 🎁\n\n#Ecommerce #Natale #EMCDigitalSolutions #WooCommerce #Sicilia"
+            },
+            {
+              "day": "lunedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Come nasce un logo: l'identità del tuo brand",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Immagine: schizzi di logo/forme e colori, mood creativo, palette EMC.",
+              "caption": "🎨 Un logo non è solo un disegno: è la faccia del tuo brand.\n\nForme, colori e carattere raccontano chi sei in un solo sguardo. Lo studiamo su misura, perché sia unico e riconoscibile.\n\nÈ ora di dare un volto alla tua attività? ✨\n\n#Logo #BrandIdentity #Design #EMCDigitalSolutions #Sicilia"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C3",
+              "sub_topic": "Blog aziendale e content marketing",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: articolo/blog, crescita, palette EMC.",
+              "caption": "✍️ Un blog aziendale lavora per te nel tempo.\n\nArticoli utili rispondono alle domande dei clienti, ti posizionano su Google e mostrano la tua competenza. Contenuti di valore oggi, clienti domani.\n\nRaccontiamo la tua storia, con metodo. 📈\n\n#ContentMarketing #Blog #SEO #EMCDigitalSolutions #Sicilia"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Restyling del sito web: quando conviene rifarlo",
+              "media_type": "carousel", "template": "quote",
+              "notes": "Carousel prima/dopo: segnali che il sito è datato, benefici del restyling.",
+              "caption": "🔄 Il tuo sito ha qualche anno? Forse è ora di rinfrescarlo.\n\nDesign datato, lento da mobile, difficile da aggiornare: sono i segnali che è tempo di un restyling. Scorri per capire quando conviene rifare il sito 👉\n\n#Restyling #SitiWeb #WebDesign #EMCDigitalSolutions #Sicilia"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C3",
+              "sub_topic": "Google Analytics: capire i tuoi dati",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: grafici/dashboard dati, palette EMC.",
+              "caption": "📊 Sai davvero cosa fanno i visitatori sul tuo sito?\n\nCon i dati giusti scopri da dove arrivano, cosa guardano e dove si fermano. Sapere significa migliorare: ogni scelta diventa più intelligente.\n\nI numeri raccontano, noi li traduciamo. 🔍\n\n#Analytics #Dati #EMCDigitalSolutions #Marketing #Sicilia"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Il nostro studio al lavoro",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Immagine: scrivania/postazione di lavoro con pc e dettagli brand EMC.",
+              "caption": "💻 Una giornata nello studio EMC.\n\nTra righe di codice, bozze di design e caffè, diamo vita ai progetti dei nostri clienti. Passione siciliana e attenzione al dettaglio, ogni giorno.\n\nIl tuo progetto potrebbe essere il prossimo. 💙\n\n#DietroLeQuinte #EMCDigitalSolutions #WebAgency #Sicilia #TeamAtWork"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "WhatsApp Business per comunicare con i clienti",
+              "media_type": "single_image", "template": "service",
+              "notes": "Immagine servizio: chat WhatsApp professionale, palette EMC.",
+              "caption": "💚 I tuoi clienti ti scrivono già su WhatsApp: rendilo professionale.\n\nCon WhatsApp Business gestisci i messaggi con ordine, risposte rapide e un catalogo dei tuoi prodotti. Comunicazione diretta, veloce e ordinata.\n\nTi aiutiamo a configurarlo al meglio. 👇\n\n#WhatsAppBusiness #EMCDigitalSolutions #Comunicazione #Sicilia #PMI"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "Case study: i risultati di un cliente",
+              "media_type": "carousel", "template": "quote",
+              "notes": "Carousel: più visite, più contatti, più vendite di un progetto reale.",
+              "caption": "📈 I risultati parlano più di mille parole.\n\nPiù visite, più contatti, più vendite: ecco cosa può fare una strategia digitale ben fatta. Scorri per vedere un caso reale 👉\n\nPronto a scrivere la tua storia di crescita? 💙\n\n#CaseStudy #Risultati #EMCDigitalSolutions #Marketing #Sicilia"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C1",
+              "sub_topic": "Prenotazioni online: l'agenda che si riempie da sola",
+              "media_type": "single_image", "template": "service",
+              "notes": "Immagine servizio: calendario/booking online, palette EMC.",
+              "caption": "📅 Fai prenotare i tuoi clienti in autonomia, anche di notte.\n\nUn sistema di prenotazione online sul tuo sito riduce le telefonate, evita gli errori e riempie l'agenda mentre pensi ad altro.\n\nMeno gestione, più clienti. 👇\n\n#Prenotazioni #Booking #SitiWeb #EMCDigitalSolutions #Sicilia"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C6",
+              "sub_topic": "Trasforma la tua idea in un progetto digitale",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Immagine concettuale: idea (lampadina) che diventa progetto, palette EMC.",
+              "caption": "💡 Hai un'idea per la tua attività? Diamole forma.\n\nDal primo schizzo al progetto online, ti accompagniamo passo dopo passo. La tecnologia diventa semplice quando c'è il partner giusto.\n\nRaccontaci la tua idea, al resto pensiamo noi. ✨\n\n#EMCDigitalSolutions #Digitalizzazione #Sicilia #Innovazione #PMI"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C3",
+              "sub_topic": "FAQ: quanto costa un sito web?",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: punto interrogativo/preventivo, palette EMC.",
+              "caption": "💬 Quanto costa un sito web?\n\nLa risposta onesta: dipende. Da cosa ti serve, da quante pagine, dalle funzioni. Per questo partiamo sempre da un preventivo chiaro e su misura, senza sorprese.\n\nCurioso di sapere quanto costa il tuo? Scrivici. 👇\n\n#SitiWeb #Preventivo #EMCDigitalSolutions #Sicilia #Digitalizzazione"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

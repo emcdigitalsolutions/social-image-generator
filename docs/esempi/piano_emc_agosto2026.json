@@ -1,0 +1,121 @@
+{
+  "title": "EMC — Agosto 2026",
+  "categories": [
+    { "code": "C1", "name": "Servizi", "frequency": "settimanale", "description": "Siti web, e-commerce, email, chatbot, advertising" },
+    { "code": "C3", "name": "Consigli & Digitalizzazione", "frequency": "1-2/mese", "description": "SEO, recensioni, sicurezza, buone pratiche digitali" },
+    { "code": "C4", "name": "Case Study", "frequency": "1-2/mese", "description": "Progetti reali e risultati ottenuti" },
+    { "code": "C5", "name": "Dietro le quinte & Brand", "frequency": "1-2/mese", "description": "Come lavoriamo, studio, identità EMC" },
+    { "code": "C6", "name": "Mission & Valori", "frequency": "1/mese", "description": "Il nostro modo di stare vicino ai clienti" }
+  ],
+  "months": [
+    {
+      "month_number": 1,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C1",
+              "sub_topic": "Chatbot: assistenza clienti automatica sul sito",
+              "media_type": "single_image", "template": "service",
+              "notes": "Immagine servizio: bolla di chat / assistente virtuale, palette EMC.",
+              "caption": "💬 Rispondi ai clienti anche quando non ci sei.\n\nUn assistente chat sul tuo sito accoglie i visitatori, risponde alle domande frequenti e raccoglie contatti 24 ore su 24. Più opportunità, meno richieste perse.\n\nVuoi aggiungerlo al tuo sito? Ne parliamo. 👇\n\n#Chatbot #AssistenzaClienti #SitiWeb #EMCDigitalSolutions #Sicilia"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C3",
+              "sub_topic": "Google My Business: la tua prima vetrina",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: pin mappa + scheda attività.",
+              "caption": "📍 Il tuo profilo Google è la tua prima vetrina.\n\nOrari aggiornati, foto belle, servizi chiari e recensioni curate: un profilo Google My Business ottimizzato ti fa scegliere prima dei concorrenti quando qualcuno ti cerca in zona.\n\nPiccoli accorgimenti, grande visibilità. 🔍\n\n#GoogleMyBusiness #SEOLocale #EMCDigitalSolutions #Sicilia #Agrigento"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C5",
+              "sub_topic": "Il nostro metodo: come nasce un progetto EMC",
+              "media_type": "single_image", "template": "service",
+              "notes": "Immagine: scrivania/lavoro creativo, schermo con design, palette EMC.",
+              "caption": "🛠️ Come nasce un progetto EMC?\n\nAscolto, idee, tanto lavoro e cura del dettaglio. Dietro ogni sito e ogni campagna c'è un metodo fatto di passione e precisione.\n\nDiamo forma digitale alle tue idee. ✨\n\n#DietroLeQuinte #EMCDigitalSolutions #WebAgency #Sicilia #Digitalizzazione"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C3",
+              "sub_topic": "Sito mobile-first: veloce e comodo da telefono",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: smartphone con sito veloce, spunta/velocità.",
+              "caption": "📱 Più della metà dei tuoi clienti ti guarda dal telefono.\n\nUn sito che si apre veloce e si legge bene su smartphone non è un lusso: è la base. Se il tuo sito è lento o scomodo da mobile, stai perdendo contatti.\n\nControlliamo insieme com'è il tuo? 👇\n\n#MobileFirst #SitiWeb #WebDesign #EMCDigitalSolutions #Sicilia"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Email marketing: trasforma i contatti in clienti fedeli",
+              "media_type": "single_image", "template": "service",
+              "notes": "Immagine servizio: busta/newsletter, palette EMC.",
+              "caption": "📧 Hai una lista di contatti? È un tesoro.\n\nL'email marketing ti fa restare in contatto con i clienti, annunciare novità e promozioni e far tornare chi ha già comprato. Costa poco e rende tanto, se fatto bene.\n\nTrasformiamo i tuoi contatti in clienti fedeli. 💌\n\n#EmailMarketing #Newsletter #EMCDigitalSolutions #Marketing #Sicilia"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C6",
+              "sub_topic": "Buon Ferragosto: la presenza digitale non va in ferie",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Immagine stagionale Ferragosto: mare/ombrellone + tono caldo, palette EMC.",
+              "caption": "☀️ Buon Ferragosto da EMC Digital Solutions!\n\nTu goditi il meritato riposo: il tuo sito, il tuo e-commerce e i tuoi canali social continuano a lavorare per te, anche sotto l'ombrellone.\n\nLa presenza digitale non va mai in ferie. 🏖️\n\n#Ferragosto #EMCDigitalSolutions #Sicilia #Estate #Digitalizzazione"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C4",
+              "sub_topic": "Case study: da un'idea a un sito che funziona",
+              "media_type": "carousel", "template": "quote",
+              "notes": "Carousel: obiettivi, design, risultati di un progetto reale.",
+              "caption": "🚀 Da un'idea a un sito che funziona.\n\nOgni progetto racconta una storia: obiettivi, scelte di design e risultati concreti. Scorri per vedere come lavoriamo su un caso reale 👉\n\nIl prossimo potrebbe essere il tuo. 💙\n\n#CaseStudy #SitiWeb #EMCDigitalSolutions #WebDesign #Sicilia"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C3",
+              "sub_topic": "Recensioni online: il passaparola del web",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: stelle/recensione, tono fiducia.",
+              "caption": "⭐ Le recensioni sono il passaparola del web.\n\nRispondere sempre, con gentilezza anche alle critiche, e invitare i clienti soddisfatti a lasciare un parere: così costruisci fiducia prima ancora del primo contatto.\n\nLa reputazione online si cura, giorno dopo giorno. 💬\n\n#Recensioni #ReputazioneOnline #EMCDigitalSolutions #Marketing #Sicilia"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C4",
+              "sub_topic": "La trasformazione digitale di un'attività",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Immagine prima/dopo concettuale: da attività offline a brand digitale.",
+              "caption": "✨ Prima un'attività senza presenza online. Dopo, un brand che si trova, si riconosce e cresce.\n\nLa trasformazione digitale è questo: strumenti su misura che portano risultati veri. E funziona per ogni tipo di attività.\n\nÈ il momento di fare il salto? 🚀\n\n#TrasformazioneDigitale #EMCDigitalSolutions #Sicilia #Digitalizzazione #PMI"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C1",
+              "sub_topic": "Advertising su Facebook e Instagram: farsi trovare dalle persone giuste",
+              "media_type": "carousel", "template": "quote",
+              "notes": "Carousel: targeting per zona/interessi, budget, risultati misurabili.",
+              "caption": "🎯 Farsi trovare dalle persone giuste.\n\nCon le campagne su Facebook e Instagram raggiungi esattamente il pubblico che ti interessa: per zona, interessi ed età. Budget sotto controllo, risultati misurabili.\n\nScorri per capire come funziona 👉\n\n#MetaAds #FacebookAds #InstagramAds #EMCDigitalSolutions #Marketing"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C3",
+              "sub_topic": "Sicurezza del sito: SSL, backup e aggiornamenti",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: lucchetto/scudo, palette EMC.",
+              "caption": "🔒 Il tuo sito è al sicuro?\n\nCertificato SSL, backup regolari e aggiornamenti costanti proteggono il tuo sito da guasti e attacchi. La sicurezza non si vede, ma quando manca si sente eccome.\n\nDormi sonni tranquilli: ci pensiamo noi. 🛡️\n\n#SicurezzaWeb #SitiWeb #SSL #EMCDigitalSolutions #Sicilia"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C1",
+              "sub_topic": "I servizi EMC in un colpo d'occhio",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Immagine: griglia icone servizi (siti, e-commerce, gestionali, social, ads), palette EMC.",
+              "caption": "⚡ Tutto quello che ci serve per portarti online, in un colpo d'occhio.\n\nSiti web, e-commerce, gestionali, social e pubblicità: un unico partner per la tua crescita digitale, qui in Sicilia.\n\nDa dove vuoi partire? 👇\n\n#EMCDigitalSolutions #Servizi #Sicilia #Digitalizzazione #WebAgency"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
