@@ -1,0 +1,121 @@
+{
+  "title": "EMC — Luglio 2026",
+  "categories": [
+    { "code": "C1", "name": "Servizi", "frequency": "settimanale", "description": "Siti web, e-commerce, social media management" },
+    { "code": "C2", "name": "Prodotti proprietari", "frequency": "1-2/mese", "description": "RTIndustry (IoT industriale) e StockflowERP (gestionale retail)" },
+    { "code": "C3", "name": "Consigli & Digitalizzazione", "frequency": "1-2/mese", "description": "SEO locale, automazioni, crescita digitale delle PMI" },
+    { "code": "C5", "name": "Dietro le quinte & Brand", "frequency": "1-2/mese", "description": "Studio, materiali di brand, cura del dettaglio" },
+    { "code": "C6", "name": "Mission & Valori", "frequency": "1/mese", "description": "Digitalizzare la Sicilia, un business alla volta" }
+  ],
+  "months": [
+    {
+      "month_number": 1,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C5",
+              "sub_topic": "Dietro le quinte: benvenuti nello studio EMC",
+              "media_type": "reel", "template": "quote",
+              "notes": "VIDEO CON MUSICA (Reel AI o CapCut). Clip dello studio/scrivania/lavoro al pc, ritmo dinamico.",
+              "caption": "🎬 Benvenuti nello studio EMC Digital Solutions!\n\nDietro ogni sito web, e-commerce e progetto digitale c'è un lavoro fatto di passione, precisione e tanta Sicilia nel cuore. 💙\n\nCi trovi a Campobello di Licata, ma lavoriamo con clienti in tutta l'isola e oltre.\n\nSoluzioni digitali su misura, proprio per te. ✨\n\n#EMCDigitalSolutions #DietroLeQuinte #Sicilia #WebAgency #Digitalizzazione"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C1",
+              "sub_topic": "Siti web su misura per la tua attività",
+              "media_type": "single_image", "template": "service",
+              "notes": "Immagine servizio: mockup sito su desktop/mobile con palette EMC.",
+              "caption": "🌐 Il tuo sito web dovrebbe lavorare per te, giorno e notte.\n\nProgettiamo siti su misura: veloci, eleganti e pensati per far crescere la tua attività. Niente template banali, ogni progetto è cucito addosso al tuo brand.\n\nVuoi un sito che faccia davvero la differenza? Parliamone. 👇\n\n📍 Campobello di Licata (AG)\n\n#SitiWeb #WebDesign #EMCDigitalSolutions #Sicilia #Digitalizzazione"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C5",
+              "sub_topic": "Il nuovo volantino EMC: i nostri servizi in tasca",
+              "media_type": "single_image", "template": "service",
+              "notes": "Foto del volantino A5 EMC (fronte/retro navy+oro).",
+              "caption": "📋 I nostri servizi, ora anche in tasca!\n\nAbbiamo realizzato il nuovo volantino EMC Digital Solutions: siti web, e-commerce, gestionali, social media e molto altro, tutto in un colpo d'occhio.\n\nDietro anche un piccolo materiale stampato c'è la stessa cura che mettiamo in ogni progetto digitale. 💛\n\nCurioso di scoprire cosa possiamo fare per te? Scrivici!\n\n#EMCDigitalSolutions #Servizi #Sicilia #Branding #Marketing"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C3",
+              "sub_topic": "SEO locale: farti trovare a Campobello e in provincia di Agrigento",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: mappa/lente + testo forte sulla ricerca locale.",
+              "caption": "🔍 Quando qualcuno cerca la tua attività a Campobello di Licata, chi trova per primo: te o il tuo concorrente?\n\nLa SEO locale ti fa trovare dai clienti giusti, nel momento giusto, nella tua zona. Google My Business, parole chiave locali, recensioni: piccoli passi, grandi risultati.\n\nFarti trovare in provincia di Agrigento è il nostro mestiere. 📍\n\n#SEO #SEOLocale #Sicilia #Agrigento #EMCDigitalSolutions"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C2",
+              "sub_topic": "RTIndustry: monitora la produzione CNC in tempo reale",
+              "media_type": "reel", "template": "quote",
+              "notes": "VIDEO CON MUSICA. Clip di macchine CNC + dashboard RTIndustry su telefono/pc.",
+              "caption": "🏭 E se potessi vedere la tua produzione CNC in tempo reale, ovunque tu sia?\n\nCon RTIndustry monitori macchine, tempi e commesse dal telefono o dal pc. Meno fermi macchina, più controllo, decisioni basate sui dati veri.\n\nL'industria 4.0 non è il futuro: è adesso. ⚙️\n\n#RTIndustry #Industria40 #IoT #CNC #EMCDigitalSolutions"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C2",
+              "sub_topic": "StockflowERP: il gestionale che mette ordine nel retail",
+              "media_type": "carousel", "template": "quote",
+              "notes": "Carousel 3-4 slide: magazzino, vendite, clienti, report.",
+              "caption": "📦 Addio caos, benvenuto ordine.\n\nStockflowERP è il gestionale che semplifica il tuo retail: magazzino, vendite, clienti e report, tutto in un unico posto.\n\nScorri per scoprire come può cambiare la gestione della tua attività 👉\n\n#StockflowERP #Gestionale #Retail #EMCDigitalSolutions #Digitalizzazione"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C1",
+              "sub_topic": "E-commerce WordPress: vendi online senza pensieri",
+              "media_type": "single_image", "template": "service",
+              "notes": "Immagine servizio: vetrina e-commerce/carrello con palette EMC.",
+              "caption": "🛒 Vendere online non deve essere complicato.\n\nRealizziamo e-commerce su WordPress e WooCommerce: semplici da gestire, sicuri e pronti a crescere con te. Dal primo prodotto alla prima vendita, ti accompagniamo passo passo.\n\nLa tua vetrina online aperta 24 ore su 24. 🌙☀️\n\n#Ecommerce #WordPress #WooCommerce #EMCDigitalSolutions #Sicilia"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C5",
+              "sub_topic": "Il tappetino EMC sulla scrivania: cura del dettaglio in ogni cosa",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Foto del tappetino mouse EMC brandizzato sulla scrivania.",
+              "caption": "🖱️ I dettagli fanno la differenza.\n\nAnche il tappetino sulla nostra scrivania porta i colori EMC. Perché la cura del brand parte da noi, ogni giorno, in ogni cosa che tocchiamo.\n\nE lo stesso occhio per il dettaglio lo mettiamo nel tuo progetto. 💙💛\n\n#EMCDigitalSolutions #Branding #DietroLeQuinte #Sicilia #Dettagli"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C1",
+              "sub_topic": "Social Media Management: cosa facciamo per la tua presenza online",
+              "media_type": "carousel", "template": "quote",
+              "notes": "Carousel: contenuti curati, pubblicazioni programmate, coerenza di brand.",
+              "caption": "📱 Gestire i social bene richiede tempo, strategia e costanza.\n\nCi pensiamo noi: contenuti curati, pubblicazioni programmate e una presenza online che parla del tuo brand. Tu pensi alla tua attività, al resto pensiamo noi.\n\nScorri per vedere cosa include il nostro servizio social 👉\n\n#SocialMedia #SocialMediaManagement #EMCDigitalSolutions #Marketing #Sicilia"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "lunedì", "time": "18:00", "category": "C5",
+              "sub_topic": "I materiali di brand EMC: volantini, biglietti, tappetini",
+              "media_type": "reel", "template": "quote",
+              "notes": "VIDEO CON MUSICA. Carrellata sui materiali stampati e digitali brandizzati.",
+              "caption": "🎨 Un brand coerente si riconosce ovunque.\n\nVolantini, biglietti da visita, tappetini, siti web: ogni materiale EMC parla la stessa lingua visiva. Questa è l'identità di marca, e la costruiamo anche per te.\n\nDal digitale alla stampa, tutto in armonia. ✨\n\n#Branding #BrandIdentity #EMCDigitalSolutions #Design #Sicilia"
+            },
+            {
+              "day": "mercoledì", "time": "18:00", "category": "C3",
+              "sub_topic": "Automazioni e digitalizzazione: fai crescere la tua PMI",
+              "media_type": "single_image", "template": "advice",
+              "notes": "Immagine consiglio: ingranaggi/flusso automatizzato, testo d'impatto.",
+              "caption": "⚙️ Quante ore perdi ogni settimana in attività ripetitive?\n\nAutomatizzare i processi giusti significa risparmiare tempo, ridurre gli errori e far crescere la tua PMI senza stress. Dalla gestione clienti alle pubblicazioni, la tecnologia lavora per te.\n\nDigitalizzare conviene. Ti mostriamo come. 🚀\n\n#Automazioni #Digitalizzazione #PMI #EMCDigitalSolutions #Innovazione"
+            },
+            {
+              "day": "venerdì", "time": "18:00", "category": "C6",
+              "sub_topic": "La nostra missione: digitalizzare la Sicilia, un business alla volta",
+              "media_type": "single_image", "template": "quote",
+              "notes": "Immagine concettuale: Sicilia + digitale, tono ispirazionale, CTA contatto.",
+              "caption": "💙 La nostra missione? Digitalizzare la Sicilia, un business alla volta.\n\nCrediamo che ogni attività, grande o piccola, meriti strumenti digitali di livello. Siti, e-commerce, gestionali, social: tecnologia concreta, al servizio delle persone e del territorio.\n\nPronto a far crescere la tua attività? Scrivici, ne parliamo insieme. 👇\n\n#EMCDigitalSolutions #Sicilia #Digitalizzazione #Mission #MadeInSicily"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
