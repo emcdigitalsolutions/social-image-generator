@@ -11,6 +11,13 @@
   .chip .count { opacity:0.7; margin-left:4px; }
 
   .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:8px; }
+  /* Mobile: il calendario 7 colonne non entra nel viewport → scroll orizzontale
+     fluido con larghezza minima leggibile (su telefono il default è la Lista). */
+  @media (max-width: 768px) {
+    #view-cal { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; }
+    #view-cal .cal-grid { min-width: 640px; }
+    #view-cal > div:first-child { min-width: 640px; }
+  }
   .cal-head { font-size:11px; font-weight:600; color:var(--gray-500); text-transform:uppercase; padding:4px 6px; }
   .cal-cell { min-height:110px; border:1px solid var(--gray-200); border-radius:6px; padding:6px; background:white; display:flex; flex-direction:column; gap:4px; cursor:pointer; transition:background .12s, border-color .12s; }
   .cal-cell:hover { background:#f8fafc; border-color:var(--blue); }
@@ -833,7 +840,9 @@
 
   function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-  let currentView = 'cal';
+  // Su telefono la Lista è molto più fruibile del calendario 7 colonne:
+  // default responsivo (il toggle resta e la scelta manuale vince sempre).
+  let currentView = window.innerWidth <= 768 ? 'list' : 'cal';
   function setView(v) {
     currentView = v;
     document.getElementById('view-cal').style.display   = v === 'cal'   ? 'block' : 'none';
@@ -855,7 +864,7 @@
   if (POSTS.length) {
     document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => setFilter(c.dataset.filter)));
     updateCounts();
-    renderViews();
+    setView(currentView); // sincronizza toggle+visibilità col default responsivo
   }
 
   // Bulk client-side: iteriamo sui post chiamando un endpoint per ognuno.

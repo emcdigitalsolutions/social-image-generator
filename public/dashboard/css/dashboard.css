@@ -816,6 +816,16 @@ tbody tr:hover td { background: var(--blue-50); }
 /* Mobile stretto: modali fullscreen + bottoni stack verticale per evitare
    overflow nei modal action bar. */
 @media (max-width: 600px) {
+  /* Form a 2 colonne inline (grid-template-columns:1fr 1fr) → 1 colonna:
+     a 390px due input affiancati sono ~160px l'uno, illeggibili.
+     !important nello stylesheet vince sugli style inline (cascade CSS). */
+  .card div[style*="grid-template-columns:1fr 1fr"],
+  .card div[style*="grid-template-columns: 1fr 1fr"],
+  form div[style*="grid-template-columns:1fr 1fr"],
+  form div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
   /* Modali (tutte le varianti del progetto: prompt editor, Reel/Veo config,
      audio picker, time bulk, ecc.) → quasi-fullscreen. */
   .modal-backdrop > .modal-card,
