@@ -5,3 +5,4 @@ test-output-*.png
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/

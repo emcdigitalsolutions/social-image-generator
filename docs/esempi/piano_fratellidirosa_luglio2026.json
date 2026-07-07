@@ -1,0 +1,123 @@
+{
+  "title": "Piano Editoriale Luglio 2026 — Agenzia Funebre Fratelli Di Rosa",
+  "categories": [
+    { "code": "C1", "name": "Servizi offerti", "frequency": "4/mese", "description": "Presentazione dei servizi concreti con focus sul valore umano dietro ogni gesto, mai su prezzi." },
+    { "code": "C2", "name": "Il team e la famiglia Di Rosa", "frequency": "1/mese", "description": "Volti e storia dei fratelli Giuseppe e Gaspare Di Rosa, la presenza costante sul territorio." },
+    { "code": "C3", "name": "Struttura, sede e mezzi", "frequency": "1/mese", "description": "La sede di Via Olimpica 18, le sale, la camera ardente, adattate alla stagione estiva." },
+    { "code": "C4", "name": "Il valore del ricordo e l'accessibilità", "frequency": "2/mese", "description": "Memoria e posizionamento valoriale: un servizio dignitoso per ogni famiglia e ogni fascia, senza mai nominare cifre." },
+    { "code": "C5", "name": "Laboratorio floreale interno", "frequency": "1/mese", "description": "Addobbi floreali interni con la stagionalità estiva (girasoli, gladioli, gerbere)." },
+    { "code": "C6", "name": "Festività e ricorrenze", "frequency": "2/mese", "description": "Calendario liturgico di luglio: Madonna del Carmine (16/7), Sant'Anna e San Gioacchino (26/7)." },
+    { "code": "C7", "name": "Disponibilità H24", "frequency": "1/mese", "description": "Il servizio reperibilità 24/7, valorizzato nel contesto estivo." }
+  ],
+  "months": [
+    {
+      "month_number": 1,
+      "weeks": [
+        {
+          "week_number": 1,
+          "posts": [
+            {
+              "day": "mercoledì", "date": "2026-07-01", "time": "18:00", "category": "C7",
+              "sub_topic": "Luglio è arrivato: noi non andiamo in ferie, reperibili H24 anche in piena estate",
+              "media_type": "single_image", "template": "service",
+              "media_note": "Foto: images/negozio.jpg (la sede)",
+              "caption": "Luglio è arrivato, e con lui l'estate vera: le serate fuori, i ritorni a casa, il paese che torna a riempirsi.\n\nNoi però restiamo dove siamo sempre stati. Perché il dolore non conosce stagioni, e una famiglia che ha bisogno deve poter contare su qualcuno a qualsiasi ora: anche nel pieno di luglio, anche a Ferragosto, anche quando tutti gli altri chiudono.\n\nSiamo reperibili 24 ore su 24, 7 giorni su 7.\n\n📞 +39 328 968 5570 — Via Olimpica 18, Ravanusa\n\n#FratelliDiRosa #Ravanusa #ServizioH24 #OnoranzeFunebri #Estate #Agrigento"
+            },
+            {
+              "day": "venerdì", "date": "2026-07-03", "time": "18:00", "category": "C1",
+              "sub_topic": "Il trasporto della salma: mezzi propri, cura e discrezione fin dal primo viaggio",
+              "media_type": "single_image", "template": "service",
+              "media_note": "Foto: images/carrofunebre/01.jpeg",
+              "caption": "Il primo viaggio è quello più silenzioso. Quando veniamo a prendere il vostro caro, lo facciamo con i nostri mezzi, curati e preparati con attenzione, e con la discrezione che un momento così richiede.\n\nNessuna fretta, nessun rumore: soltanto il rispetto dovuto a chi accompagniamo e alla famiglia che resta.\n\nÈ così che intendiamo il nostro lavoro, in ogni stagione dell'anno.\n\n📞 +39 328 968 5570 — Via Olimpica 18, Ravanusa\n\n#FratelliDiRosa #Ravanusa #OnoranzeFunebri #TrasportoFunebre #Discrezione #Dignità"
+            },
+            {
+              "day": "domenica", "date": "2026-07-05", "time": "10:00", "category": "C4",
+              "sub_topic": "L'estate dei ritorni: chi torna al paese e va a trovare i propri cari",
+              "media_type": "reel",
+              "media_note": "VIDEO dal cliente (WhatsApp): clip cimitero di Ravanusa al mattino / panoramica del paese. Audio: scegliere brano sobrio dalla libreria.",
+              "caption": "L'estate, in Sicilia, è la stagione dei ritorni. Chi vive lontano riparte verso casa, e tra i primi gesti, appena arrivati, c'è quasi sempre lo stesso: una visita al cimitero. Un fiore fresco, una candela, qualche minuto in silenzio davanti a chi non c'è più.\n\nÈ il modo siciliano di dire \"sono tornato, e non ti ho dimenticato\".\n\nA chi in queste settimane rientra al paese: bentornati. E un pensiero a chi vi aspetta lì, e che continuate a portare nel cuore. 🤍\n\n#FratelliDiRosa #Ravanusa #Estate #Ritorni #Memoria #Sicilia #RadiciSiciliane"
+            }
+          ]
+        },
+        {
+          "week_number": 2,
+          "posts": [
+            {
+              "day": "martedì", "date": "2026-07-07", "time": "14:30", "category": "C3",
+              "sub_topic": "Vegliare d'estate senza il peso dell'afa: le nostre sale climatizzate",
+              "media_type": "single_image", "template": "service",
+              "media_note": "Foto: images/cameraardente/06.jpeg",
+              "caption": "In luglio il caldo si fa sentire, e vegliare una persona cara non dovrebbe mai diventare anche una fatica fisica.\n\nLe nostre sale sono climatizzate, con luci soffuse e un ambiente curato e fresco: uno spazio raccolto dove fermarsi, pregare, restare accanto a chi si ama, senza il peso dell'afa.\n\nPerché ogni dettaglio, persino la temperatura di una stanza, è un modo per avere cura di chi resta.\n\n📍 Via Olimpica 18, Ravanusa\n\n#FratelliDiRosa #CameraArdente #SaleClimatizzate #Ravanusa #OnoranzeFunebri #Dignità"
+            },
+            {
+              "day": "giovedì", "date": "2026-07-09", "time": "18:00", "category": "C2",
+              "sub_topic": "Giuseppe e Gaspare: due fratelli, una presenza costante per Ravanusa",
+              "media_type": "single_image", "template": "service",
+              "media_note": "Foto: images/giuseppegaspare.jpg",
+              "caption": "Dietro ogni servizio ci siamo noi: Giuseppe e Gaspare, due fratelli prima ancora che due professionisti. Conosciamo Ravanusa, le sue famiglie, le sue storie — e proprio per questo, per noi, ogni accompagnamento non è mai soltanto un lavoro.\n\nAnche d'estate, quando il paese si riempie e i ritmi cambiano, restiamo gli stessi: presenti, vicini, raggiungibili.\n\nPerché la fiducia di una comunità si costruisce con la presenza, giorno dopo giorno. 🤍\n\n#FratelliDiRosa #Famiglia #Ravanusa #Squadra #OnoranzeFunebri #DalCuore #Territorio"
+            },
+            {
+              "day": "sabato", "date": "2026-07-11", "time": "10:00", "category": "C4",
+              "sub_topic": "ACCESSIBILITÀ — un addio dignitoso per ogni famiglia, qualunque sia la sua situazione",
+              "media_type": "single_image", "template": "quote",
+              "media_note": "Foto: images/fratelli.jpeg (i due fratelli, vicinanza)",
+              "caption": "Davanti alla perdita di una persona cara, nessuna famiglia dovrebbe sentirsi sola. E nessuna dovrebbe rinunciare a un addio dignitoso.\n\nPer noi questo è un principio, non una frase di circostanza: accompagniamo ogni famiglia, qualunque sia la sua situazione, costruendo soluzioni su misura per le esigenze di ciascuno. Con lo stesso rispetto, la stessa cura, la stessa attenzione. Sempre.\n\nPerché la dignità di un saluto non dipende da nient'altro che dall'amore con cui viene preparato.\n\n🤍 Un servizio pensato per tutti, vicino a ogni famiglia.\n\n#FratelliDiRosa #Ravanusa #VicinoAOgniFamiglia #Dignità #OnoranzeFunebri #UnServizioPerTutti"
+            }
+          ]
+        },
+        {
+          "week_number": 3,
+          "posts": [
+            {
+              "day": "martedì", "date": "2026-07-14", "time": "14:30", "category": "C1",
+              "sub_topic": "Disbrigo pratiche: pensiamo noi alla burocrazia, voi al ricordo",
+              "media_type": "single_image", "template": "service",
+              "media_note": "Foto: images/s3.jpg (assistenza burocratica)",
+              "caption": "Nei giorni del lutto, la burocrazia è l'ultimo pensiero che una famiglia dovrebbe avere. E infatti non lo deve avere: ci pensiamo noi.\n\nCertificati, autorizzazioni al trasporto, pratiche cimiteriali e consolari, documenti per la cremazione: ci occupiamo di ogni passaggio, dal primo all'ultimo. Voi dedicate il vostro tempo a chi vi sta accanto e al ricordo del vostro caro.\n\nAlleggerire il peso, anche quello pratico, è parte del nostro modo di esserci.\n\n📞 +39 328 968 5570 — Via Olimpica 18, Ravanusa\n\n#FratelliDiRosa #Ravanusa #DisbrigoPratiche #ServizioCompleto #OnoranzeFunebri #VicinoAlleFamiglie"
+            },
+            {
+              "day": "giovedì", "date": "2026-07-16", "time": "09:00", "category": "C6",
+              "sub_topic": "16 luglio — Madonna del Carmine, consolatrice e protettrice delle anime",
+              "media_type": "single_image", "template": "event",
+              "media_note": "Foto: images/cameraardente/10.jpeg (statua della Pietà con candela) — oppure santino del Carmine se reperito.",
+              "caption": "Oggi la Chiesa celebra la Madonna del Carmine, la Vergine dello scapolare, da sempre invocata come consolatrice e protettrice delle anime.\n\nIn una terra come la nostra, questa devozione accompagna da generazioni il ricordo di chi non c'è più: un affidamento silenzioso, una preghiera, una candela accesa nel suo nome.\n\n🕯️ In questo giorno il nostro pensiero va a tutte le famiglie che custodiscono la memoria di una persona amata. Che la Madonna del Carmine vegli su di loro.\n\n#MadonnaDelCarmine #16Luglio #FratelliDiRosa #Ravanusa #Devozione #Fede #Memoria"
+            },
+            {
+              "day": "sabato", "date": "2026-07-18", "time": "10:00", "category": "C5",
+              "sub_topic": "Il laboratorio floreale d'estate: girasoli, gladioli e gerbere fatti a mano",
+              "media_type": "reel",
+              "media_note": "VIDEO dal cliente (WhatsApp): mani che compongono fiori nel laboratorio interno. Audio: brano dalla libreria.",
+              "caption": "Nel cuore dell'estate, il nostro laboratorio floreale si riempie di luce. Girasoli che seguono il sole, gladioli alti e fieri, gerbere dai colori caldi: i fiori di luglio raccontano la vita, anche quando servono a salutarla.\n\nOgni composizione nasce qui, a mano, una per una. Scegliamo ogni stelo, accostiamo ogni colore, pensiamo a chi la riceverà e a chi vuole onorare.\n\n🌻 Perché dove le parole non arrivano, un fiore sa ancora dire \"ti ricordo\".\n\n#FratelliDiRosa #LaboratorioFloreale #FioriDEstate #Girasoli #Ravanusa #FattoAMano #OnoranzeFunebri"
+            }
+          ]
+        },
+        {
+          "week_number": 4,
+          "posts": [
+            {
+              "day": "martedì", "date": "2026-07-21", "time": "14:30", "category": "C1",
+              "sub_topic": "ACCESSIBILITÀ — un accompagnamento completo, alla portata di tutti",
+              "media_type": "single_image", "template": "service",
+              "media_note": "Foto: images/cameraardente/01.jpeg (sala accogliente e dignitosa)",
+              "caption": "Quando arriva il momento più difficile, l'ultima cosa di cui una famiglia ha bisogno è sentirsi sopraffatta: né dalle pratiche, né dalle preoccupazioni.\n\nNoi ci occupiamo di tutto: dal primo trasporto all'allestimento, dal disbrigo delle pratiche burocratiche agli addobbi floreali, fino ai manifesti. Un accompagnamento completo, calibrato su ciò che ogni famiglia desidera e su ciò di cui ha bisogno.\n\nPerché un servizio attento e dignitoso deve essere alla portata di tutti, nessuno escluso. Questo è il nostro impegno verso Ravanusa.\n\n📞 +39 328 968 5570 — Via Olimpica 18, Ravanusa\n\n#FratelliDiRosa #Ravanusa #UnServizioPerTutti #OnoranzeFunebri #VicinoAlleFamiglie #Dignità"
+            },
+            {
+              "day": "giovedì", "date": "2026-07-23", "time": "18:00", "category": "C1",
+              "sub_topic": "Tanatoestetica: restituire serenità e dignità al volto di chi amiamo",
+              "media_type": "single_image", "template": "service",
+              "media_note": "Foto: images/s6.jpg (servizio di tanatoestetica)",
+              "caption": "L'ultima immagine che custodiamo di una persona cara conta più di quanto immaginiamo. La tanatoestetica è il gesto delicato e rispettoso con cui restituiamo serenità e naturalezza al volto di chi non c'è più.\n\nÈ un lavoro discreto, fatto con competenza e umanità, perché le famiglie possano dare un ultimo saluto più dolce e conservare un ricordo sereno.\n\nLa dignità, per noi, è anche questa cura silenziosa.\n\n#FratelliDiRosa #Ravanusa #Tanatoestetica #Dignità #UltimoSaluto #OnoranzeFunebri #Cura"
+            },
+            {
+              "day": "domenica", "date": "2026-07-26", "time": "10:00", "category": "C6",
+              "sub_topic": "26 luglio — Sant'Anna e San Gioacchino: un pensiero ai nostri nonni",
+              "media_type": "single_image", "template": "event",
+              "media_note": "Foto: images/cameraardente/04.jpeg (sala serena) — tono tenero e familiare.",
+              "caption": "Oggi è Sant'Anna, insieme a San Gioacchino: i genitori della Madonna, i nonni di Gesù. È anche la giornata in cui pensiamo con tenerezza ai nostri nonni.\n\nA chi ci ha cresciuto con le sue mani, a chi ci ha raccontato le storie di una volta, a chi ci ha insegnato il valore delle radici. Molti di loro oggi non sono più con noi, ma restano nei gesti che ci hanno lasciato, nei nomi che portiamo, nei ricordi che custodiamo.\n\n🤍 Un pensiero a tutti i nonni che ci guardano da lontano. E un augurio a quelli che possiamo ancora abbracciare.\n\n#SantAnna #26Luglio #FratelliDiRosa #Ravanusa #Nonni #Memoria #Radici"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

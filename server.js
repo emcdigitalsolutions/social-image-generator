@@ -244,30 +244,65 @@ app.use('/dashboard/api/music', require('./routes/api/music'));
 // Page routes
 app.use('/dashboard', require('./routes/dashboard'));
 
-// ── Cleanup cron: delete images older than 30 days ──
+// ── Cleanup cron: delete legacy top-level images older than 30 days ──
+// Regole: NON tocca le sottocartelle (posts/, branding/, library/ ...), salta
+// qualsiasi file ancora referenziato in DB (posts.image_url / post_media),
+// e un errore su un file NON interrompe il resto del giro.
 async function cleanupOldImages() {
   const imagesDir = path.join(__dirname, 'public', 'images');
   const maxAge = 30 * 24 * 60 * 60 * 1000;
+  let deleted = 0, skippedRef = 0, errors = 0;
 
+  // Set dei filename referenziati in DB (una query sola per giro)
+  let referenced = new Set();
   try {
-    const clients = await fs.readdir(imagesDir);
-    for (const client of clients) {
-      const clientDir = path.join(imagesDir, client);
-      const stat = await fs.stat(clientDir);
-      if (!stat.isDirectory()) continue;
-
-      const files = await fs.readdir(clientDir);
-      for (const file of files) {
-        const filePath = path.join(clientDir, file);
-        const fileStat = await fs.stat(filePath);
-        if (Date.now() - fileStat.mtimeMs > maxAge) {
-          await fs.unlink(filePath);
-          console.log(`[cleanup] Deleted: ${filePath}`);
-        }
-      }
+    const { getDb } = require('./lib/db');
+    const db = getDb();
+    for (const r of db.prepare("SELECT image_url FROM posts WHERE image_url IS NOT NULL AND image_url != ''").all()) {
+      const base = String(r.image_url).split('/').pop().split('?')[0];
+      if (base) referenced.add(base);
+    }
+    for (const r of db.prepare("SELECT filename FROM post_media WHERE filename IS NOT NULL AND filename != ''").all()) {
+      const base = String(r.filename).split('/').pop();
+      if (base) referenced.add(base);
     }
   } catch (err) {
-    console.error('[cleanup] Error:', err.message);
+    // Se non riusciamo a leggere i riferimenti, meglio NON cancellare nulla.
+    console.error('[cleanup] Impossibile leggere i riferimenti DB, giro annullato:', err.message);
+    return;
+  }
+
+  let clients = [];
+  try { clients = await fs.readdir(imagesDir); } catch { return; }
+
+  for (const client of clients) {
+    const clientDir = path.join(imagesDir, client);
+    try {
+      const stat = await fs.stat(clientDir);
+      if (!stat.isDirectory()) continue;
+    } catch { continue; }
+
+    let files = [];
+    try { files = await fs.readdir(clientDir); } catch { continue; }
+
+    for (const file of files) {
+      const filePath = path.join(clientDir, file);
+      try {
+        const fileStat = await fs.stat(filePath);
+        if (fileStat.isDirectory()) continue;            // posts/, branding/, library/...
+        if (Date.now() - fileStat.mtimeMs <= maxAge) continue;
+        if (referenced.has(file)) { skippedRef++; continue; } // ancora usato da un post
+        await fs.unlink(filePath);
+        deleted++;
+        console.log(`[cleanup] Deleted: ${filePath}`);
+      } catch (err) {
+        errors++;
+        console.error(`[cleanup] Errore su ${filePath}:`, err.message);
+      }
+    }
+  }
+  if (deleted || skippedRef || errors) {
+    console.log(`[cleanup] Giro completato: ${deleted} eliminati, ${skippedRef} mantenuti (referenziati), ${errors} errori`);
   }
 }
 
@@ -278,8 +313,11 @@ setInterval(cleanupOldImages, 24 * 60 * 60 * 1000);
 runMigrations();
 seedUsers();
 scheduler.start();
-runBackup();
-cron.schedule('0 3 * * *', runBackup);
+runBackup(); // boot: solo DB (il tar media da ~1GB a ogni deploy è sprecato)
+cron.schedule('0 3 * * *', () => {
+  // DB ogni notte; media solo la domenica (retention 3 copie ≈ 3 settimane)
+  runBackup({ includeMedia: new Date().getDay() === 0 });
+});
 
 // Promemoria mensile: il 25 di ogni mese alle 08:00 (Europe/Rome) — invia all'admin
 // un digest dello stato dei piani per ciascun cliente attivo, ed eventuali solleciti

@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const os = require('os');
 const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const { generateCaption } = require('../../lib/ai-provider');
@@ -1530,7 +1530,7 @@ router.post('/:id/media/:mediaId/bust-url', (req, res) => {
   try {
     const path = require('path');
     const fs = require('fs');
-    const { v4: uuidv4 } = require('uuid');
+    const { randomUUID: uuidv4 } = require('crypto');
     const dir = postMedia.postDir(post.client_id, post.id);
     const oldPath = path.join(dir, m.filename);
     if (!fs.existsSync(oldPath)) return res.status(404).json({ error: 'File non trovato' });

@@ -14,7 +14,7 @@
 'use strict';
 
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 const { getDb } = require('../../lib/db');
 const { authMiddleware } = require('../../lib/auth');
 const audit = require('../../lib/audit');
