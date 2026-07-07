@@ -23,6 +23,40 @@
 
 <!-- Tab: Profilo -->
 <div class="tab-content active" id="tab-profilo">
+
+  <% if (typeof setup !== 'undefined' && setup && (!setup.complete || (typeof tokenWarnings !== 'undefined' && tokenWarnings.length))) { %>
+  <!-- Stato attivazione: visibile solo finché c'è qualcosa da sistemare -->
+  <div class="card" style="border-left:4px solid <%= setup.criticalMissing > 0 ? '#f59e0b' : '#3b82f6' %>">
+    <div class="card-header">
+      <h3>🚦 Stato attivazione servizio</h3>
+      <span style="font-size:12px;color:var(--gray-500)">
+        <%= setup.checks.filter(c => c.ok).length %>/<%= setup.checks.length %> completati
+        <% if (setup.isPaying && setup.criticalMissing > 0) { %>
+          · <strong style="color:#b45309">cliente con abbonamento ma servizio NON operativo</strong>
+        <% } %>
+      </span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px 20px;padding:4px 0">
+      <% setup.checks.forEach(ck => { %>
+        <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px">
+          <span style="flex-shrink:0"><%= ck.ok ? '✅' : (ck.critical ? '🔴' : '🟡') %></span>
+          <div>
+            <div style="font-weight:500"><%= ck.label %></div>
+            <% if (ck.hint) { %><div style="color:var(--gray-500);font-size:12px"><%= ck.hint %></div><% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <% if (typeof tokenWarnings !== 'undefined' && tokenWarnings.length) { %>
+      <div style="margin-top:10px;padding:8px 12px;background:#fef2f2;border-radius:8px;font-size:13px">
+        <% tokenWarnings.forEach(w => { %>
+          <div>⏰ <strong><%= w.channel %></strong>: token <%= w.expired ? 'SCADUTO' : ('in scadenza tra ' + w.daysLeft + ' giorni') %> (<%= w.expiresAt %>) — rinnovalo per non interrompere le pubblicazioni.</div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+  <% } %>
+
   <div class="card">
     <div class="card-header"><h3>Informazioni Brand</h3></div>
     <form id="profile-form">
@@ -366,7 +400,76 @@
     </p>
     <div id="snapshot-result" style="font-size:12px;color:var(--gray-500);margin-top:10px"></div>
   </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>📈 Cosa funziona meglio</h3>
+      <select id="analytics-days" onchange="loadAnalytics()" style="font-size:13px;padding:4px 8px;border:1px solid var(--gray-300);border-radius:6px">
+        <option value="30">Ultimi 30 giorni</option>
+        <option value="90" selected>Ultimi 90 giorni</option>
+        <option value="180">Ultimi 180 giorni</option>
+      </select>
+    </div>
+    <p style="font-size:13px;color:var(--gray-500);margin-bottom:10px">
+      Performance media per formato, categoria del piano, giorno e orario di pubblicazione — per capire su cosa puntare il prossimo mese.
+    </p>
+    <div id="analytics-body" style="font-size:13px;color:var(--gray-500)">Caricamento…</div>
+  </div>
 </div>
+
+<script>
+async function loadAnalytics() {
+  const el = document.getElementById('analytics-body');
+  const days = document.getElementById('analytics-days').value;
+  el.innerHTML = 'Caricamento…';
+  try {
+    const d = await apiFetch('/dashboard/api/clients/<%= client.id %>/insights/analytics?days=' + days);
+    if (d.error) { el.innerHTML = '<span style="color:var(--red)">' + d.error + '</span>'; return; }
+    if (!d.posts) {
+      el.innerHTML = 'Nessun dato nel periodo: servono post pubblicati con metriche raccolte (il fetch gira ogni notte alle 04:00).';
+      return;
+    }
+    const fmt = v => v === null || v === undefined ? '—' : Number(v).toLocaleString('it-IT');
+    const table = (title, rows, max) => {
+      if (!rows || !rows.length) return '';
+      const top = rows.slice(0, max || 6);
+      return '<div><div style="font-weight:600;color:var(--gray-700);margin:10px 0 6px">' + title + '</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
+        '<tr style="color:var(--gray-500);text-align:left"><th style="padding:3px 6px;font-weight:500">&nbsp;</th><th style="padding:3px 6px;font-weight:500;text-align:right">Post</th><th style="padding:3px 6px;font-weight:500;text-align:right">Reach medio</th><th style="padding:3px 6px;font-weight:500;text-align:right">Interazioni medie</th></tr>' +
+        top.map((r, i) => '<tr style="border-top:1px solid var(--gray-100)' + (i === 0 ? ';background:#f0fdf4;font-weight:600' : '') + '">' +
+          '<td style="padding:4px 6px">' + (i === 0 ? '🏆 ' : '') + r.label + '</td>' +
+          '<td style="padding:4px 6px;text-align:right">' + r.posts + '</td>' +
+          '<td style="padding:4px 6px;text-align:right">' + fmt(r.avg_reach) + '</td>' +
+          '<td style="padding:4px 6px;text-align:right">' + fmt(r.avg_engagement) + '</td></tr>').join('') +
+        '</table></div>';
+    };
+    let best = [];
+    if (d.best.mediaType) best.push('formato <strong>' + d.best.mediaType.label + '</strong>');
+    if (d.best.weekday) best.push('giorno <strong>' + d.best.weekday.label + '</strong>');
+    if (d.best.hour) best.push('orario <strong>' + d.best.hour.label + '</strong>');
+    el.innerHTML =
+      '<div style="padding:8px 12px;background:#eff6ff;border-radius:8px;margin-bottom:4px;color:var(--gray-700)">' +
+        'Analisi su <strong>' + d.posts + ' post</strong> pubblicati negli ultimi ' + d.days + ' giorni' +
+        (best.length ? ' — rende di più: ' + best.join(' · ') : '') + '.</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 24px">' +
+        table('Per formato', d.byMediaType) +
+        table('Per piattaforma', d.platforms) +
+        table('Per categoria del piano', d.byCategory, 6) +
+        table('Per giorno della settimana', d.byWeekday, 7) +
+        table('Per orario', d.byHour) +
+      '</div>';
+  } catch (err) {
+    el.innerHTML = '<span style="color:var(--red)">' + err.message + '</span>';
+  }
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const perfTab = document.querySelector('[data-tab="performance"]');
+  let analyticsLoaded = false;
+  if (perfTab) perfTab.addEventListener('click', function() {
+    if (!analyticsLoaded) { analyticsLoaded = true; loadAnalytics(); }
+  });
+});
+</script>
 
 <!-- Tab: Impostazioni -->
 <div class="tab-content" id="tab-impostazioni">

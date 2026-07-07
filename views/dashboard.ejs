@@ -28,6 +28,11 @@
         <h3><%= c.display_name %></h3>
         <p><%= c.sector ? c.sector.replace(/_/g, ' ') : 'Settore non definito' %> &middot; <%= c.location || '' %></p>
         <span class="badge badge-<%= c.status %>"><%= c.status %></span>
+        <% if (c.setup && c.setup.criticalMissing > 0) { %>
+          <span class="badge" style="background:#fef3c7;color:#92400e" title="<%= c.setup.checks.filter(x => x.critical && !x.ok).map(x => x.label).join(' · ') %>">
+            ⚠ Setup incompleto<%= c.setup.isPaying ? ' — cliente pagante!' : '' %>
+          </span>
+        <% } %>
       </div>
     </a>
   <% }) %>

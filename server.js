@@ -327,6 +327,40 @@ cron.schedule('0 8 25 * *', () => {
   Promise.resolve(sendMonthlyReminders()).catch(e => console.error('[reminders]', e.message));
 }, { timezone: 'Europe/Rome' });
 
+// Salute canali: ogni lunedì alle 08:30 (Europe/Rome) — avvisa l'admin se ci sono
+// clienti PAGANTI con setup incompleto (servizio fermo = fatturato a rischio)
+// o token social in scadenza (LinkedIn 60gg, TikTok refresh 365gg).
+cron.schedule('30 8 * * 1', () => {
+  try {
+    const { buildChannelHealthReport } = require('./lib/setup-status');
+    const { sendNotification } = require('./lib/notifier');
+    const { getDb } = require('./lib/db');
+    const report = buildChannelHealthReport(getDb());
+    if (!report) { console.log('[channel-health] Tutto ok, nessun avviso'); return; }
+
+    let html = '<h2>Salute canali social — controllo settimanale</h2>';
+    if (report.notActivated.length) {
+      html += '<h3>⚠️ Clienti con abbonamento ma servizio NON operativo</h3><ul>';
+      for (const c of report.notActivated) {
+        html += `<li><strong>${c.name}</strong> (${c.plan}${c.price ? ', ' + c.price + '€/mese' : ''}) — manca: ${c.missing.join(', ')}</li>`;
+      }
+      html += '</ul>';
+    }
+    if (report.expiring.length) {
+      html += '<h3>⏰ Token in scadenza</h3><ul>';
+      for (const t of report.expiring) {
+        html += `<li><strong>${t.name}</strong> — ${t.channel}: ${t.expired ? 'SCADUTO' : 'scade tra ' + t.daysLeft + ' giorni'} (${t.expiresAt})</li>`;
+      }
+      html += '</ul>';
+    }
+    html += `<p><a href="${BASE_URL}/dashboard">Apri la dashboard</a></p>`;
+    const subject = `[SIG] Salute canali: ${report.notActivated.length} da attivare, ${report.expiring.length} token in scadenza`;
+    Promise.resolve(sendNotification(subject, html)).catch(e => console.error('[channel-health]', e.message));
+  } catch (err) {
+    console.error('[channel-health]', err.message);
+  }
+}, { timezone: 'Europe/Rome' });
+
 app.listen(PORT, () => {
   console.log(`Social Image Generator running on port ${PORT}`);
   console.log(`Base URL: ${BASE_URL}`);

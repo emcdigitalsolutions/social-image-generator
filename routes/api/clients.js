@@ -888,6 +888,21 @@ router.get('/:id/insights/history', (req, res) => {
   res.json({ days, rows });
 });
 
+// Analytics aggregati: performance per formato/categoria/giorno/ora (F-pro-7d)
+router.get('/:id/insights/analytics', (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT id FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  try {
+    const { getClientAnalytics } = require('../../lib/analytics');
+    const days = Math.min(parseInt(req.query.days, 10) || 90, 365);
+    res.json(getClientAnalytics(req.params.id, days));
+  } catch (err) {
+    console.error('[insights analytics]', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Trigger manuale del cron mensile: invia il report mese-precedente a TUTTI
 // i clienti con contact_email. Utile per test o se il cron del 1° non è
 // scattato (es. server era down).

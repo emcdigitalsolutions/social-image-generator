@@ -127,6 +127,10 @@ router.get('/', (req, res) => {
   for (const row of statsRows) statsMap[row.client_id] = row;
   clients.forEach(c => { c.stats = statsMap[c.id] || defaultStats; });
 
+  // Stato attivazione: badge "Setup incompleto" sulla card cliente
+  const { computeSetupStatus } = require('../lib/setup-status');
+  clients.forEach(c => { c.setup = computeSetupStatus(c, db); });
+
   res.render('dashboard', { title: 'Dashboard', clients, archivedCount, user: req.user });
 });
 
@@ -226,7 +230,12 @@ router.get('/clients/:id', (req, res) => {
   const visualStyles = parseVisualStyles(client.visual_styles);
   const visualStylesIsDefault = !client.visual_styles;
 
-  res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, onboarding, currentMonthShortcut, visualStyles, visualStylesIsDefault, defaultVisualStyles: DEFAULT_VISUAL_STYLES, user: req.user });
+  // Stato attivazione (checklist servizio) + scadenze token
+  const { computeSetupStatus, tokenExpiryWarnings } = require('../lib/setup-status');
+  const setup = computeSetupStatus(client, db);
+  const tokenWarnings = tokenExpiryWarnings(client);
+
+  res.render('client-detail', { title: client.display_name, client, questionnaires, plans, sectors, onboarding, currentMonthShortcut, visualStyles, visualStylesIsDefault, defaultVisualStyles: DEFAULT_VISUAL_STYLES, setup, tokenWarnings, user: req.user });
 });
 
 // ── TikTok OAuth: connetti un account cliente (ottiene access+refresh token) ──
