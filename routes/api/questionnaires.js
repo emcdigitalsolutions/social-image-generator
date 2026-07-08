@@ -50,6 +50,52 @@ router.get('/by-client/:clientId', authMiddleware, (req, res) => {
   res.json(list);
 });
 
+// Invia il link del questionario al cliente via email (usa clients.contact_email)
+router.post('/:id/send-email', authMiddleware, async (req, res) => {
+  const db = getDb();
+  const q = db.prepare('SELECT * FROM questionnaires WHERE id = ?').get(req.params.id);
+  if (!q) return res.status(404).json({ error: 'Questionnaire not found' });
+  const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(q.client_id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  if (!client.contact_email) {
+    return res.status(400).json({ error: 'Il cliente non ha una email di contatto: impostala nel profilo (tab Profilo → Email di contatto cliente).' });
+  }
+  try {
+    const { getBaseUrl } = require('../../lib/settings');
+    const { sendQuestionnaireLinkToClient } = require('../../lib/notifier');
+    const questionnaireUrl = getBaseUrl().replace(/\/$/, '') + '/dashboard/q/' + q.token;
+    const result = await sendQuestionnaireLinkToClient({ client, questionnaireUrl });
+    if (result.skipped) return res.status(400).json({ error: 'Invio saltato: ' + result.reason });
+    res.json({ success: true, sent_to: result.sent_to });
+  } catch (err) {
+    console.error('[questionnaire send-email]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Scarica le risposte del questionario come file JSON (auth required)
+router.get('/:id/export.json', authMiddleware, (req, res) => {
+  const db = getDb();
+  const q = db.prepare(`
+    SELECT q.*, c.display_name AS client_name FROM questionnaires q
+    JOIN clients c ON c.id = q.client_id WHERE q.id = ?
+  `).get(req.params.id);
+  if (!q) return res.status(404).json({ error: 'Questionnaire not found' });
+  const payload = {
+    client_id: q.client_id,
+    client_name: q.client_name,
+    questionnaire_id: q.id,
+    sector: q.sector,
+    status: q.status,
+    submitted_at: q.submitted_at,
+    responses: q.responses ? JSON.parse(q.responses) : null
+  };
+  const fname = `questionario-${q.client_id}-${String(q.id).slice(0, 8)}.json`;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
+  res.send(JSON.stringify(payload, null, 2));
+});
+
 // Import CSV responses (auth required)
 router.post('/:id/import-csv', authMiddleware, (req, res) => {
   const db = getDb();

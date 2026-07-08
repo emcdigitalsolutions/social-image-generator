@@ -184,6 +184,10 @@
               <div style="display:flex;gap:6px;flex-wrap:wrap">
                 <a href="<%= qUrl %>" target="_blank" class="qicon" title="Apri il questionario in una nuova scheda"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
                 <button type="button" class="qicon" onclick="copyQLink(this, '<%= qUrl %>')" title="Copia il link da inviare al cliente"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+                <button type="button" class="qicon" onclick="sendQuestionnaireEmail('<%= q.id %>')" title="Invia il link al cliente via email (usa l'email di contatto del profilo)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>
+                <% if (q.status === 'submitted') { %>
+                <a href="/dashboard/api/questionnaires/<%= q.id %>/export.json" class="qicon" title="Scarica le risposte in formato JSON" download><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+                <% } %>
                 <% if (q.status === 'submitted') { %>
                 <button type="button" class="qicon" onclick="viewResponses('<%= q.id %>')" title="Vedi le risposte"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
                 <% } %>
@@ -695,6 +699,21 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Copia il link pubblico del questionario (URL assoluto) da inviare al cliente
+  async function sendQuestionnaireEmail(qId) {
+    const email = <%- JSON.stringify(client.contact_email || '') %>;
+    if (!email) {
+      alert('Il cliente non ha una email di contatto.\nImpostala nel tab Profilo → "Email di contatto cliente" e salva, poi riprova.');
+      return;
+    }
+    if (!confirm('Inviare il link del questionario a ' + email + '?\n(EMC sarà in copia)')) return;
+    try {
+      const r = await apiFetch('/dashboard/api/questionnaires/' + qId + '/send-email', { method: 'POST' });
+      if (r.error) { alert('Errore: ' + r.error); return; }
+      if (typeof toast === 'function') toast('✉️ Questionario inviato a ' + r.sent_to);
+      else alert('Questionario inviato a ' + r.sent_to);
+    } catch (e) { alert('Errore invio: ' + e.message); }
+  }
+
   function copyQLink(btn, relUrl) {
     if (!relUrl) return;
     const url = location.origin + relUrl;
