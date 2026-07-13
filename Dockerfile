@@ -32,11 +32,19 @@ RUN npm ci --omit=dev
 # Remove build tools after native modules are compiled
 RUN apt-get purge -y python3 make g++ && apt-get autoremove -y
 
+# Chrome for Testing pinnato: il chromium di Debian segue i security update
+# e la 150 crasha in container (SIGTRAP all'avvio, 13/7/2026). Il pacchetto
+# apt chromium resta installato solo per la chiusura delle librerie condivise.
+ENV CFT_VERSION=131.0.6778.264
+RUN npx -y @puppeteer/browsers install chrome@${CFT_VERSION} --path /opt/chrome \
+    && ln -sf /opt/chrome/chrome/linux-${CFT_VERSION}/chrome-linux64/chrome /usr/local/bin/chrome-cft \
+    && /usr/local/bin/chrome-cft --headless --no-sandbox --disable-gpu --dump-dom about:blank > /dev/null
+
 COPY . .
 
 RUN mkdir -p /app/public/images/fratellidirosa /app/data
 
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/local/bin/chrome-cft
 ENV NODE_ENV=production
 
 EXPOSE 3100
