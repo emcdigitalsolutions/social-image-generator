@@ -335,10 +335,19 @@ cron.schedule('30 8 * * 1', () => {
     const { buildChannelHealthReport } = require('./lib/setup-status');
     const { sendNotification } = require('./lib/notifier');
     const { getDb } = require('./lib/db');
-    const report = buildChannelHealthReport(getDb());
-    if (!report) { console.log('[channel-health] Tutto ok, nessun avviso'); return; }
+    const { apiVersionAgeMonths, LINKEDIN_API_VERSION } = require('./lib/linkedin-publish');
+    const report = buildChannelHealthReport(getDb()) || { notActivated: [], expiring: [] };
+    // LinkedIn spegne ogni versione API dopo ~12 mesi: avvisa da 10 mesi in su.
+    const liAge = apiVersionAgeMonths();
+    const liVersionWarn = liAge >= 10;
+    if (!report.notActivated.length && !report.expiring.length && !liVersionWarn) {
+      console.log('[channel-health] Tutto ok, nessun avviso'); return;
+    }
 
     let html = '<h2>Salute canali social — controllo settimanale</h2>';
+    if (liVersionWarn) {
+      html += `<h3>🔴 Versione API LinkedIn in scadenza</h3><p>In uso la <strong>${LINKEDIN_API_VERSION}</strong> (${liAge} mesi): LinkedIn la spegne dopo ~12 mesi e da quel momento <strong>nessun post esce su LinkedIn</strong>. Aggiorna <code>DEFAULT_API_VERSION</code> in lib/linkedin-publish.js (o l'env <code>LINKEDIN_API_VERSION</code>) alla versione più recente.</p>`;
+    }
     if (report.notActivated.length) {
       html += '<h3>⚠️ Clienti con abbonamento ma servizio NON operativo</h3><ul>';
       for (const c of report.notActivated) {
@@ -354,10 +363,44 @@ cron.schedule('30 8 * * 1', () => {
       html += '</ul>';
     }
     html += `<p><a href="${BASE_URL}/dashboard">Apri la dashboard</a></p>`;
-    const subject = `[SIG] Salute canali: ${report.notActivated.length} da attivare, ${report.expiring.length} token in scadenza`;
+    const subject = `[SIG] Salute canali: ${report.notActivated.length} da attivare, ${report.expiring.length} token in scadenza${liVersionWarn ? ', API LinkedIn da aggiornare' : ''}`;
     Promise.resolve(sendNotification(subject, html)).catch(e => console.error('[channel-health]', e.message));
   } catch (err) {
     console.error('[channel-health]', err.message);
+  }
+}, { timezone: 'Europe/Rome' });
+
+// Fonti articoli: ogni mattina alle 07:30 (Europe/Rome) legge i feed/le pagine
+// configurate per ogni cliente e salva gli articoli nuovi; avvisa l'admin via email
+// (se il cliente ha l'avviso attivo) con il link per creare i post riassunto.
+cron.schedule('30 7 * * *', async () => {
+  try {
+    const { getDb } = require('./lib/db');
+    const { checkClientSources } = require('./lib/article-sources');
+    const { sendNotification } = require('./lib/notifier');
+    const db = getDb();
+    const clients = db.prepare(`
+      SELECT DISTINCT c.id, c.display_name, c.sources_notify FROM clients c
+      JOIN client_sources s ON s.client_id = c.id AND s.is_active = 1
+      WHERE c.status = 'active' AND c.deleted_at IS NULL
+    `).all();
+    for (const c of clients) {
+      const report = await checkClientSources(db, c.id);
+      console.log(`[sources] ${c.id}: ${report.added.length} nuovi articoli, ${report.errors.length} errori`);
+      if (!c.sources_notify || (!report.added.length && !report.errors.length)) continue;
+      const esc = s => String(s || '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+      let html = `<h2>${esc(c.display_name)} — nuovi articoli dalle fonti</h2>`;
+      if (report.added.length) {
+        html += '<ul>' + report.added.map(a => `<li><a href="${esc(a.url)}">${esc(a.title || a.url)}</a>${a.author ? ' — ' + esc(a.author) : ''} <small>(${esc(a.source)})</small></li>`).join('') + '</ul>';
+      }
+      if (report.errors.length) {
+        html += '<h3>⚠️ Fonti con errori</h3><ul>' + report.errors.map(e => `<li>${esc(e.source)}: ${esc(e.error)}</li>`).join('') + '</ul>';
+      }
+      html += `<p><a href="${BASE_URL}/dashboard/clients/${encodeURIComponent(c.id)}#impostazioni">Apri le fonti e crea i post</a></p>`;
+      await Promise.resolve(sendNotification(`[SIG] ${c.display_name}: ${report.added.length} nuovi articoli`, html)).catch(e => console.error('[sources]', e.message));
+    }
+  } catch (err) {
+    console.error('[sources]', err.message);
   }
 }, { timezone: 'Europe/Rome' });
 

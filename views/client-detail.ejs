@@ -494,11 +494,11 @@ document.addEventListener('DOMContentLoaded', function() {
           <div style="display:flex;gap:4px"><input type="text" name="ig_user_id" value="<%= client.ig_user_id || '' %>" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
         <div class="form-group">
-          <label>LinkedIn Organization ID <span style="font-weight:400;color:var(--gray-400);font-size:11px">(es. 12345678)</span></label>
+          <label>LinkedIn Organization ID <span style="font-weight:400;color:var(--gray-400);font-size:11px">(numero, URN o URL admin della Page)</span></label>
           <div style="display:flex;gap:4px"><input type="text" name="linkedin_org_id" value="<%= client.linkedin_org_id || '' %>" placeholder="ID numerico Page LinkedIn" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
         <div class="form-group">
-          <label>LinkedIn Access Token <span style="font-weight:400;color:var(--gray-400);font-size:11px">(scope w_organization_social)</span></label>
+          <label>LinkedIn Access Token <span style="font-weight:400;color:var(--gray-400);font-size:11px">(scope w_organization_social + rw_organization_admin)</span></label>
           <div style="display:flex;gap:4px"><input type="password" name="linkedin_access_token" value="<%= client.linkedin_access_token || '' %>" placeholder="OAuth 2.0 user token" style="flex:1"><button type="button" class="btn-copy" onclick="copyField(this)" title="Copia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
         </div>
         <div class="form-group">
@@ -518,6 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
           <% if (liBadge) { %>
             <div style="margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;line-height:1.4;background:<%= liBadge.bg %>;color:<%= liBadge.color %>"><%= liBadge.txt %></div>
           <% } %>
+          <button type="button" class="btn btn-secondary" id="li-verify-btn" onclick="verifyLinkedIn()" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px">🔍 Verifica connessione LinkedIn</button>
+          <p style="font-size:11px;color:var(--gray-500);margin-top:4px;line-height:1.5">Controlla token e ruolo sulla Page senza pubblicare nulla. Con il solo token mostra le tue Pagine e compila l'ID. Se lasci vuota la data, al salvataggio di un token nuovo viene impostata a +60 giorni.</p>
+          <div id="li-verify-result" style="display:none;margin-top:6px;padding:8px 10px;border-radius:6px;font-size:12px;line-height:1.5"></div>
         </div>
         <div class="form-group">
           <label>TikTok Open ID <span style="font-weight:400;color:var(--gray-400);font-size:11px">(ritornato dall'OAuth)</span></label>
@@ -661,6 +664,46 @@ document.addEventListener('DOMContentLoaded', function() {
         </form>
       </div>
     </div>
+  </div>
+  <div class="card" style="margin-top:16px" id="sources-card">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <h3>📰 Fonti articoli <span style="font-weight:400;font-size:12px;color:var(--gray-400)">(spunti per i post)</span></h3>
+      <button type="button" class="btn btn-sm btn-secondary" id="src-check-btn" onclick="srcCheckNow()">🔄 Controlla ora</button>
+    </div>
+    <p style="font-size:12px;color:var(--gray-500);line-height:1.5;margin-bottom:12px">Inserisci il sito o la rivista online del cliente (basta l'indirizzo: il feed RSS viene trovato da solo). Ogni mattina alle 7:30 il sistema controlla le fonti e ti avvisa via email dei nuovi articoli; da ognuno crei con un clic un post che lo riassume, con copertina e link all'articolo.</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:end;margin-bottom:8px">
+      <div class="form-group" style="margin:0;flex:2 1 240px"><label>URL sito / rivista / feed RSS</label><input type="url" id="src-url" placeholder="https://rivista.esempio.org" style="width:100%"></div>
+      <div class="form-group" style="margin:0;flex:1 1 160px"><label>Nome (opzionale)</label><input type="text" id="src-label" placeholder="Es. Rivista AI Europe" style="width:100%"></div>
+      <button type="button" class="btn btn-secondary" onclick="srcPreview()">Prova</button>
+      <button type="button" class="btn btn-primary" id="src-add-btn" onclick="srcAdd()">Aggiungi</button>
+    </div>
+    <div id="src-preview" style="display:none;font-size:12px;padding:8px 10px;border-radius:6px;margin-bottom:8px;line-height:1.5"></div>
+    <div id="src-list" style="margin-bottom:14px"></div>
+
+    <details style="margin-bottom:14px">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600">✍️ Linee guida per i post dagli articoli</summary>
+      <div class="form-group" style="margin-top:8px">
+        <textarea id="src-guidelines" rows="5" style="width:100%" placeholder="Es: tono autorevole ma accessibile; cita sempre nome e ruolo dell'autore; chiudi con una domanda alla community; hashtag fissi #AIEurope #ArtificialIntelligence; lingua italiana."></textarea>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px"><input type="checkbox" id="src-notify"> Avvisami via email quando escono nuovi articoli</label>
+      <button type="button" class="btn btn-sm btn-primary" onclick="srcSaveSettings()">Salva linee guida</button>
+    </details>
+
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <strong style="font-size:13px">Articoli</strong>
+      <select id="src-filter" onchange="srcRenderArticles()" style="width:auto"><option value="new">Nuovi</option><option value="used">Già usati</option><option value="ignored">Ignorati / storico</option><option value="all">Tutti</option></select>
+      <span style="flex:1"></span>
+      <input type="url" id="src-manual-url" placeholder="Incolla l'URL di un articolo" style="min-width:200px;flex:1">
+      <button type="button" class="btn btn-sm btn-secondary" onclick="srcAddArticle()">+ Articolo</button>
+    </div>
+    <div style="display:flex;gap:6px;align-items:end;flex-wrap:wrap;margin-bottom:10px;font-size:12px;background:var(--gray-50);padding:8px;border-radius:6px">
+      <div class="form-group" style="margin:0"><label style="font-size:11px">Piano di destinazione</label><select id="src-plan" style="width:auto;max-width:260px"></select></div>
+      <div class="form-group" style="margin:0"><label style="font-size:11px">Data pubblicazione</label><input type="date" id="src-date"></div>
+      <div class="form-group" style="margin:0"><label style="font-size:11px">Ora</label><input type="time" id="src-time" value="09:00"></div>
+      <span style="color:var(--gray-500);flex-basis:100%">Valgono per il prossimo "Crea post". Il post nasce come bozza con la caption già scritta: rivedilo, approvalo e mettilo "Pronto".</span>
+    </div>
+    <div id="src-articles"></div>
   </div>
 </div>
 
@@ -1159,6 +1202,206 @@ document.addEventListener('DOMContentLoaded', function() {
     await apiFetch('/dashboard/api/clients/' + CLIENT_ID, { method: 'PUT', body: data });
     toast('Credenziali salvate');
   });
+
+  // ─────────── Fonti articoli ───────────
+  let SRC = { sources: [], articles: [], plans: [] };
+  const srcEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const srcApi = (path, opts) => apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/sources' + path, opts);
+  const srcFmtDate = iso => {
+    if (!iso) return '';
+    const d = new Date(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(iso) ? iso.replace(' ', 'T') + 'Z' : iso);
+    return isNaN(d) ? '' : d.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  async function srcLoad() {
+    try {
+      SRC = await srcApi('');
+      if (SRC.error) throw new Error(SRC.error);
+      document.getElementById('src-guidelines').value = SRC.settings.article_caption_guidelines || '';
+      document.getElementById('src-notify').checked = !!SRC.settings.sources_notify;
+      const sel = document.getElementById('src-plan');
+      const prev = sel.value;
+      sel.innerHTML = SRC.plans.length
+        ? SRC.plans.map(p => '<option value="' + srcEsc(p.id) + '">' + srcEsc(p.title || 'Piano') + (p.start_year_month ? ' (da ' + srcEsc(p.start_year_month) + ')' : '') + '</option>').join('')
+        : '<option value="">— nessun piano: creane uno —</option>';
+      if (prev && SRC.plans.some(p => p.id === prev)) sel.value = prev;
+      srcRenderSources();
+      srcRenderArticles();
+    } catch (e) {
+      document.getElementById('src-list').innerHTML = '<p style="color:var(--red);font-size:12px">Errore caricamento fonti: ' + srcEsc(e.message) + '</p>';
+    }
+  }
+
+  function srcRenderSources() {
+    const box = document.getElementById('src-list');
+    if (!SRC.sources.length) { box.innerHTML = '<p style="font-size:12px;color:var(--gray-400)">Nessuna fonte configurata.</p>'; return; }
+    box.innerHTML = SRC.sources.map(s => '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px">'
+      + '<span style="background:' + (s.type === 'rss' ? '#dbeafe;color:#1e40af' : '#f3e8ff;color:#6b21a8') + ';padding:2px 8px;border-radius:10px;font-size:11px">' + (s.type === 'rss' ? 'RSS' : 'Pagina') + '</span>'
+      + '<strong>' + srcEsc(s.label) + '</strong>'
+      + '<a href="' + srcEsc(s.feed_url || s.url) + '" target="_blank" rel="noopener" style="font-size:11px;color:var(--gray-500);word-break:break-all">' + srcEsc(s.feed_url || s.url) + '</a>'
+      + '<span style="flex:1"></span>'
+      + (s.last_error ? '<span style="font-size:11px;color:#991b1b" title="' + srcEsc(s.last_error) + '">⚠ ' + srcEsc(s.last_error.slice(0, 80)) + '</span>' : (s.last_checked_at ? '<span style="font-size:11px;color:var(--gray-400)">controllata il ' + srcFmtDate(s.last_checked_at) + '</span>' : ''))
+      + '<label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" ' + (s.is_active ? 'checked' : '') + ' onchange="srcToggle(\'' + srcEsc(s.id) + '\', this.checked)"> attiva</label>'
+      + '<button type="button" class="btn btn-sm btn-secondary" onclick="srcDelete(\'' + srcEsc(s.id) + '\')" title="Rimuovi fonte">🗑</button>'
+      + '</div>').join('');
+  }
+
+  function srcRenderArticles() {
+    const f = document.getElementById('src-filter').value;
+    const list = SRC.articles.filter(a => f === 'all' || a.status === f);
+    const box = document.getElementById('src-articles');
+    if (!list.length) {
+      box.innerHTML = '<p style="font-size:12px;color:var(--gray-400)">' + (f === 'new' ? 'Nessun articolo nuovo. Premi "Controlla ora" o incolla l\'URL di un articolo.' : 'Nessun articolo.') + '</p>';
+      return;
+    }
+    box.innerHTML = list.map(a => '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--gray-100)">'
+      + (a.image_url
+          ? '<img src="' + srcEsc(a.image_url) + '" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:84px;height:84px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--gray-100)" onerror="this.style.visibility=\'hidden\'">'
+          : '<div style="width:84px;height:84px;border-radius:6px;background:var(--gray-100);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px">📰</div>')
+      + '<div style="flex:1;min-width:0">'
+      + '<a href="' + srcEsc(a.url) + '" target="_blank" rel="noopener" style="font-weight:600;font-size:14px;line-height:1.3">' + srcEsc(a.title || a.url) + '</a>'
+      + '<div style="font-size:11px;color:var(--gray-500);margin:3px 0">' + [a.author, srcFmtDate(a.published_at), a.source_label].filter(Boolean).map(srcEsc).join(' · ') + '</div>'
+      + (a.excerpt ? '<div style="font-size:12px;color:var(--gray-600);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + srcEsc(a.excerpt) + '</div>' : '')
+      + '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'
+      + (a.status === 'used' && a.post_id
+          ? '<a class="btn btn-sm btn-secondary" href="/dashboard/posts/' + srcEsc(a.post_id) + '">📝 Apri post' + (a.post_date ? ' (' + srcEsc(a.post_date) + ')' : '') + '</a>'
+          : '<button type="button" class="btn btn-sm btn-primary" onclick="srcCreatePost(this, \'' + srcEsc(a.id) + '\')">✍️ Crea post</button>'
+            + (a.status === 'ignored'
+                ? '<button type="button" class="btn btn-sm btn-secondary" onclick="srcSetStatus(\'' + srcEsc(a.id) + '\', \'new\')">Ripristina</button>'
+                : '<button type="button" class="btn btn-sm btn-secondary" onclick="srcSetStatus(\'' + srcEsc(a.id) + '\', \'ignored\')">Ignora</button>'))
+      + '</div></div></div>').join('');
+  }
+
+  function srcShowPreview(html, kind) {
+    const box = document.getElementById('src-preview');
+    box.style.background = kind === 'ok' ? '#dcfce7' : '#fee2e2';
+    box.style.color = kind === 'ok' ? '#166534' : '#991b1b';
+    box.innerHTML = html; box.style.display = '';
+  }
+
+  async function srcPreview() {
+    const url = document.getElementById('src-url').value.trim();
+    if (!url) return toast('Inserisci un URL');
+    srcShowPreview('⏳ Analisi della fonte…', 'ok');
+    const r = await srcApi('/preview', { method: 'POST', body: { url } });
+    if (!r.ok) return srcShowPreview('❌ ' + srcEsc(r.error || 'errore'), 'err');
+    srcShowPreview('✓ ' + (r.type === 'rss' ? 'Feed RSS trovato' : 'Nessun feed: leggerò i link agli articoli della pagina') + (r.title ? ' — <strong>' + srcEsc(r.title) + '</strong>' : '')
+      + ' · ' + r.count + ' articoli. Ultimi:<ul style="margin:4px 0 0 16px">' + r.sample.map(a => '<li>' + srcEsc(a.title || a.url) + '</li>').join('') + '</ul>', 'ok');
+  }
+
+  async function srcAdd() {
+    const url = document.getElementById('src-url').value.trim();
+    if (!url) return toast('Inserisci un URL');
+    const btn = document.getElementById('src-add-btn');
+    btn.disabled = true; btn.textContent = '⏳';
+    try {
+      const r = await srcApi('', { method: 'POST', body: { url, label: document.getElementById('src-label').value.trim() } });
+      if (r.error) return srcShowPreview('❌ ' + srcEsc(r.error), 'err');
+      document.getElementById('src-url').value = '';
+      document.getElementById('src-label').value = '';
+      document.getElementById('src-preview').style.display = 'none';
+      toast('Fonte aggiunta: ' + r.report.added.length + ' articoli recenti pronti (lo storico è in "Ignorati / storico")');
+      document.getElementById('src-filter').value = 'new';
+      await srcLoad();
+    } finally { btn.disabled = false; btn.textContent = 'Aggiungi'; }
+  }
+
+  async function srcToggle(id, active) { await srcApi('/' + id, { method: 'PUT', body: { is_active: active } }); srcLoad(); }
+  async function srcDelete(id) {
+    if (!confirm('Rimuovere questa fonte? Gli articoli già trovati restano.')) return;
+    await srcApi('/' + id, { method: 'DELETE' });
+    srcLoad();
+  }
+
+  async function srcCheckNow() {
+    const btn = document.getElementById('src-check-btn');
+    btn.disabled = true; btn.textContent = '⏳ Controllo…';
+    try {
+      const r = await srcApi('/check', { method: 'POST' });
+      if (r.error) return toast('❌ ' + r.error);
+      toast(r.added.length + ' nuovi articoli' + (r.errors.length ? ' · ' + r.errors.length + ' fonti con errori' : ''));
+      document.getElementById('src-filter').value = 'new';
+      await srcLoad();
+    } finally { btn.disabled = false; btn.textContent = '🔄 Controlla ora'; }
+  }
+
+  async function srcSaveSettings() {
+    const r = await srcApi('/settings', { method: 'PUT', body: {
+      article_caption_guidelines: document.getElementById('src-guidelines').value,
+      sources_notify: document.getElementById('src-notify').checked
+    } });
+    toast(r.ok ? 'Linee guida salvate' : '❌ ' + (r.error || 'errore'));
+  }
+
+  async function srcAddArticle() {
+    const input = document.getElementById('src-manual-url');
+    if (!input.value.trim()) return toast('Incolla l\'URL di un articolo');
+    const r = await srcApi('/articles', { method: 'POST', body: { url: input.value.trim() } });
+    if (r.error) return toast('❌ ' + r.error);
+    input.value = '';
+    toast(r.existing ? 'Articolo già presente: rimesso tra i nuovi' : 'Articolo aggiunto');
+    document.getElementById('src-filter').value = 'new';
+    srcLoad();
+  }
+
+  async function srcSetStatus(id, status) { await srcApi('/articles/' + id + '/status', { method: 'POST', body: { status } }); srcLoad(); }
+
+  async function srcCreatePost(btn, id) {
+    const plan = document.getElementById('src-plan').value;
+    if (!plan) return toast('Serve un piano editoriale di destinazione');
+    btn.disabled = true; btn.textContent = '⏳ Leggo e riassumo…';
+    try {
+      const r = await srcApi('/articles/' + id + '/create-post', { method: 'POST', body: {
+        editorial_plan_id: plan,
+        scheduled_date: document.getElementById('src-date').value || null,
+        scheduled_time: document.getElementById('src-time').value || null
+      } });
+      if (r.error) { toast('❌ ' + r.error); return; }
+      if (r.warnings && r.warnings.length) alert('Post creato. Da controllare:\n\n• ' + r.warnings.join('\n• '));
+      location.href = r.editor_url;
+    } finally { btn.disabled = false; btn.textContent = '✍️ Crea post'; }
+  }
+
+  srcLoad();
+
+  // Verifica connessione LinkedIn: usa i valori nel form (anche non salvati)
+  async function verifyLinkedIn() {
+    const form = document.getElementById('social-form');
+    const btn = document.getElementById('li-verify-btn');
+    const box = document.getElementById('li-verify-result');
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    btn.disabled = true; btn.textContent = '⏳ Verifica in corso…';
+    try {
+      const r = await apiFetch('/dashboard/api/clients/' + CLIENT_ID + '/linkedin/verify', {
+        method: 'POST',
+        body: { access_token: form.linkedin_access_token.value.trim(), org_id: form.linkedin_org_id.value.trim() }
+      });
+      const good = r.ok, warn = !r.ok && r.tokenValid;
+      box.style.background = good ? '#dcfce7' : warn ? '#fef3c7' : '#fee2e2';
+      box.style.color = good ? '#166534' : warn ? '#92400e' : '#991b1b';
+      let html = '<strong>' + (good ? '✓ ' : '⚠ ') + esc(r.message || r.error || 'Risposta inattesa') + '</strong>';
+      if (r.pages && r.pages.length) {
+        html += '<div style="margin-top:6px">Pagine collegate al token:</div><ul style="margin:4px 0 0 16px;padding:0">';
+        for (const p of r.pages) {
+          html += '<li style="margin:3px 0">' + esc(p.name || '(nome non disponibile)') + ' — ID <code>' + esc(p.id) + '</code> · ' + esc(p.roles.join(', '))
+            + (p.canPost ? ' <button type="button" class="btn btn-secondary" style="padding:2px 8px;font-size:11px" onclick="useLinkedInPage(\'' + esc(p.id) + '\')">Usa questa</button>' : ' (non può pubblicare)')
+            + '</li>';
+        }
+        html += '</ul>';
+      }
+      box.innerHTML = html;
+      box.style.display = '';
+    } catch (e) {
+      box.style.background = '#fee2e2'; box.style.color = '#991b1b';
+      box.textContent = '❌ ' + e.message; box.style.display = '';
+    } finally {
+      btn.disabled = false; btn.textContent = '🔍 Verifica connessione LinkedIn';
+    }
+  }
+  function useLinkedInPage(id) {
+    document.getElementById('social-form').linkedin_org_id.value = id;
+    toast('ID Page inserito: premi "Salva Credenziali" e poi verifica di nuovo');
+  }
 
   // Esito del flusso OAuth TikTok (?tiktok=connected|error|noappkey)
   (function () {

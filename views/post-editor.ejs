@@ -624,6 +624,8 @@
         <p style="color:var(--green);font-size:14px;margin-bottom:8px">Pubblicato il <%= fmtRome(post.published_at) %></p>
         <% if (post.fb_post_id) { %><p style="font-size:12px;color:var(--gray-500)">FB: <%= post.fb_post_id %></p><% } %>
         <% if (post.ig_media_id) { %><p style="font-size:12px;color:var(--gray-500)">IG: <%= post.ig_media_id %></p><% } %>
+        <% if (post.linkedin_post_id) { %><p style="font-size:12px;color:var(--gray-500)">LinkedIn: <a href="https://www.linkedin.com/feed/update/<%= encodeURIComponent(post.linkedin_post_id) %>/" target="_blank" rel="noopener">apri il post ↗</a></p><% } %>
+        <% if (post.tiktok_publish_id) { %><p style="font-size:12px;color:var(--gray-500)">TikTok: <%= post.tiktok_publish_id %></p><% } %>
       <% } %>
       <div style="display:flex;gap:14px;margin:<%= post.status === 'published' ? '12px 0 10px' : '0 0 10px' %>;flex-wrap:wrap">
         <% if (client.fb_page_id) { %>

@@ -17,6 +17,8 @@ router.use(authMiddleware);
 
 // Sub-router libreria media per cliente: /:id/library
 router.use('/:clientId/library', require('./library'));
+// Sub-router fonti articoli (rivista online → post riassunto): /:id/sources
+router.use('/:clientId/sources', require('./sources'));
 
 // Filesystem branding del cliente: public/images/<clientId>/branding/
 // Path scelto perché public/images/ è l'UNICO volume persistente in Coolify
@@ -160,6 +162,26 @@ router.put('/:id', (req, res) => {
     req.body.monthly_report_enabled = (v === 1 || v === '1' || v === true || v === 'true' || v === 'on') ? 1 : 0;
   }
 
+  // LinkedIn: accetta anche URN o URL admin della Page ("urn:li:organization:123",
+  // ".../company/123/admin/") e salva solo l'ID numerico.
+  if (typeof req.body.linkedin_org_id === 'string') {
+    const raw = req.body.linkedin_org_id.trim();
+    const m = raw.match(/organization:(\d+)/) || raw.match(/company\/(\d+)/);
+    req.body.linkedin_org_id = m ? m[1] : raw;
+  }
+  // LinkedIn: token nuovo senza una scadenza nuova → +60 giorni (durata standard),
+  // così il badge e l'alert settimanale non restano agganciati al token vecchio.
+  if (typeof req.body.linkedin_access_token === 'string') {
+    req.body.linkedin_access_token = req.body.linkedin_access_token.trim();
+    const cur = db.prepare('SELECT linkedin_access_token, linkedin_token_expires_at FROM clients WHERE id = ?').get(req.params.id);
+    if (cur && req.body.linkedin_access_token && req.body.linkedin_access_token !== cur.linkedin_access_token) {
+      const sent = req.body.linkedin_token_expires_at;
+      if (!sent || sent === (cur.linkedin_token_expires_at || '').slice(0, 10)) {
+        req.body.linkedin_token_expires_at = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
+      }
+    }
+  }
+
   const updates = [];
   const values = [];
 
@@ -204,6 +226,25 @@ router.put('/:id', (req, res) => {
   }
 
   res.json(client);
+});
+
+// Verifica connessione LinkedIn (non pubblica nulla): token valido, Pagine su cui
+// il token ha un ruolo, Page configurata pubblicabile. Accetta token/org_id dal
+// body per provare PRIMA di salvare; altrimenti usa quelli salvati.
+router.post('/:id/linkedin/verify', async (req, res) => {
+  const db = getDb();
+  const client = db.prepare('SELECT linkedin_org_id, linkedin_access_token FROM clients WHERE id = ?').get(req.params.id);
+  if (!client) return res.status(404).json({ error: 'Client not found' });
+  const token = (req.body && req.body.access_token) || client.linkedin_access_token;
+  let orgId = (req.body && req.body.org_id !== undefined) ? String(req.body.org_id) : (client.linkedin_org_id || '');
+  const m = orgId.match(/organization:(\d+)/) || orgId.match(/company\/(\d+)/);
+  if (m) orgId = m[1];
+  try {
+    const { verifyLinkedInConnection } = require('../../lib/linkedin-publish');
+    res.json(await verifyLinkedInConnection(token, orgId.trim()));
+  } catch (err) {
+    res.status(502).json({ ok: false, error: 'Errore di rete verso LinkedIn: ' + err.message });
+  }
 });
 
 // Genera 5 stili visivi AI dal profilo brand del cliente.
