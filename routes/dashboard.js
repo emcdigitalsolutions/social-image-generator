@@ -131,7 +131,10 @@ router.get('/', (req, res) => {
   const { computeSetupStatus } = require('../lib/setup-status');
   clients.forEach(c => { c.setup = computeSetupStatus(c, db); });
 
-  res.render('dashboard', { title: 'Dashboard', clients, archivedCount, user: req.user });
+  res.render('dashboard', {
+    title: 'Dashboard', clients, archivedCount, user: req.user,
+    sectors: Object.entries(SETTORI).map(([k, v]) => ({ key: k, label: v.label }))
+  });
 });
 
 // Clienti archiviati: vista separata accessibile dalla sidebar

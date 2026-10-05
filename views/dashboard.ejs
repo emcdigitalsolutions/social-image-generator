@@ -55,16 +55,9 @@
         <label>Settore</label>
         <select name="sector">
           <option value="">— Seleziona —</option>
-          <option value="onoranze_funebri">Onoranze Funebri</option>
-          <option value="ristorazione">Ristorazione</option>
-          <option value="abbigliamento">Abbigliamento / Moda</option>
-          <option value="alimentari">Alimentari / Gastronomia</option>
-          <option value="estetica">Estetica / Benessere</option>
-          <option value="studio_professionale">Studio Professionale</option>
-          <option value="erboristeria">Erboristeria</option>
-          <option value="artigianato">Artigianato</option>
-          <option value="turismo">Turismo / B&B</option>
-          <option value="edilizia">Edilizia</option>
+          <% (locals.sectors || []).forEach(s => { %>
+            <option value="<%= s.key %>"><%= s.label %></option>
+          <% }) %>
         </select>
       </div>
       <div class="form-group">
