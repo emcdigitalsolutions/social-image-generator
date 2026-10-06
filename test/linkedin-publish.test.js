@@ -245,9 +245,14 @@ describe('publishToLinkedIn (fetch simulato)', () => {
     expect(JSON.parse(calls[0].opts.body).content).toBeUndefined();
   });
 
-  test('401 → messaggio "token scaduto"', async () => {
-    mockFetch([[is('POST', '/rest/posts'), () => ({ status: 401, json: { message: 'Invalid access token' } })]]);
-    await expect(publishToLinkedIn(client, { caption: 'x' }, [])).rejects.toThrow(/HTTP 401.*token scaduto o revocato/);
+  test('401 invalid → messaggio "token NON VALIDO"', async () => {
+    mockFetch([[is('POST', '/rest/posts'), () => ({ status: 401, json: { serviceErrorCode: 65600, code: 'INVALID_ACCESS_TOKEN', message: 'Invalid access token' } })]]);
+    await expect(publishToLinkedIn(client, { caption: 'x' }, [])).rejects.toThrow(/HTTP 401.*token NON VALIDO/);
+  });
+
+  test('401 expired → messaggio "token SCADUTO"', async () => {
+    mockFetch([[is('POST', '/rest/posts'), () => ({ status: 401, json: { serviceErrorCode: 65601, code: 'EXPIRED_ACCESS_TOKEN', message: 'The token used in the request has expired' } })]]);
+    await expect(publishToLinkedIn(client, { caption: 'x' }, [])).rejects.toThrow(/HTTP 401.*token SCADUTO/);
   });
 
   test('versione dismessa → messaggio esplicito', async () => {
